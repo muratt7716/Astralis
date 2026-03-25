@@ -140,25 +140,28 @@ export default function UyumlulukPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <CosmicSelect
-              label={`${t("chart.time")} (${t("chart.optional")})`}
-              value={person.hour}
-              onChange={e => updateFn("hour", e.target.value)}
-              options={[
-                { value: "", label: t("chart.hour") },
-                ...Array.from({ length: 24 }, (_, i) => ({ value: i.toString(), label: i.toString().padStart(2, "0") }))
-              ]}
-            />
-            <CosmicSelect
-              label="&nbsp;"
-              value={person.minute}
-              onChange={e => updateFn("minute", e.target.value)}
-              options={[
-                { value: "", label: t("chart.minute") },
-                ...Array.from({ length: 60 }, (_, i) => ({ value: i.toString(), label: i.toString().padStart(2, "0") }))
-              ]}
-            />
+          <div className="space-y-2">
+            <label className="block text-gray-400 text-xs font-medium uppercase tracking-widest pl-1">
+              {t("chart.time")} ({t("chart.optional")})
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <CosmicSelect
+                value={person.hour}
+                onChange={e => updateFn("hour", e.target.value)}
+                options={[
+                  { value: "", label: t("chart.hour") },
+                  ...Array.from({ length: 24 }, (_, i) => ({ value: i.toString(), label: i.toString().padStart(2, "0") }))
+                ]}
+              />
+              <CosmicSelect
+                value={person.minute}
+                onChange={e => updateFn("minute", e.target.value)}
+                options={[
+                  { value: "", label: t("chart.minute") },
+                  ...Array.from({ length: 60 }, (_, i) => ({ value: i.toString(), label: i.toString().padStart(2, "0") }))
+                ]}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

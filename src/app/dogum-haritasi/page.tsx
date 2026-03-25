@@ -123,7 +123,6 @@ export default function DogumHaritasiPage() {
             <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">🕐 {t("chart.time")} <span className="text-red-400 text-xs font-normal">({t("chart.required")})</span></h2>
             <div className="grid grid-cols-2 gap-4 mb-6">
               <CosmicSelect
-                label={t("chart.hour")}
                 value={hour}
                 onChange={(e) => setHour(e.target.value)}
                 options={[
@@ -132,7 +131,6 @@ export default function DogumHaritasiPage() {
                 ]}
               />
               <CosmicSelect
-                label={t("chart.minute")}
                 value={minute}
                 onChange={(e) => setMinute(e.target.value)}
                 options={[
