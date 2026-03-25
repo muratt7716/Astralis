@@ -48,8 +48,11 @@ export default function UyumlulukPage() {
     setLoading(true);
 
     try {
-      const p1LatLn = getCityData(p1.country, p1.city);
-      const p2LatLn = getCityData(p2.country, p2.city);
+      const p1City = p1.country === "TR" ? p1.city : p1.manualCity;
+      const p2City = p2.country === "TR" ? p2.city : p2.manualCity;
+      
+      const p1LatLn = getCityData(p1.country, p1City);
+      const p2LatLn = getCityData(p2.country, p2City);
 
       const requestBody = {
         language,

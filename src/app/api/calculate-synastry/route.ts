@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateBirthChart, calculateSynastryAspects } from "@/lib/astrology";
-import { generateSynastryInterpretation, type SupportedLanguage } from "@/lib/gemini";
-
+import { generateSynastryInterpretation, SupportedLanguage } from "@/lib/gemini";
+ 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { person1, person2, language } = body;
-
-      const errorMsgs: Record<string, string> = {
+    
+    const lang: SupportedLanguage = ["tr", "en", "ar", "de", "fr"].includes(language)
+      ? (language as SupportedLanguage)
+      : "tr";
+ 
+    if (!person1 || !person2) {
+      const errorMsgs: Record<SupportedLanguage, string> = {
         tr: "Her iki kişinin de bilgileri gereklidir.",
         en: "Information for both people is required.",
         ar: "معلومات كلا الشخصين مطلوبة.",
@@ -15,14 +20,10 @@ export async function POST(request: NextRequest) {
         fr: "Les informations pour les deux personnes sont requises."
       };
       return NextResponse.json(
-        { error: errorMsgs[language as SupportedLanguage] || errorMsgs.tr },
+        { error: errorMsgs[lang] },
         { status: 400 }
       );
-
-    const lang: SupportedLanguage = ["tr", "en", "ar", "de", "fr"].includes(language)
-      ? (language as SupportedLanguage)
-      : "tr";
-
+    }
     // 1. Calculate Individual Birth Charts
     const chart1 = calculateBirthChart(
       person1.year, person1.month, person1.day,
