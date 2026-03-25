@@ -281,39 +281,60 @@ export async function generateSynastryInterpretation(
 ) {
   const lang = languageNames[language];
   
-  // Send cross-aspects with clear IDs for model context
-  const aspectListStr = synastryAspects.slice(0, 8).map(a => 
+  // Sort aspects by importance (intensity) and send top 18 for comprehensive reading
+  const sortedAspects = [...synastryAspects].sort((a,b) => b.intensity - a.intensity);
+  const aspectListStr = sortedAspects.slice(0, 18).map(a => 
     `- Planet 1 ${a.planet1Id} ⯈ Planet 2 ${a.planet2Id}: ${a.typeId} (${a.orb}° orb) - ${a.harmony}`
   ).join("\n");
 
-  const prompt = `You are a master synastry astrologer specializing in relationship dynamics.
+  const prompt = `You are a master synastry astrologer specializing in relationship dynamics and psychological compatibility.
 TASK:
-Analyze the deep relationship compatibility (Synastry) between two individuals based on their exact astrological birth charts and cross-aspects.
+Analyze the deep relationship compatibility (Synastry) between two individuals based on their exact astrological birth charts and the provided planetary aspects.
 
 DATA:
-Person 1: Sun in ${chart1.sunSign.name}, Moon in ${chart1.moonSign.name}, ASC in ${chart1.risingSign.name}.
-Person 2: Sun in ${chart2.sunSign.name}, Moon in ${chart2.moonSign.name}, ASC in ${chart2.risingSign.name}.
+Siz (You): Sun in ${chart1.sunSign.name}, Moon in ${chart1.moonSign.name}, ASC in ${chart1.risingSign.name}.
+Partneriniz (Your Partner): Sun in ${chart2.sunSign.name}, Moon in ${chart2.moonSign.name}, ASC in ${chart2.risingSign.name}.
 
-KEY CROSS-ASPECTS (Person 1 to Person 2):
+PLANETARY CONNECTIONS (Cross-Aspects):
 ${aspectListStr}
 
 CONTEXT:
 - Language: ${lang}
-- Audience: Adults seeking deep, psychological, and realistic relationship insights. Not fluffy pop-astrology.
-- Tone: Empathetic, analytical, profound.
+- Audience: Adults seeking deep, psychological, and realistic relationship insights. 
+- Tone: Empathetic, analytical, profound, and professional. Use "Siz" and "Partneriniz".
+- Goal: provide HIGHLY DETAILED, analytical interpretations. Avoid short bullet points.
 
-OUTPUT MUST BE VALID JSON:
+STRICT FORMATTING RULES:
+- Return ONLY valid JSON.
+- No markdown, no explanations.
+- DO NOT use double emojis.
+
+OUTPUT STRUCTURE:
 {
-  "overallScore": 0-100, // Evaluate based on aspects
-  "loveScore": 0-100, // Evaluate Moon/Venus/Mars contacts
-  "friendshipScore": 0-100, // Evaluate Sun/Mercury/Jupiter contacts
-  "workScore": 0-100, // Evaluate Saturn/Sun/Mars contacts
-  "description": "3-4 sentences of deep holistic overview of the relationship chemistry.",
-  "strengths": ["A detailed strength of this bond", "Another major strength"],
-  "challenges": ["A potential friction point and how to heal it", "A communication block"]
+  "overallScore": 0-100, 
+  "loveScore": 0-100, 
+  "friendshipScore": 0-100, 
+  "workScore": 0-100, 
+  "description": "6-8 long sentences providing a profound holistic overview of the connection. Synthesize the Sun/Moon/ASC energies.",
+  "strengths": [
+    "A detailed strength focused on general relationship dynamics and personality synergy (3-4 analytical sentences). DO NOT mention technical aspect names or specific planetary degrees here.", 
+    "Another major strength focusing on emotional or intellectual harmony (3-4 sentences). Focus on the 'human' side of the bond."
+  ],
+  "challenges": [
+    "A potential friction point explained deeply through personality traits and behavioral patterns (3-4 sentences). DO NOT mention technical aspect names or specific planetary degrees here.", 
+    "A communication or emotional block analyzed with depth (3-4 sentences). Focus on how their characters clash or need adjustment."
+  ],
+  "aspectInterpretations": [
+     {
+       "p1": "planet1Id",
+       "p2": "planet2Id",
+       "type": "aspectTypeId",
+       "insight": "Explain exactly what this {planet1} and {planet2} interaction ({aspect}) means in reality. VARY YOUR OPENINGS; do not repeat the same sentence structure for every aspect. You can start with descriptors like 'Doğum haritalarınızdaki {planet1} ve {planet2} arasındaki bu {aspect} yerleşimi...', or 'Partnerinizin {planet2} konumu sizin {planet1} enerjinizle {aspect} yaparak...', etc. Add 2-3 sentences of deep, factual, and informative consequence. Focus on what they feel and how they interact."
+     }
+  ]
 }
 
-Write elegantly and naturally in ${lang}. Ensure it sounds like an expert astrologer reading the exact angles between them.`;
+Write elegantly and naturally in ${lang}. Ensure every interpretation is professional, insightful, and comprehensive.`;
 
   try {
     const text = await callGeminiWithFallback(prompt);

@@ -45,17 +45,19 @@ export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
   if (compact) {
     return (
       <Link href={`/burclar/${sign.id}`}>
-        <div className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${theme.gradient} border ${theme.accent} transition-all duration-500 lg:hover:scale-[1.03] ${theme.glow} cursor-pointer p-4`}>
+        <div className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${theme.gradient} border ${theme.accent} transition-all duration-500 hover:scale-[1.03] ${theme.glow} cursor-pointer p-3 md:p-4 h-full`}>
           {/* Subtle background element */}
           <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/5 blur-xl group-hover:bg-white/10 transition-colors" />
           
-          <div className="relative z-10 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/40 border ${theme.accent} backdrop-blur-md shadow-inner`}>
-              <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{sign.symbol}</span>
+          <div className="relative z-10 flex flex-col items-center text-center gap-2 md:gap-3 h-full justify-center">
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border ${theme.accent} backdrop-blur-md shadow-inner transition-all duration-500 group-hover:bg-white/10`}>
+              <span className="text-xl md:text-2xl group-hover:scale-110 transition-transform duration-300">{sign.symbol}</span>
             </div>
-            <div>
-              <h3 className="text-white font-bold tracking-wide">{t(`zodiac.${sign.id}`)}</h3>
-              <p className="text-gray-400 text-xs mt-0.5">{sign.dateRange}</p>
+            <div className="min-w-0 w-full">
+              <h3 className="text-white font-bold tracking-wide text-sm md:text-base mb-0.5">{t(`zodiac.${sign.id}`)}</h3>
+              <div className="text-[10px] md:text-xs text-gray-400 font-medium leading-tight opacity-80 decoration-indigo-500/30">
+                {sign.dateRange}
+              </div>
             </div>
           </div>
         </div>

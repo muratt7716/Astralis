@@ -171,8 +171,14 @@ function calculatePlanetLongitude(
 
 /**
  * Calculate all planet longitudes with perturbation corrections
+ * Memoized by Julian Day to prevent redundant calculations during retrograde detection
  */
+const planetCache: Record<string, Record<string, number>> = {};
+
 function calculateAllPlanetLongitudes(jd: number): Record<string, number> {
+  const cacheKey = jd.toString();
+  if (planetCache[cacheKey]) return planetCache[cacheKey];
+
   const T = (jd - 2451545.0) / 36525;
   const sunLong = calculateSunLongitude(jd);
   const moonLong = calculateMoonLongitude(jd);
@@ -201,7 +207,9 @@ function calculateAllPlanetLongitudes(jd: number): Record<string, number> {
   const neptune = safeMod(304.349 + 218.4862 * T, 360);
   const pluto   = safeMod(238.929 + 145.2078 * T, 360);
 
-  return { sun: sunLong, moon: moonLong, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto };
+  const result = { sun: sunLong, moon: moonLong, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto };
+  planetCache[cacheKey] = result;
+  return result;
 }
 
 /**

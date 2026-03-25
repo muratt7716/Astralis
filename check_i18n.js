@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 
-const content = fs.readFileSync('c:/Users/Administrator/Desktop/Falcı Bacı/src/lib/i18n.tsx', 'utf8');
+const content = fs.readFileSync('c:/Users/Administrator/Desktop/Falcı Bacı/src/lib/i18n-shared.ts', 'utf8');
 
 const languages = ['tr', 'en', 'ar', 'de', 'fr'];
 const results = {};
