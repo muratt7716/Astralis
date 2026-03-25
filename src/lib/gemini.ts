@@ -31,7 +31,7 @@ async function callGeminiWithFallback(prompt: string): Promise<string> {
   }
 
   console.error("All Gemini API models failed.", lastError);
-  throw new Error("Tüm Gemini modelleri başarısız oldu.");
+  throw new Error("All AI models failed to respond.");
 }
 
 /**
@@ -281,9 +281,9 @@ export async function generateSynastryInterpretation(
 ) {
   const lang = languageNames[language];
   
-  // Send only the most important cross-aspects (e.g. top 8)
+  // Send cross-aspects with clear IDs for model context
   const aspectListStr = synastryAspects.slice(0, 8).map(a => 
-    `- Kişi 1 ${a.planet1} ⯈ Kişi 2 ${a.planet2}: ${a.type} (${a.orb}° orb) - ${a.harmony}`
+    `- Planet 1 ${a.planet1Id} ⯈ Planet 2 ${a.planet2Id}: ${a.typeId} (${a.orb}° orb) - ${a.harmony}`
   ).join("\n");
 
   const prompt = `You are a master synastry astrologer specializing in relationship dynamics.
@@ -336,7 +336,7 @@ export async function generateTransitInterpretation(
 
   // We only send the top 5 transits so we don't overwhelm the prompt
   const transitListStr = transits.slice(0, 5).map(t => 
-    `- ${t.description} (Orb: ${t.orb}°, Harmony: ${t.harmony})`
+    `- Transit ${t.transitPlanetId} ${t.typeId} Natal ${t.natalPlanetId} (Orb: ${t.orb}°, Harmony: ${t.harmony})`
   ).join("\n");
 
   const prompt = `You are an expert predictive astrologer. 
@@ -395,7 +395,8 @@ export async function generateDivinationReading(
   type: DivinationType,
   cards: DivinationCard[],
   question: string,
-  lang: SupportedLanguage
+  lang: SupportedLanguage,
+  persona?: { name: string; style: string }
 ) {
   const langName = languageNames[lang];
 
@@ -405,7 +406,7 @@ export async function generateDivinationReading(
     lenormand: "Lenormand card reader. CRITICAL: Read cards IN COMBINATION — adjacent cards modify each other's meaning. Context flows left to right.",
     rune: "Elder Futhark Norse Rune caster. Channel ancient Viking wisdom with modern relevance.",
     iching: "I Ching (Book of Changes) interpreter. Blend traditional Chinese philosophy with practical modern guidance.",
-    crystal: "Mystical crystal ball seer. Purely intuitive, poetic, and deeply personal AI oracle.",
+    crystal: "Mystical crystal ball seer. Purely intuitive, poetic, and deeply personal mystical oracle.",
   };
 
   const cardList = cards.map((c, i) => {
@@ -416,13 +417,16 @@ export async function generateDivinationReading(
     return entry;
   }).join("\n");
 
+  const personaSection = persona 
+    ? `\nCRITICAL PERSONALITY: You are interpreting as "${persona.name}". ${persona.style}\n`
+    : "";
+
   const prompt = `You are a master ${typeDescriptions[type]}
-
-User's question/intention: "${question || "Genel bir rehberlik istiyorum"}"
-
+${personaSection}
 Selected cards/symbols:
 ${cardList}
 
+User's question: "${question || (lang === 'tr' ? 'Genel bir rehberlik istiyorum' : 'I want general guidance')}"
 Language: ${langName}
 
 STRICT OUTPUT RULES:
@@ -467,12 +471,17 @@ export async function generateCoffeeReading(
   imageBase64: string,
   mimeType: string,
   question: string,
-  lang: SupportedLanguage
+  lang: SupportedLanguage,
+  persona?: { name: string; style: string }
 ) {
   const langName = languageNames[lang];
 
-  const prompt = `You are a master Turkish coffee fortune teller (kahve falcısı).
+  const personaSection = persona 
+    ? `\nCRITICAL PERSONALITY: You are interpreting as "${persona.name}". ${persona.style}\n`
+    : "";
 
+  const prompt = `You are a master Turkish coffee fortune teller (kahve falcısı).
+${personaSection}
 CRITICAL SAFETY RULE:
 First, analyze this image. If the image does NOT clearly contain a coffee cup, coffee grounds (telve), a saucer, or anything related to Turkish coffee fortune telling, you MUST respond with EXACTLY this JSON and nothing else:
 {"error": "INVALID_IMAGE"}
@@ -480,7 +489,7 @@ First, analyze this image. If the image does NOT clearly contain a coffee cup, c
 Do NOT interpret non-coffee images as fortune telling under ANY circumstances.
 
 If the image IS a valid coffee cup/grounds:
-User's question: "${question || "Genel falıma bak"}"
+User's question: "${question || (lang === 'tr' ? 'Genel falıma bak' : 'Give me a general reading')}"
 Language: ${langName}
 
 Carefully examine the coffee grounds. Identify 3-5 distinct shapes/symbols you see in the telve patterns.
@@ -537,7 +546,8 @@ OUTPUT FORMAT:
  */
 export async function generateVirtualCoffeeReading(
   question: string,
-  lang: SupportedLanguage
+  lang: SupportedLanguage,
+  persona?: { name: string; style: string }
 ) {
   const langName = languageNames[lang];
 
@@ -545,7 +555,7 @@ export async function generateVirtualCoffeeReading(
 
 IMAGINE that you are looking at fresh coffee grounds in a cup. Invent 3-5 completely random, creative, and vividly described telve shapes/symbols that you "see" in this imaginary cup. Make each symbol unique and surprising.
 
-User's question: "${question || "Genel falıma bak"}"
+User's question: "${question || (lang === 'tr' ? 'Genel falıma bak' : 'Give me a general reading')}"
 Language: ${langName}
 
 STRICT OUTPUT RULES:

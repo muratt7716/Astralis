@@ -136,21 +136,21 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-serif tracking-tight flex items-center justify-center gap-3">
-              <Logo size={48} /> Mistik Fallar
+              <Logo size={48} /> {t("home.mystic.title")}
             </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">Kadim kehanet sistemlerinin bilgeliği, kozmik sezginin gücüyle buluşuyor.</p>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("home.mystic.subtitle")}</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6">
             {[
-              { id: "tarot", name: "Tarot", href: "/fallar/tarot", theme: "from-purple-900/40 to-indigo-950/60" },
-              { id: "katina", name: "Katina", href: "/fallar/katina", theme: "from-rose-900/40 to-rose-950/60" },
-              { id: "lenormand", name: "Lenormand", href: "/fallar/lenormand", theme: "from-amber-900/40 to-amber-950/60" },
-              { id: "kahve", name: "Kahve", href: "/fallar/kahve", theme: "from-yellow-900/40 to-yellow-950/60" },
-              { id: "runler", name: "Rünler", href: "/fallar/runler", theme: "from-blue-900/40 to-blue-950/60" },
-              { id: "iching", name: "I Ching", href: "/fallar/iching", theme: "from-emerald-900/40 to-emerald-950/60" },
-              { id: "kristal", name: "Kristal", href: "/fallar/kristal", theme: "from-violet-900/40 to-violet-950/60" },
+              { id: "tarot", nameKey: "fortune.tarot.title", href: "/fallar/tarot", theme: "from-purple-900/40 to-indigo-950/60" },
+              { id: "katina", nameKey: "fortune.katina.title", href: "/fallar/katina", theme: "from-rose-900/40 to-rose-950/60" },
+              { id: "lenormand", nameKey: "fortune.lenormand.title", href: "/fallar/lenormand", theme: "from-amber-900/40 to-amber-950/60" },
+              { id: "kahve", nameKey: "fortune.kahve.title", href: "/fallar/kahve", theme: "from-yellow-900/40 to-yellow-950/60" },
+              { id: "runler", nameKey: "fortune.runler.title", href: "/fallar/runler", theme: "from-blue-900/40 to-blue-950/60" },
+              { id: "iching", nameKey: "fortune.iching.title", href: "/fallar/iching", theme: "from-emerald-900/40 to-emerald-950/60" },
+              { id: "kristal", nameKey: "fortune.kristal.title", href: "/fallar/kristal", theme: "from-violet-900/40 to-violet-950/60" },
             ].map((fal, idx) => (
-              <Link key={fal.name} href={fal.href} className="group">
+              <Link key={fal.nameKey} href={fal.href} className="group">
                 <div className={`
                   relative rounded-3xl p-8 text-center h-full flex flex-col items-center justify-center
                   bg-gradient-to-br ${fal.theme} border border-white/10
@@ -166,12 +166,12 @@ export default function HomePage() {
                   </div>
                   
                   <p className="text-white text-xs font-brand font-bold tracking-[0.2em] uppercase relative z-10 group-hover:text-purple-300 transition-colors">
-                    {fal.name}
+                    {t(fal.nameKey)}
                   </p>
                   
                   {/* Subtle reveal hint */}
                   <div className="mt-4 opacity-0 group-hover:opacity-100 transition-all duration-700 transform translate-y-2 group-hover:translate-y-0 relative z-10">
-                    <span className="text-[8px] font-bold text-white/40 tracking-[0.1em] uppercase">Keşfet</span>
+                    <span className="text-[8px] font-bold text-white/40 tracking-[0.1em] uppercase">{t("fallar.explore.btn")}</span>
                   </div>
 
                   {/* Background light spot */}
@@ -182,7 +182,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-12">
             <Link href="/fallar">
-              <CosmicButton variant="ghost">Hepsini Keşfet →</CosmicButton>
+              <CosmicButton variant="ghost">{t("home.mystic.all")}</CosmicButton>
             </Link>
           </div>
         </div>

@@ -5,19 +5,32 @@ import Footer from "@/components/Footer";
 import StarField from "@/components/StarField";
 import Providers from "@/components/Providers";
 
-export const metadata: Metadata = {
-  title: "Astralis | Astroloji & Burç Platformu",
-  description: "Burçlarınızı keşfedin, günlük yorumlarınızı okuyun, doğum haritanızı hesaplayın. Yıldızların rehberliğinde hayatınıza ışık tutun.",
-  keywords: "astroloji, burçlar, günlük burç yorumu, doğum haritası, burç uyumluluğu, gezegenler",
-};
+import { cookies } from "next/headers";
+import { translations, SupportedLanguage, languages } from "@/lib/i18n-shared";
 
-export default function RootLayout({
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const lang = (cookieStore.get("falci-lang")?.value as SupportedLanguage) || "tr";
+  const t = (key: string) => translations[lang]?.[key] || translations.tr[key] || key;
+
+  return {
+    title: `Astralis | ${t("hero.title.1")} ${t("hero.title.2")}`,
+    description: t("hero.subtitle"),
+    keywords: "astrology, zodiac, horoscopes, tarot, birth chart, coffee fortune, astroloji, burçlar, günlük burç yorumu, doğum haritası, fal",
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const lang = (cookieStore.get("falci-lang")?.value as SupportedLanguage) || "tr";
+  const langInfo = languages.find(l => l.code === lang) || languages[0];
+
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang={lang} dir={langInfo.dir} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

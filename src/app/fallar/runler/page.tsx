@@ -4,7 +4,7 @@ import { elderFutharkRunes, runeSpreads } from "@/data/runes";
 import { useTranslation } from "@/lib/i18n";
 
 export default function RunlerPage() {
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const [spread, setSpread] = useState("odin");
   const [question, setQuestion] = useState("");
   const [drawnRunes, setDrawnRunes] = useState<(typeof elderFutharkRunes[0] & { isReversed: boolean })[]>([]);
@@ -24,7 +24,7 @@ export default function RunlerPage() {
   };
 
   const allRevealed = drawnRunes.length > 0 && revealed.size === drawnRunes.length;
-  const positions = spread === "norns" ? ["Urd (Geçmiş)", "Verdandi (Şimdi)", "Skuld (Gelecek)"] : ["Odin'in Mesajı"];
+  const positions = spread === "norns" ? [t("horoscope.past"), t("horoscope.present"), t("horoscope.future")] : [t("fortune.runler.position.odin")];
 
   const getReading = async () => {
     setLoading(true);
@@ -42,14 +42,14 @@ export default function RunlerPage() {
       <section className="pt-16 pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="text-6xl mb-4 float" style={{ fontFamily: "serif" }}>ᚱ</div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">İskandinav Rünleri</span></h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">Kadim Viking bilgeliğinin 24 kutsal taşı. Elder Futhark rünlerinden mesajınızı çekin.</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.runler.title")}</span></h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.runler.full_desc")}</p>
         </div>
       </section>
 
       <section className="pb-6 px-4"><div className="max-w-3xl mx-auto space-y-4">
         <div className="glass-card p-6">
-          <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Çekim Türü</label>
+          <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">{t("chart.overview")}</label>
           <div className="grid grid-cols-2 gap-3">
             {runeSpreads.map(s => (
               <button key={s.id} onClick={() => { setSpread(s.id); setDrawnRunes([]); setResult(null); }}
@@ -60,15 +60,15 @@ export default function RunlerPage() {
           </div>
         </div>
         <div className="glass-card p-6">
-          <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Sorunuz</label>
-          <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder="Nornlara sorunuzu yönlendirin..." className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
+          <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">{t("fortune.common.question.label")}</label>
+          <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
         </div>
-        <button onClick={draw} className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-700 to-cyan-600 text-white font-bold text-lg hover:shadow-lg transition-all glow">ᚱ Rünleri Çek</button>
+        <button onClick={draw} className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-700 to-cyan-600 text-white font-bold text-lg hover:shadow-lg transition-all glow">{t("fortune.runler.draw_btn")}</button>
       </div></section>
 
       {drawnRunes.length > 0 && (
         <section className="pb-8 px-4"><div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-bold text-white text-center mb-6">Taşlara dokunarak çevirin ✨</h2>
+          <h2 className="text-xl font-bold text-white text-center mb-6">{t("fortune.runler.pick_subtitle")}</h2>
           <div className={`grid gap-6 ${drawnRunes.length === 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-3 max-w-2xl mx-auto"}`}>
             {drawnRunes.map((rune, idx) => {
               const isRevealed = revealed.has(idx);
@@ -84,7 +84,7 @@ export default function RunlerPage() {
                       <p className="text-gray-400 text-xs mb-2">{positions[idx] || `Rün ${idx + 1}`}</p>
                       <span className={`text-5xl font-bold mb-2 ${rune.isReversed ? "rotate-180 inline-block text-red-300" : "text-blue-200"}`} style={{ fontFamily: "serif" }}>{rune.symbol}</span>
                       <p className="text-white font-bold">{rune.name}</p>
-                      {rune.isReversed && <p className="text-red-400 text-xs">↻ Ters</p>}
+                      {rune.isReversed && <p className="text-red-400 text-xs">{t("fortune.runler.reversed")}</p>}
                       <p className="text-gray-400 text-xs mt-2 text-center">{rune.isReversed ? rune.reversed : rune.meaning}</p>
                     </div>
                   )}
@@ -98,7 +98,7 @@ export default function RunlerPage() {
       {allRevealed && !result && (
         <section className="pb-8 px-4"><div className="max-w-3xl mx-auto">
           <button onClick={getReading} disabled={loading} className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 glow">
-            {loading ? "Rünler Yorumlanıyor..." : "✨ Viking Bilgeliğini Al"}
+            {loading ? t("fortune.runler.loading") : t("fortune.runler.result_btn")}
           </button>
         </div></section>
       )}
@@ -114,11 +114,11 @@ export default function RunlerPage() {
               </div>
             ))}
             <div className="mt-4 p-4 bg-blue-900/20 rounded-xl border border-blue-500/20">
-              <h4 className="text-lg font-bold text-white mb-2">🌟 Genel Sentez</h4>
+              <h4 className="text-lg font-bold text-white mb-2">🌟 {t("chart.overview")}</h4>
               <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
             </div>
             {result.advice && (<div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
-              <span className="text-blue-400 font-semibold text-sm">💡 Tavsiye: </span><span className="text-gray-300 text-sm">{result.advice}</span>
+              <span className="text-blue-400 font-semibold text-sm">💡 {t("chart.advice")}: </span><span className="text-gray-300 text-sm">{result.advice}</span>
             </div>)}
           </div>
         </div></section>

@@ -12,6 +12,7 @@ export interface BirthChart {
 
 export interface PlanetPosition {
   planet: string;
+  planetId: string;
   emoji: string;
   sign: string;
   signId: string;
@@ -31,8 +32,11 @@ export interface HousePosition {
 
 export interface Aspect {
   planet1: string;
+  planet1Id: string;
   planet2: string;
+  planet2Id: string;
   type: string;
+  typeId: string;
   typeEmoji: string;
   angle: number;
   orb: number;
@@ -213,17 +217,17 @@ function isRetrograde(jd: number, planetKey: string): boolean {
   return diff < 0;
 }
 
-const planetInfo: Record<string, { name: string; emoji: string; meaning: string }> = {
-  sun:     { name: "Güneş",  emoji: "☀️", meaning: "Benlik, kimlik ve yaşam enerjisi" },
-  moon:    { name: "Ay",     emoji: "🌙", meaning: "Duygular, iç dünya ve bilinçaltı" },
-  mercury: { name: "Merkür", emoji: "☿️", meaning: "İletişim, zeka ve düşünce tarzı" },
-  venus:   { name: "Venüs",  emoji: "♀️", meaning: "Aşk, güzellik ve değerler" },
-  mars:    { name: "Mars",   emoji: "♂️", meaning: "Enerji, tutku ve eylem gücü" },
-  jupiter: { name: "Jüpiter",emoji: "♃",  meaning: "Şans, büyüme ve genişleme" },
-  saturn:  { name: "Satürn", emoji: "♄",  meaning: "Disiplin, sorumluluk ve yapı" },
-  uranus:  { name: "Uranüs", emoji: "⚡", meaning: "Yenilik, özgürlük ve devrim" },
-  neptune: { name: "Neptün", emoji: "🔱", meaning: "Hayal gücü, sezgi ve spiritüellik" },
-  pluto:   { name: "Plüton", emoji: "🔮", meaning: "Dönüşüm, güç ve yenilenme" },
+const planetInfo: Record<string, { id: string; name: string; emoji: string; meaning: string }> = {
+  sun:     { id: "sun",     name: "Güneş",  emoji: "☀️", meaning: "Benlik, kimlik ve yaşam enerjisi" },
+  moon:    { id: "moon",    name: "Ay",     emoji: "🌙", meaning: "Duygular, iç dünya ve bilinçaltı" },
+  mercury: { id: "mercury", name: "Merkür", emoji: "☿️", meaning: "İletişim, zeka ve düşünce tarzı" },
+  venus:   { id: "venus",   name: "Venüs",  emoji: "♀️", meaning: "Aşk, güzellik ve değerler" },
+  mars:    { id: "mars",    name: "Mars",   emoji: "♂️", meaning: "Enerji, tutku ve eylem gücü" },
+  jupiter: { id: "jupiter", name: "Jüpiter",emoji: "♃",  meaning: "Şans, büyüme ve genişleme" },
+  saturn:  { id: "saturn",  name: "Satürn", emoji: "♄",  meaning: "Disiplin, sorumluluk ve yapı" },
+  uranus:  { id: "uranus",  name: "Uranüs", emoji: "⚡", meaning: "Yenilik, özgürlük ve devrim" },
+  neptune: { id: "neptune", name: "Neptün", emoji: "🔱", meaning: "Hayal gücü, sezgi ve spiritüellik" },
+  pluto:   { id: "pluto",   name: "Plüton", emoji: "🔮", meaning: "Dönüşüm, güç ve yenilenme" },
 };
 
 const houseDescriptions = [
@@ -265,11 +269,11 @@ function calculateHouses(ascendant: number): HousePosition[] {
  */
 function calculateAspects(positions: Record<string, number>): Aspect[] {
   const aspectTypes = [
-    { name: "Kavuşum", emoji: "☌", angle: 0, orb: 8, harmony: "neutral" as const, desc: "Enerjilerin birleşmesidir; güçlü ve yoğundur" },
-    { name: "Karşıtlık", emoji: "☍", angle: 180, orb: 8, harmony: "negative" as const, desc: "Gerilim ve denge arayışı yaratır" },
-    { name: "Kare", emoji: "□", angle: 90, orb: 7, harmony: "negative" as const, desc: "Zorluk ve büyüme potansiyeli taşır" },
-    { name: "Üçgen", emoji: "△", angle: 120, orb: 8, harmony: "positive" as const, desc: "Uyum ve doğal yetenek gösterir" },
-    { name: "Altmışlık", emoji: "⚹", angle: 60, orb: 6, harmony: "positive" as const, desc: "Fırsat ve işbirliği enerjisi taşır" },
+    { id: "conjunction", name: "Kavuşum", emoji: "☌", angle: 0, orb: 8, harmony: "neutral" as const, desc: "Enerjilerin birleşmesidir; güçlü ve yoğundur" },
+    { id: "opposition", name: "Karşıtlık", emoji: "☍", angle: 180, orb: 8, harmony: "negative" as const, desc: "Gerilim ve denge arayışı yaratır" },
+    { id: "square", name: "Kare", emoji: "□", angle: 90, orb: 7, harmony: "negative" as const, desc: "Zorluk ve büyüme potansiyeli taşır" },
+    { id: "trine", name: "Üçgen", emoji: "△", angle: 120, orb: 8, harmony: "positive" as const, desc: "Uyum ve doğal yetenek gösterir" },
+    { id: "sextile", name: "Altmışlık", emoji: "⚹", angle: 60, orb: 6, harmony: "positive" as const, desc: "Fırsat ve işbirliği enerjisi taşır" },
   ];
 
   const planets = Object.keys(positions);
@@ -287,8 +291,11 @@ function calculateAspects(positions: Record<string, number>): Aspect[] {
         if (orb <= type.orb) {
           aspects.push({
             planet1: planetInfo[p1].name,
+            planet1Id: planetInfo[p1].id,
             planet2: planetInfo[p2].name,
+            planet2Id: planetInfo[p2].id,
             type: type.name,
+            typeId: type.id,
             typeEmoji: type.emoji,
             angle: Math.round(angle * 10) / 10,
             orb: Math.round(orb * 10) / 10,
@@ -338,6 +345,7 @@ export function calculateBirthChart(
     const retro = (key !== "sun" && key !== "moon") ? isRetrograde(jd, key) : false;
     return {
       planet: info.name,
+      planetId: info.id,
       emoji: info.emoji,
       sign: signData.name,
       signId: signData.id,
@@ -377,10 +385,13 @@ export function calculateBirthChart(
 
 export interface TransitAspect {
   transitPlanet: string;
+  transitPlanetId: string;
   transitEmoji: string;
   natalPlanet: string;
+  natalPlanetId: string;
   natalEmoji: string;
   type: string;
+  typeId: string;
   typeEmoji: string;
   angle: number;
   orb: number;
@@ -405,11 +416,11 @@ export function calculateTransits(birthPositions: PlanetPosition[]): TransitAspe
   const transitPositions = calculateAllPlanetLongitudes(currentJd);
   
   const aspectTypes = [
-    { name: "Kavuşum", emoji: "☌", angle: 0, orb: 3, harmony: "neutral" as const },
-    { name: "Karşıtlık", emoji: "☍", angle: 180, orb: 3, harmony: "negative" as const },
-    { name: "Kare", emoji: "□", angle: 90, orb: 3, harmony: "negative" as const },
-    { name: "Üçgen", emoji: "△", angle: 120, orb: 3, harmony: "positive" as const },
-    { name: "Altmışlık", emoji: "⚹", angle: 60, orb: 3, harmony: "positive" as const },
+    { id: "conjunction", name: "Kavuşum", emoji: "☌", angle: 0, orb: 3, harmony: "neutral" as const },
+    { id: "opposition", name: "Karşıtlık", emoji: "☍", angle: 180, orb: 3, harmony: "negative" as const },
+    { id: "square", name: "Kare", emoji: "□", angle: 90, orb: 3, harmony: "negative" as const },
+    { id: "trine", name: "Üçgen", emoji: "△", angle: 120, orb: 3, harmony: "positive" as const },
+    { id: "sextile", name: "Altmışlık", emoji: "⚹", angle: 60, orb: 3, harmony: "positive" as const },
   ];
 
   const transits: TransitAspect[] = [];
@@ -430,10 +441,13 @@ export function calculateTransits(birthPositions: PlanetPosition[]): TransitAspe
         if (orb <= maxOrb) {
           transits.push({
             transitPlanet: planetInfo[tp].name,
+            transitPlanetId: planetInfo[tp].id,
             transitEmoji: planetInfo[tp].emoji,
             natalPlanet: np.planet,
+            natalPlanetId: np.planetId,
             natalEmoji: np.emoji,
             type: type.name,
+            typeId: type.id,
             typeEmoji: type.emoji,
             angle: Math.round(angle * 10) / 10,
             orb: Math.round(orb * 10) / 10,
@@ -452,10 +466,13 @@ export function calculateTransits(birthPositions: PlanetPosition[]): TransitAspe
 
 export interface SynastryAspect {
   planet1: string;
+  planet1Id: string;
   emoji1: string;
   planet2: string;
+  planet2Id: string;
   emoji2: string;
   type: string;
+  typeId: string;
   typeEmoji: string;
   angle: number;
   orb: number;
@@ -468,11 +485,11 @@ export interface SynastryAspect {
  */
 export function calculateSynastryAspects(p1Positions: PlanetPosition[], p2Positions: PlanetPosition[]): SynastryAspect[] {
   const aspectTypes = [
-    { name: "Kavuşum", emoji: "☌", angle: 0, orb: 8, harmony: "neutral" as const },
-    { name: "Karşıtlık", emoji: "☍", angle: 180, orb: 8, harmony: "negative" as const },
-    { name: "Kare", emoji: "□", angle: 90, orb: 7, harmony: "negative" as const },
-    { name: "Üçgen", emoji: "△", angle: 120, orb: 8, harmony: "positive" as const },
-    { name: "Altmışlık", emoji: "⚹", angle: 60, orb: 6, harmony: "positive" as const },
+    { id: "conjunction", name: "Kavuşum", emoji: "☌", angle: 0, orb: 8, harmony: "neutral" as const },
+    { id: "opposition", name: "Karşıtlık", emoji: "☍", angle: 180, orb: 8, harmony: "negative" as const },
+    { id: "square", name: "Kare", emoji: "□", angle: 90, orb: 7, harmony: "negative" as const },
+    { id: "trine", name: "Üçgen", emoji: "△", angle: 120, orb: 8, harmony: "positive" as const },
+    { id: "sextile", name: "Altmışlık", emoji: "⚹", angle: 60, orb: 6, harmony: "positive" as const },
   ];
 
   const synastry: SynastryAspect[] = [];
@@ -502,10 +519,13 @@ export function calculateSynastryAspects(p1Positions: PlanetPosition[], p2Positi
 
           synastry.push({
             planet1: p1.planet,
+            planet1Id: p1.planetId,
             emoji1: p1.emoji,
             planet2: p2.planet,
+            planet2Id: p2.planetId,
             emoji2: p2.emoji,
             type: type.name,
+            typeId: type.id,
             typeEmoji: type.emoji,
             angle: Math.round(angle * 10) / 10,
             orb: Math.round(orb * 10) / 10,
@@ -530,12 +550,14 @@ export function calculateSynastryAspects(p1Positions: PlanetPosition[], p2Positi
 export interface CelestialEvents {
   moonPhase: {
     emoji: string;
+    id: string;
     name: string;
     description: string;
     illumination: number;
   };
   retrogrades: Array<{
     planet: string;
+    planetId: string;
     emoji: string;
     description: string;
   }>;
@@ -564,23 +586,24 @@ export function getCurrentCelestialEvents(): CelestialEvents {
   let phaseName = "";
   let phaseEmoji = "";
   let phaseDesc = "";
+  let phaseId = "";
 
   if (phaseAngle >= 0 && phaseAngle < 45) {
-    phaseName = "Yeni Ay"; phaseEmoji = "🌑"; phaseDesc = "Yeni başlangıçlar ve niyet tohumları ekmek için mükemmel zaman.";
+    phaseId = "new"; phaseName = "Yeni Ay"; phaseEmoji = "🌑"; phaseDesc = "Yeni başlangıçlar ve niyet tohumları ekmek için mükemmel zaman.";
   } else if (phaseAngle >= 45 && phaseAngle < 90) {
-    phaseName = "Büyüyen Hilal"; phaseEmoji = "🌒"; phaseDesc = "Niyetlerinizi eyleme dökme ve ilk adımları atma evresi.";
+    phaseId = "crescent"; phaseName = "Büyüyen Hilal"; phaseEmoji = "🌒"; phaseDesc = "Niyetlerinizi eyleme dökme ve ilk adımları atma evresi.";
   } else if (phaseAngle >= 90 && phaseAngle < 135) {
-    phaseName = "İlk Dördün"; phaseEmoji = "🌓"; phaseDesc = "Karşılaşılan ilk engelleri aşma ve kararlılık gösterme zamanı.";
+    phaseId = "first_quarter"; phaseName = "İlk Dördün"; phaseEmoji = "🌓"; phaseDesc = "Karşılaşılan ilk engelleri aşma ve kararlılık gösterme zamanı.";
   } else if (phaseAngle >= 135 && phaseAngle < 180) {
-    phaseName = "Büyüyen Ay (Gibbous)"; phaseEmoji = "🌔"; phaseDesc = "Hedeflerinize ulaşmadan önceki son analiz ve mükemmelleştirme evresi.";
+    phaseId = "gibbous"; phaseName = "Büyüyen Ay (Gibbous)"; phaseEmoji = "🌔"; phaseDesc = "Hedeflerinize ulaşmadan önceki son analiz ve mükemmelleştirme evresi.";
   } else if (phaseAngle >= 180 && phaseAngle < 225) {
-    phaseName = "Dolunay"; phaseEmoji = "🌕"; phaseDesc = "Sonuçların görünür olduğu, uyanış, hasat ve kutlama zamanı.";
+    phaseId = "full"; phaseName = "Dolunay"; phaseEmoji = "🌕"; phaseDesc = "Sonuçların görünür olduğu, uyanış, hasat ve kutlama zamanı.";
   } else if (phaseAngle >= 225 && phaseAngle < 270) {
-    phaseName = "Küçülen Ay (Disseminating)"; phaseEmoji = "🌖"; phaseDesc = "Bilgeliği paylaşma, şükretme ve elde edilenleri değerlendirme zamanı.";
+    phaseId = "disseminating"; phaseName = "Küçülen Ay (Disseminating)"; phaseEmoji = "🌖"; phaseDesc = "Bilgeliği paylaşma, şükretme ve elde edilenleri değerlendirme zamanı.";
   } else if (phaseAngle >= 270 && phaseAngle < 315) {
-    phaseName = "Son Dördün"; phaseEmoji = "🌗"; phaseDesc = "Bırakma, affetme ve gereksiz yüklerden arınma evresi.";
+    phaseId = "last_quarter"; phaseName = "Son Dördün"; phaseEmoji = "🌗"; phaseDesc = "Bırakma, affetme ve gereksiz yüklerden arınma evresi.";
   } else {
-    phaseName = "Balzamik Ay (Balsamic)"; phaseEmoji = "🌘"; phaseDesc = "Dinlenme, teslimiyet ve yenilenmeden önceki ruhsal kapanış zamanı.";
+    phaseId = "balsamic"; phaseName = "Balzamik Ay (Balsamic)"; phaseEmoji = "🌘"; phaseDesc = "Dinlenme, teslimiyet ve yenilenmeden önceki ruhsal kapanış zamanı.";
   }
 
   // Retrogrades
@@ -591,6 +614,7 @@ export function getCurrentCelestialEvents(): CelestialEvents {
     if (isRetrograde(currentJd, p)) {
       retrogrades.push({
         planet: planetInfo[p].name,
+        planetId: planetInfo[p].id,
         emoji: planetInfo[p].emoji,
         description: `${planetInfo[p].name} şu an geri harekette (Retro). ${planetInfo[p].meaning.toLowerCase()} konularında içsel değerlendirme zamanı.`
       });
@@ -599,6 +623,7 @@ export function getCurrentCelestialEvents(): CelestialEvents {
 
   return {
     moonPhase: {
+      id: phaseId,
       name: phaseName,
       emoji: phaseEmoji,
       description: phaseDesc,

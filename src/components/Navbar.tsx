@@ -14,7 +14,7 @@ export default function Navbar() {
     { href: "/", label: t("nav.home") },
     { href: "/burclar", label: t("nav.zodiac") },
     { href: "/yorumlar", label: t("nav.horoscope") },
-    { href: "/fallar", label: "Fallar" },
+    { href: "/fallar", label: t("nav.fallar") },
     { href: "/hesaplayici", label: t("nav.calculator") },
     { href: "/dogum-haritasi", label: t("nav.birthchart") },
     { href: "/uyumluluk", label: t("nav.compatibility") },

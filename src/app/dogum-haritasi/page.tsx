@@ -37,10 +37,10 @@ export default function DogumHaritasiPage() {
   const districts = useMemo(() => selectedCity?.districts || [], [selectedCity]);
 
   const handleCalculate = async () => {
-    if (!day || !month || !year) { setError("Lütfen doğum tarihinizi eksiksiz girin."); return; }
-    if (!hour || minute === "") { setError("Doğum saatinizi ve dakikasını girin."); return; }
-    if (isTurkey && !city) { setError("Doğum yerinizi seçin."); return; }
-    if (!isTurkey && !manualCity) { setError("Doğum şehrinizi girin."); return; }
+    if (!day || !month || !year) { setError(t("error.date")); return; }
+    if (!hour || minute === "") { setError(t("error.time")); return; }
+    if (isTurkey && !city) { setError(t("error.city")); return; }
+    if (!isTurkey && !manualCity) { setError(t("error.city")); return; }
 
     setLoading(true); setError(""); setResult(null);
     try {
@@ -58,8 +58,8 @@ export default function DogumHaritasiPage() {
       });
       const data = await response.json();
       if (data.success) { setResult(data.data); setActiveTab("overview"); }
-      else { setError(data.error || "Bir hata oluştu."); }
-    } catch { setError("Bağlantı hatası."); }
+      else { setError(data.error || t("error.generic")); }
+    } catch { setError(t("error.connection")); }
     finally { setLoading(false); }
   };
 
@@ -269,7 +269,7 @@ export default function DogumHaritasiPage() {
                 { key: "planets", label: `🪐 ${t("chart.planets")}` },
                 { key: "houses", label: `🏠 ${t("chart.houses")}` },
                 { key: "aspects", label: `🔗 ${t("chart.aspects")}` },
-                { key: "transits", label: `✨ Canlı Gökyüzü` },
+                { key: "transits", label: `✨ ${t("chart.transits")}` },
               ] as const).map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -288,9 +288,9 @@ export default function DogumHaritasiPage() {
                 
                 {/* Zodiac Wheel Visualization */}
                 <div className="glass-card p-6 overflow-hidden">
-                  <h3 className="text-xl font-bold text-white mb-2 text-center text-gradient">Kişisel Zodyak Çarkınız</h3>
+                  <h3 className="text-xl font-bold text-white mb-2 text-center text-gradient">{t("chart.wheel")}</h3>
                   <p className="text-gray-400 text-sm text-center mb-6 max-w-2xl mx-auto">
-                    Bu çark, tam olarak doğduğunuz dakika ve koordinatta gökyüzünün nasıl göründüğünün 360 derecelik haritasıdır. Gezegenlerin dizilimi, sizin parmak iziniz kadar benzersiz olan kozmik potansiyelinizi yansıtır.
+                    {t("chart.wheel.desc")}
                   </p>
                   <BirthChartWheel chart={result} />
                 </div>
@@ -301,24 +301,24 @@ export default function DogumHaritasiPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10 text-left">
-                        <th className="pb-3 text-gray-500 font-medium">{t("chart.planets")?.replace(/s$/, "") || "Planet"}</th>
-                        <th className="pb-3 text-gray-500 font-medium">{t("nav.zodiac")?.replace(/lar$/, "") || "Sign"}</th>
+                        <th className="pb-3 text-gray-500 font-medium">{t("chart.planets").slice(0, -1)}</th>
+                        <th className="pb-3 text-gray-500 font-medium">{t("nav.zodiac").slice(0, -1)}</th>
                         <th className="pb-3 text-gray-500 font-medium">°</th>
-                        <th className="pb-3 text-gray-500 font-medium hidden md:table-cell">Etki / Effect</th>
+                        <th className="pb-3 text-gray-500 font-medium hidden md:table-cell">{t("planet.influence")}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {result.planetPositions.map((pos) => (
-                        <tr key={pos.planet} className="border-b border-white/5 group hover:bg-white/5 transition-colors">
+                        <tr key={pos.planetId} className="border-b border-white/5 group hover:bg-white/5 transition-colors">
                           <td className="py-4 text-white">
                             <div className="flex items-center gap-3">
-                              <PlanetIcon name={pos.planet} size={24} className="group-hover:scale-110 transition-transform" />
-                              <span className="font-medium">{pos.planet}</span>
+                              <PlanetIcon name={pos.planetId} size={24} className="group-hover:scale-110 transition-transform" />
+                              <span className="font-medium">{t(`astrology.planet.${pos.planetId}`)}</span>
                             </div>
                           </td>
-                          <td className="py-4 text-amber-400 font-medium">{pos.sign}</td>
+                          <td className="py-4 text-amber-400 font-medium">{t(`zodiac.${pos.signId}`)}</td>
                           <td className="py-4 text-gray-400">{pos.degree}°</td>
-                          <td className="py-4 text-gray-500 hidden md:table-cell text-xs leading-relaxed">{pos.meaning}</td>
+                          <td className="py-4 text-gray-500 hidden md:table-cell text-xs leading-relaxed">{t(`astrology.planet.meaning.${pos.planetId}`)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -350,28 +350,28 @@ export default function DogumHaritasiPage() {
             {activeTab === "planets" && (
               <div className="space-y-4 fade-in-up">
                 <div className="glass-card p-6 mb-4 border-l-4 border-purple-500">
-                  <h3 className="text-lg font-bold text-white mb-2">Gezegenler Ne Anlama Geliyor?</h3>
+                  <h3 className="text-lg font-bold text-white mb-2">{t("chart.planets")}?</h3>
                   <p className="text-gray-400 text-sm">
-                    Gezegenler, içinizdeki farklı "karakterleri" temsil eder. Güneş temel kimliğinizi, Ay duygusal ihtiyaçlarınızı, Merkür iletişim tarzınızı, Venüs nasıl sevdiğinizi ve Mars nasıl eyleme geçtiğinizi gösterir. Aşağıda her bir gezegenin haritanızda hangi burca yerleştiğini ve size nasıl bir enerji verdiğini görebilirsiniz.
+                    {t("chart.planets.desc")}
                   </p>
                 </div>
                 {result.planetPositions.map((pos) => (
-                  <div key={pos.planet} className="glass-card p-6 group lg:hover:border-white/20 transition-all duration-300">
+                  <div key={pos.planetId} className="glass-card p-6 group lg:hover:border-white/20 transition-all duration-300">
                     <div className="flex items-start gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
-                        <PlanetIcon name={pos.planet} size={32} />
+                        <PlanetIcon name={pos.planetId} size={32} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                          <h3 className="text-white font-bold">{pos.planet}</h3>
+                          <h3 className="text-white font-bold">{t(`astrology.planet.${pos.planetId}`)}</h3>
                           <span className="text-amber-400 text-sm font-medium px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/15">
-                            {pos.sign} {pos.degree}°
+                            {t(`zodiac.${pos.signId}`)} {pos.degree}°
                           </span>
                         </div>
-                        <p className="text-gray-400 text-sm mb-2">{pos.meaning}</p>
+                        <p className="text-gray-400 text-sm mb-2">{t(`astrology.planet.meaning.${pos.planetId}`)}</p>
                         <div className="flex items-center gap-3 text-xs text-gray-600">
                           <span>Ekliptik: {pos.fullDegree}°</span>
-                          {pos.retrograde && <span className="text-red-400">℞ Gerileyici</span>}
+                          {pos.retrograde && <span className="text-red-400">℞ {t("planet.retrograde")}</span>}
                         </div>
                       </div>
                     </div>
@@ -384,9 +384,9 @@ export default function DogumHaritasiPage() {
             {activeTab === "houses" && (
               <div className="space-y-3 fade-in-up">
                 <div className="glass-card p-6 mb-4 border-l-4 border-blue-500">
-                  <h3 className="text-lg font-bold text-white mb-2">Hayat Alanlarınız (Evler)</h3>
+                  <h3 className="text-lg font-bold text-white mb-2">{t("chart.houses")}</h3>
                   <p className="text-gray-400 text-sm">
-                    🏠 Doğum haritanız 12 farklı "Ev"e bölünmüştür. Her ev, kariyer, evlilik, para, sağlık gibi hayatınızın farklı bir sahnesini temsil eder. 1. Ev (Yükselen Burcunuz) dışarıya yansıttığınız maskedir. Evleri yöneten burçlar, o yaşam alanına nasıl yaklaştığınızı gösterir.
+                    {t("chart.houses.desc")}
                   </p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-3">
@@ -397,11 +397,11 @@ export default function DogumHaritasiPage() {
                           <span className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/20 flex items-center justify-center text-purple-300 text-sm font-bold">
                             {house.house}
                           </span>
-                          <span className="text-white font-medium text-sm">{house.house}. Ev</span>
+                           <span className="text-white font-medium text-sm">{house.house}. {t("chart.houses").replace(/lar$/, "").replace(/ları$/, "")}</span>
                         </div>
-                        <span className="text-amber-400 text-sm">{house.sign} {house.degree}°</span>
+                        <span className="text-amber-400 text-sm">{t(`zodiac.${house.signId}`)} {house.degree}°</span>
                       </div>
-                      <p className="text-gray-500 text-xs">{house.meaning}</p>
+                      <p className="text-gray-500 text-xs">{t(`astrology.house.${house.house}`)}</p>
                     </div>
                   ))}
                 </div>
@@ -412,14 +412,14 @@ export default function DogumHaritasiPage() {
             {activeTab === "aspects" && (
               <div className="space-y-3 fade-in-up">
                 <div className="glass-card p-6 mb-4 border-l-4 border-pink-500">
-                  <h3 className="text-lg font-bold text-white mb-2">Gezegenlerin Sohbeti (Açılar)</h3>
+                  <h3 className="text-lg font-bold text-white mb-2">{t("chart.aspects")}</h3>
                   <p className="text-gray-400 text-sm mb-3">
-                    🔗 Gezegenler gökyüzünde dururken birbirlerine belirli geometrik açılar yaparlar. Bu açılar, içinizdeki farklı enerjilerin birbiriyle nasıl anlaştığını veya nasıl çatıştığını gösterir.
+                    {t("chart.aspects.desc.natal")}
                   </p>
                   <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
-                     <li><strong className="text-green-400">Üçgen (△) & Altmışlık (⚹):</strong> Uyumlu ve akıcı enerjiler, doğal yeteneklerinizdir.</li>
-                     <li><strong className="text-red-400">Kare (□) & Karşıtlık (☍):</strong> Zorlayıcı ama sizi büyütecek ve aksiyona geçirecek gerilimlerdir.</li>
-                     <li><strong className="text-blue-400">Kavuşum (☌):</strong> İki enerjinin tek bir güç olarak birleşmesidir. Oldukça yoğundur.</li>
+                     <li><strong className="text-green-400">{t("chart.aspect.harmonious")}</strong></li>
+                     <li><strong className="text-red-400">{t("chart.aspect.challenging")}</strong></li>
+                     <li><strong className="text-blue-400">{t("chart.aspect.conjunction")}</strong></li>
                   </ul>
                 </div>
                 {result.aspects.length === 0 ? (
@@ -432,16 +432,17 @@ export default function DogumHaritasiPage() {
                           <span className={`text-lg ${harmonyColor(aspect.harmony).split(" ").filter(c => c.startsWith("text-")).join(" ")}`}>
                             {aspect.typeEmoji}
                           </span>
-                          <span className="text-white text-sm font-medium">{aspect.planet1} — {aspect.planet2}</span>
+                          <span className="text-white text-sm font-medium">{t(`astrology.planet.${aspect.planet1Id}`)} — {t(`astrology.planet.${aspect.planet2Id}`)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`px-2 py-0.5 rounded text-xs ${harmonyColor(aspect.harmony)}`}>
-                            {aspect.type}
+                            {t(`astrology.aspect.${aspect.typeId}`)}
                           </span>
-                          <span className="text-gray-600 text-xs">{aspect.angle}° (orb: {aspect.orb}°)</span>
-                        </div>
+                         </div>
                       </div>
-                      <p className="text-gray-500 text-xs">{aspect.description}</p>
+                      <p className="text-gray-500 text-xs">
+                        {t(`astrology.planet.${aspect.planet1Id}`)} {aspect.typeEmoji} {t(`astrology.planet.${aspect.planet2Id}`)}: {t(`astrology.aspect.${aspect.typeId}.desc`)}
+                      </p>
                     </div>
                   ))
                 )}
@@ -452,23 +453,20 @@ export default function DogumHaritasiPage() {
             {activeTab === "transits" && (
               <div className="space-y-6 fade-in-up">
                 <div className="glass-card p-6 border-l-4 border-amber-500">
-                  <h3 className="text-xl font-bold text-white mb-2">Bugünün Etkileri (Canlı Gökyüzü / Transitler)</h3>
+                  <h3 className="text-xl font-bold text-white mb-2">{t("chart.transits")}</h3>
                   <p className="text-gray-400 text-sm mb-6 max-w-2xl">
-                    Siz doğduğunuz andan itibaren gökyüzündeki gezegenler dönmeye devam etti. "Transitler", şu an gökyüzünde hareket eden güncel gezegenlerin, sizin sabit doğum haritanızla yaptığı anlık etkileşimlerdir. 
-                    Bu liste, bugünün enerjilerinin SİZE ÖZEL nasıl yansıyacağını gösterir.
+                    {t("chart.transits.desc")}
                   </p>
                   
                   {result.transits && result.transits.length > 0 ? (
                     <div className="space-y-4 mb-8">
                       {result.transits.map((transit: any, idx: number) => {
-                        let action = "";
-                        if (transit.type === "Kavuşum") action = "yoğun bir şekilde tetikliyor ve her iki gücü birleştiriyor.";
-                        else if (transit.type === "Karşıtlık") action = "karşı karşıya getirerek bir denge bulmanızı ve karar vermenizi istiyor.";
-                        else if (transit.type === "Kare") action = "zorlayarak sizi konfor alanınızdan çıkmaya ve harekete geçmeye itiyor.";
-                        else if (transit.type === "Üçgen") action = "su gibi akan, koruyucu ve son derece şanslı bir şekilde destekliyor.";
-                        else if (transit.type === "Altmışlık") action = "eğer adım atarsanız size fayda sağlayacak olumlu bir fırsat sunuyor.";
-
-                        const summary = `Gökyüzündeki güncel ${transit.transitPlanet} enerjisi, sizin haritanızdaki köklü ${transit.natalPlanet} doğanızı ${action}`;
+                        const summary = t("astrology.transit.desc_pattern", {
+                          transitPlanet: t(`astrology.planet.${transit.transitPlanetId}`),
+                          natalPlanet: t(`astrology.planet.${transit.natalPlanetId}`),
+                          aspectType: t(`astrology.aspect.${transit.typeId}`),
+                          action: t(`astrology.aspect.${transit.typeId}.action`)
+                        });
 
                         return (
                           <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-3">
@@ -476,21 +474,21 @@ export default function DogumHaritasiPage() {
                               <div className="flex items-center gap-3">
                                 <span className="text-2xl">{transit.transitEmoji}</span>
                                 <div>
-                                  <p className="text-white font-medium text-sm">Transit {transit.transitPlanet}</p>
-                                  <p className="text-gray-400 text-xs">{transit.type} ({transit.typeEmoji})</p>
+                                  <p className="text-white font-medium text-sm">Transit {t(`astrology.planet.${transit.transitPlanetId}`)}</p>
+                                  <p className="text-gray-400 text-xs">{t(`astrology.aspect.${transit.typeId}`)} ({transit.typeEmoji})</p>
                                 </div>
                               </div>
                               <div className="text-right flex items-center gap-3">
                                 <div className="text-right">
-                                  <p className="text-white font-medium text-sm">Natal {transit.natalPlanet}</p>
-                                  <p className="text-gray-400 text-xs">Doğum Haritanız</p>
+                                  <p className="text-white font-medium text-sm">Natal {t(`astrology.planet.${transit.natalPlanetId}`)}</p>
+                                  <p className="text-gray-400 text-xs">{t("chart.yours")}</p>
                                 </div>
                                 <span className="text-2xl text-purple-400">{transit.natalEmoji}</span>
                               </div>
                             </div>
                             <div className="pt-2 border-t border-white/5">
                               <p className="text-gray-400 text-xs leading-relaxed">
-                                <span className="text-purple-300 font-medium">Kısa Etki:</span> {summary}
+                                <span className="text-purple-300 font-medium">{t("chart.short_effect")}:</span> {summary}
                               </p>
                             </div>
                           </div>
@@ -499,14 +497,14 @@ export default function DogumHaritasiPage() {
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center text-gray-500 mb-8">
-                      Bugün haritanıza tam açı yapan çok önemli bir transit bulunmuyor. Gökyüzü sizin için sakin.
+                      {t("chart.transits.none")}
                     </div>
                   )}
 
                   {!transitInterpretation ? (
                     <div className="mt-8">
                        {transitLoading ? (
-                         <CosmicLoader label="Yıldızlar Yorumluyor... ✨" />
+                         <CosmicLoader label={t("chart.transits.loading")} />
                        ) : (
                         <CosmicButton 
                           fullWidth 
@@ -526,7 +524,7 @@ export default function DogumHaritasiPage() {
                           disabled={transitLoading || !result.transits || result.transits.length === 0}
                           icon="✨"
                         >
-                          Bugüne Özel Transit Yorumumu Al
+                          {t("chart.transits.btn")}
                         </CosmicButton>
                        )}
                     </div>
@@ -538,7 +536,7 @@ export default function DogumHaritasiPage() {
                       
                       {transitInterpretation.advice && (
                         <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                          <span className="font-semibold text-pink-400 block mb-1">💡 Günün Tavsiyesi:</span>
+                          <span className="font-semibold text-pink-400 block mb-1">💡 {t("chart.advice.day")}:</span>
                           <span className="text-gray-300 text-sm">{transitInterpretation.advice}</span>
                         </div>
                       )}
@@ -551,9 +549,8 @@ export default function DogumHaritasiPage() {
             {/* Disclaimer */}
             <div className="text-center pt-4">
               <p className="text-gray-600 text-xs max-w-2xl mx-auto">
-                ⚠️ Hesaplamalar Julian Day, Yerel Yıldız Zamanı (LST), Ekliptik Assendan formülü,
-                ortalama yörünge elemanları ve gezegen ortalama boylamları kullanılarak yapılmıştır.
-                Ev sistemi olarak eşit ev sistemi kullanılmaktadır. Koordinatlar: {selectedCity?.lat.toFixed(4)}°N, {selectedCity?.lng.toFixed(4)}°E
+                ⚠️ {t("chart.disclaimer")}
+                Coord: {selectedCity?.lat.toFixed(4)}°N, {selectedCity?.lng.toFixed(4)}°E
               </p>
             </div>
           </div>

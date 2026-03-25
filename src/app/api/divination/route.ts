@@ -10,13 +10,13 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, cards, question, language, imageBase64, mimeType, virtual } = body;
+    const { type, cards, question, language, imageBase64, mimeType, virtual, persona } = body;
     const lang = (language || "tr") as SupportedLanguage;
 
     // Coffee reading (photo or virtual)
     if (type === "coffee") {
       if (virtual) {
-        const result = await generateVirtualCoffeeReading(question || "", lang);
+        const result = await generateVirtualCoffeeReading(question || "", lang, persona);
         if (!result) {
           return NextResponse.json({ success: false, error: "AI yorumu başarısız oldu." }, { status: 500 });
         }
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const result = await generateCoffeeReading(imageBase64, mimeType, question || "", lang);
+        const result = await generateCoffeeReading(imageBase64, mimeType, question || "", lang, persona);
         if (result?.error === "INVALID_IMAGE") {
           return NextResponse.json({ success: false, error: "Lütfen geçerli bir kahve fincanı fotoğrafı yükleyin. Sistemimiz gönderdiğiniz görselde telve tespit edemedi." }, { status: 400 });
         }
@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
       type as DivinationType,
       cards,
       question || "",
-      lang
+      lang,
+      persona
     );
 
     if (!result) {

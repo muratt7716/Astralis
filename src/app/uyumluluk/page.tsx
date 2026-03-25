@@ -41,7 +41,7 @@ export default function UyumlulukPage() {
 
   const handleCalculate = async () => {
     if (!p1.day || !p1.month || !p1.year || !p2.day || !p2.month || !p2.year) {
-      setError("Lütfen her iki kişi için de doğum tarihlerini tam girin.");
+      setError(t("error.date.both"));
       return;
     }
     setError("");
@@ -77,11 +77,11 @@ export default function UyumlulukPage() {
       if (data.success) {
         setResult(data.data);
       } else {
-        setError(data.error || "Hesaplama hatası.");
+        setError(data.error || t("error.calc"));
       }
     } catch (err) {
       console.error(err);
-      setError("Bağlantı hatası oluştu.");
+      setError(t("error.connection"));
     } finally {
       setLoading(false);
     }
@@ -201,10 +201,10 @@ export default function UyumlulukPage() {
         <div className="max-w-4xl mx-auto text-center">
           <Logo size={80} className="mx-auto mb-4 float" />
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="gradient-text">Gelişmiş Sinastri (Uyumluluk)</span>
+            <span className="gradient-text">{t("compatibility.title")}</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            İlişki dinamiğinizi en ince ayrıntısına kadar keşfetmek için siz ve partnerinizin detaylı doğum verilerini girin. Gerçek gezegen açılarına dayalı (Synastry) derin bir analiz sizi bekliyor.
+            {t("compatibility.desc")}
           </p>
         </div>
       </section>
@@ -224,12 +224,12 @@ export default function UyumlulukPage() {
             disabled={loading}
             className="mt-8"
           >
-            {loading ? "Gezegen Uyumları Hesaplanıyor... 💫" : "İlişki Uyumu Analizi Başlat"}
+            {loading ? t("compatibility.calculating") : t("compatibility.calculate")}
           </CosmicButton>
 
           {loading && (
             <div className="mt-12 fade-in">
-              <CosmicLoader label="Gezegenler Hizalanıyor..." />
+              <CosmicLoader label={t("chart.transits.loading")} />
             </div>
           )}
         </div>
@@ -242,14 +242,13 @@ export default function UyumlulukPage() {
             {/* Summary Score Head */}
             <div className="glass-card p-8 text-center relative overflow-hidden">
                <div className="absolute inset-0 bg-gradient-to-b from-pink-500/5 to-transparent pointer-events-none"></div>
-               <h2 className="text-3xl font-bold text-white mb-2">Astrolojik Bağınız</h2>
+               <h2 className="text-3xl font-bold text-white mb-2">{t("compatibility.bond")}</h2>
                <div className="flex flex-col sm:flex-row justify-center items-center gap-8 my-8">
                   <div className="text-center group min-w-[120px]">
                     <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-3 mx-auto group-hover:scale-110 transition-transform duration-500 shadow-xl">
                       <PlanetIcon name="Sun" size={48} />
                     </div>
-                    <p className="text-pink-300 font-bold text-lg">{result.chart1.sunSign.name}</p>
-                    <p className="text-gray-500 text-xs text-center font-light tracking-wide">Yükselen: {result.chart1.risingSign.name}</p>
+                    <p className="text-gray-500 text-xs text-center font-light tracking-wide">{t("chart.rising")}: {t(`zodiac.${result.chart1.risingSign.id}`)}</p>
                   </div>
                   
                   <div className="relative group">
@@ -261,8 +260,7 @@ export default function UyumlulukPage() {
                     <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-3 mx-auto group-hover:scale-110 transition-transform duration-500 shadow-xl">
                       <PlanetIcon name="Sun" size={48} />
                     </div>
-                    <p className="text-pink-300 font-bold text-lg">{result.chart2.sunSign.name}</p>
-                    <p className="text-gray-500 text-xs text-center font-light tracking-wide">Yükselen: {result.chart2.risingSign.name}</p>
+                    <p className="text-gray-500 text-xs text-center font-light tracking-wide">{t("chart.rising")}: {t(`zodiac.${result.chart2.risingSign.id}`)}</p>
                   </div>
                </div>
             </div>
@@ -270,7 +268,7 @@ export default function UyumlulukPage() {
             {/* Holistic Reading */}
             <div className="glass-card p-8">
                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                 <Logo size={24} /> Sinastri Özeti (Kozmik Yorum)
+                 <Logo size={24} /> {t("compatibility.summary")}
                </h3>
               <p className="text-gray-300 leading-relaxed text-lg">{result.interpretation.description}</p>
             </div>
@@ -278,17 +276,17 @@ export default function UyumlulukPage() {
             {/* Detailed Scores */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="glass-card p-6">
-                <h3 className="text-lg font-bold text-white mb-6">📊 Uyum Yüzdeleri</h3>
-                <ScoreBar label="Genel Potansiyel" score={result.interpretation.overallScore} emoji="🌟" />
-                <ScoreBar label="Aşk & Çekim" score={result.interpretation.loveScore} emoji="💕" />
-                <ScoreBar label="İletişim & Dostluk" score={result.interpretation.friendshipScore} emoji="🤝" />
-                <ScoreBar label="Uzun Vadeli Hedefler" score={result.interpretation.workScore} emoji="🎯" />
+                <h3 className="text-lg font-bold text-white mb-6">{t("compatibility.pct")}</h3>
+                <ScoreBar label={t("compatibility.potential.general")} score={result.interpretation.overallScore} emoji="🌟" />
+                <ScoreBar label={t("compatibility.potential.love")} score={result.interpretation.loveScore} emoji="💕" />
+                <ScoreBar label={t("compatibility.potential.friendship")} score={result.interpretation.friendshipScore} emoji="🤝" />
+                <ScoreBar label={t("compatibility.potential.goals")} score={result.interpretation.workScore} emoji="🎯" />
               </div>
 
               {/* Strengths & Challenges */}
               <div className="space-y-6">
                 <div className="glass-card p-6 border-l-4 border-l-green-500">
-                  <h3 className="text-lg font-bold text-white mb-4">✅ Bağın Güçlü Yönleri</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">{t("compatibility.strengths")}</h3>
                   <ul className="space-y-2">
                     {result.interpretation.strengths?.map((s: string, i: number) => (
                       <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
@@ -298,7 +296,7 @@ export default function UyumlulukPage() {
                   </ul>
                 </div>
                 <div className="glass-card p-6 border-l-4 border-l-amber-500">
-                  <h3 className="text-lg font-bold text-white mb-4">⚠️ Dikkat Edilmesi Gerekenler</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">⚠️ {t("compatibility.challenges")}</h3>
                   <ul className="space-y-2">
                     {result.interpretation.challenges?.map((c: string, i: number) => (
                       <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
@@ -312,33 +310,33 @@ export default function UyumlulukPage() {
 
             {/* Synastry Exact Aspects */}
             <div className="glass-card p-6">
-              <h3 className="text-lg font-bold text-white mb-2">🔗 Önemli Gezegen Temasları (Açılar)</h3>
-              <p className="text-gray-400 text-sm mb-4">Sizin gezegenleriniz ile partnerinizin gezegenleri arasındaki matematiksel etkileşimler.</p>
+              <h3 className="text-lg font-bold text-white mb-2">{t("compatibility.aspects")}</h3>
+              <p className="text-gray-400 text-sm mb-4">{t("compatibility.aspects.desc")}</p>
               <div className="grid md:grid-cols-2 gap-4">
                 {result.synastryAspects?.map((aspect: any, idx: number) => (
                   <div key={idx} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between hover:bg-white/10 hover:border-pink-500/30 transition-all duration-300 group">
                     <div className="flex items-center gap-3">
                       <div className="flex -space-x-2">
                          <div className="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center group-hover:translate-x-[-2px] transition-transform">
-                           <PlanetIcon name={aspect.planet1} size={20} />
+                           <PlanetIcon name={aspect.planet1Id} size={20} />
                          </div>
                          <div className="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center group-hover:translate-x-[2px] transition-transform">
-                           <PlanetIcon name={aspect.planet2} size={20} />
+                           <PlanetIcon name={aspect.planet2Id} size={20} />
                          </div>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white flex items-center gap-1.5">
-                          {aspect.planet1} 
+                          {t(`astrology.planet.${aspect.planet1Id}`)} 
                           <span className="text-pink-400 text-lg">{aspect.typeEmoji}</span> 
-                          {aspect.planet2}
+                          {t(`astrology.planet.${aspect.planet2Id}`)}
                         </p>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{aspect.type} (Orb: {aspect.orb}°)</p>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{t(`astrology.aspect.${aspect.typeId}`)} (Orb: {aspect.orb}°)</p>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      {aspect.harmony === "positive" && <span className="px-2.5 py-1 bg-green-500/20 text-green-300 text-[10px] font-bold rounded-lg border border-green-500/30 uppercase">Uyumlu</span>}
-                      {aspect.harmony === "negative" && <span className="px-2.5 py-1 bg-red-500/20 text-red-300 text-[10px] font-bold rounded-lg border border-red-500/30 uppercase">Zorlu</span>}
-                      {aspect.harmony === "neutral" && <span className="px-2.5 py-1 bg-blue-500/20 text-blue-300 text-[10px] font-bold rounded-lg border border-blue-500/30 uppercase">Kuvvetli</span>}
+                      {aspect.harmony === "positive" && <span className="px-2.5 py-1 bg-green-500/20 text-green-300 text-[10px] font-bold rounded-lg border border-green-500/30 uppercase">{t("chart.aspect.harmonious").split(" ")[0]}</span>}
+                      {aspect.harmony === "negative" && <span className="px-2.5 py-1 bg-red-500/20 text-red-300 text-[10px] font-bold rounded-lg border border-red-500/30 uppercase">{t("chart.aspect.challenging").split(" ")[0]}</span>}
+                      {aspect.harmony === "neutral" && <span className="px-2.5 py-1 bg-blue-500/20 text-blue-300 text-[10px] font-bold rounded-lg border border-blue-500/30 uppercase">{t("chart.aspect.conjunction").split(" ")[0]}</span>}
                     </div>
                   </div>
                 ))}

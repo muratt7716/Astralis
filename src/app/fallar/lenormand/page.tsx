@@ -3,22 +3,31 @@ import { useState } from "react";
 import { lenormandCards, lenormandSpreads } from "@/data/lenormand";
 import { LenormandCardFace } from "@/components/CardSVG";
 import { useTranslation } from "@/lib/i18n";
+import { FortuneTeller } from "@/data/fortune-tellers";
+import { getLocalizedName } from "@/lib/fortune-utils";
+import FortuneTellerSelector from "@/components/Fortune/FortuneTellerSelector";
 import CosmicButton from "@/components/Cosmic/CosmicButton";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 
 export default function LenormandPage() {
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const [spread, setSpread] = useState("three");
   const [question, setQuestion] = useState("");
   const [shuffledDeck, setShuffledDeck] = useState<typeof lenormandCards>([]);
   const [selectedCards, setSelectedCards] = useState<typeof lenormandCards>([]);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState<"setup" | "picking" | "reading">("setup");
+  const [phase, setPhase] = useState<"setup" | "teller-selection" | "picking" | "reading">("setup");
+  const [selectedTeller, setSelectedTeller] = useState<FortuneTeller | null>(null);
 
   const selectedSpread = lenormandSpreads.find(s => s.id === spread)!;
 
-  const startPicking = () => {
+  const startSelection = () => {
+    setPhase("teller-selection");
+  };
+
+  const startPicking = (teller: FortuneTeller) => {
+    setSelectedTeller(teller);
     setResult(null); setSelectedCards([]);
     setShuffledDeck([...lenormandCards].sort(() => Math.random() - 0.5));
     setPhase("picking");
@@ -36,7 +45,13 @@ export default function LenormandPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/divination", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "lenormand", cards: selectedCards.map(c => ({ name: `${c.id}. ${c.name}`, meaning: c.meaning, combinationHint: c.combinationHint })), question, language }) });
+        body: JSON.stringify({ 
+          type: "lenormand", 
+          cards: selectedCards.map(c => ({ name: `${c.id}. ${getLocalizedName(c, language)}`, meaning: c.meaning, combinationHint: c.combinationHint })), 
+          question, 
+          language,
+          persona: selectedTeller ? { name: selectedTeller.name, style: selectedTeller.style } : undefined
+        }) });
       const data = await res.json();
       if (data.success) setResult(data.data);
     } catch (e) { console.error(e); }
@@ -48,8 +63,8 @@ export default function LenormandPage() {
       <section className="pt-16 pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="text-6xl mb-4 float">🏵️</div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">Lenormand Falı</span></h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">36 kart arasından sezgilerinizle seçim yapın. Lenormand kartları yan yana okunarak anlam kazanır.</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.lenormand.title")}</span></h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.lenormand.desc")}</p>
         </div>
       </section>
 
@@ -57,52 +72,64 @@ export default function LenormandPage() {
       {phase === "setup" && (
         <section className="pb-6 px-4"><div className="max-w-3xl mx-auto space-y-4">
           <div className="glass-card p-6">
-            <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Serim Türü</label>
-            <div className="grid grid-cols-3 gap-3">
+            <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">{t("fortune.common.spread")}</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {lenormandSpreads.map(s => (
                 <button key={s.id} onClick={() => setSpread(s.id)}
                   className={`p-3 rounded-xl text-sm font-medium transition-all ${spread === s.id ? "bg-amber-600 text-white" : "bg-white/5 text-gray-400 hover:bg-white/10"}`}>
-                  {s.name} ({s.count})
+                  {t(s.nameKey)} ({s.count})
                 </button>
               ))}
             </div>
           </div>
           <div className="glass-card p-6">
-            <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">Sorunuz</label>
-            <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder="Sorunuzu yazın..." className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
+            <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">{t("fortune.common.question.label")}</label>
+            <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
           </div>
           <CosmicButton 
             fullWidth 
-            onClick={startPicking}
+            onClick={startSelection}
             icon="🏵️"
           >
-            Kartları Aç ve Seçmeye Başla
+            {t("fortune.common.start")}
           </CosmicButton>
         </div></section>
+      )}
+
+      {/* Teller Selection Phase */}
+      {phase === "teller-selection" && (
+        <section className="pb-8 px-4 fade-in-up">
+          <div className="max-w-6xl mx-auto">
+            <FortuneTellerSelector 
+              onSelect={(teller) => startPicking(teller)} 
+              selectedId={selectedTeller?.id} 
+            />
+          </div>
+        </section>
       )}
 
       {/* Picking Phase */}
       {phase === "picking" && (
         <section className="pb-8 px-4 fade-in-up">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-6">
+            <div className="text-center mb-6 px-4">
               <h2 className="text-xl font-bold text-white mb-2">
-                Sezgilerinizle {selectedSpread.count} kart seçin ({selectedCards.length}/{selectedSpread.count})
+                {t("fortune.common.picking", { count: selectedSpread.count.toString(), current: selectedCards.length.toString(), total: selectedSpread.count.toString() })}
               </h2>
-              <p className="text-gray-400 text-sm">Kartlar birbirine bağlı bir hikaye anlatacak. İçgüdülerinize güvenin.</p>
+              <p className="text-gray-400 text-sm">{t("fortune.selection.subtitle")}</p>
             </div>
 
             {selectedCards.length > 0 && (
               <div className="flex gap-3 justify-center mb-6 flex-wrap">
                 {selectedCards.map((card, idx) => (
                   <div key={idx} className="w-14 h-20 rounded-lg overflow-hidden border-2 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-                    <LenormandCardFace name={card.name} id={card.id} className="w-full h-full" />
+                    <LenormandCardFace name={getLocalizedName(card, language)} id={card.id} className="w-full h-full" />
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="grid grid-cols-6 sm:grid-cols-9 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-9 gap-2">
               {shuffledDeck.map((card) => {
                 const isSelected = selectedCards.some(c => c.id === card.id);
                 return (
@@ -131,16 +158,16 @@ export default function LenormandPage() {
       {phase === "reading" && (
         <section className="pb-8 px-4 fade-in-up">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-bold text-white text-center mb-6">Seçtiğiniz Kartlar ✨</h2>
-            <div className={`grid gap-4 ${selectedCards.length <= 3 ? "grid-cols-3 max-w-2xl mx-auto" : selectedCards.length <= 5 ? "grid-cols-5 max-w-3xl mx-auto" : "grid-cols-3 md:grid-cols-5"} mb-8`}>
+            <h2 className="text-xl font-bold text-white text-center mb-6">{t("fortune.common.selected")} ✨</h2>
+            <div className={`grid gap-4 ${selectedCards.length <= 3 ? "grid-cols-2 sm:grid-cols-3 max-w-2xl mx-auto" : selectedCards.length <= 5 ? "grid-cols-3 sm:grid-cols-5 max-w-3xl mx-auto" : "grid-cols-3 md:grid-cols-5"} mb-8`}>
               {selectedCards.map((card, idx) => (
                 <div key={idx} className="rounded-xl overflow-hidden border border-amber-500/30 text-center fade-in-up bg-gradient-to-b from-amber-950/80 to-gray-900/60"
                   style={{ animationDelay: `${idx * 0.15}s` }}>
                   <div className="w-full aspect-[2/3] overflow-hidden">
-                    <LenormandCardFace name={card.name} id={card.id} className="w-full h-full" />
+                    <LenormandCardFace name={getLocalizedName(card, language)} id={card.id} className="w-full h-full" />
                   </div>
                   <div className="p-2 bg-black/20 border-t border-amber-500/20">
-                    <p className="text-white text-xs font-bold">{card.id}. {card.name}</p>
+                    <p className="text-white text-xs font-bold">{card.id}. {getLocalizedName(card, language)}</p>
                     <p className="text-gray-400 text-[10px] mt-1">{card.meaning}</p>
                   </div>
                 </div>
@@ -150,16 +177,21 @@ export default function LenormandPage() {
             {!result && (
               <div className="max-w-3xl mx-auto">
                 {loading ? (
-                  <CosmicLoader label="Kartlar Yorumlanıyor... ✨" />
+                  <CosmicLoader label={t("fortune.reading.loading", { name: selectedTeller?.name || "" })} />
                 ) : (
-                  <CosmicButton 
-                    fullWidth 
-                    onClick={getReading} 
-                    disabled={loading}
-                    icon="✨"
-                  >
-                    Kombine Okumanızı Alın
-                  </CosmicButton>
+                  <>
+                    <div className="text-center mb-6">
+                      <p className="text-amber-400 text-sm font-bold">{t("fortune.reading.ready", { name: selectedTeller?.name || "" })}</p>
+                    </div>
+                    <CosmicButton 
+                      fullWidth 
+                      onClick={getReading} 
+                      disabled={loading}
+                      icon="✨"
+                    >
+                      {t("fortune.reading.btn")}
+                    </CosmicButton>
+                  </>
                 )}
               </div>
             )}
@@ -170,7 +202,18 @@ export default function LenormandPage() {
       {/* Result */}
       {result && (
         <section className="pb-20 px-4"><div className="max-w-3xl mx-auto space-y-6 fade-in-up">
-          <div className="glass-card p-8 glow">
+          <div className="glass-card p-8 glow relative overflow-hidden">
+            {/* Persona Header */}
+            <div className="flex items-center gap-4 mb-8 pb-6 border-b border-white/10">
+              <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-amber-500/30">
+                {selectedTeller && <img src={selectedTeller.avatar} alt={selectedTeller.name} className="w-full h-full object-cover" />}
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-lg">{t("fortune.reading.header", { name: selectedTeller?.name || "" })}</h3>
+                <p className="text-amber-400 text-xs font-medium uppercase tracking-widest">{selectedTeller?.title}</p>
+              </div>
+            </div>
+
             <h3 className="text-2xl font-bold text-white mb-4">{result.title}</h3>
             {result.cards?.map((c: any, i: number) => (
               <div key={i} className="mb-3 p-4 bg-white/5 rounded-xl border border-white/10">
@@ -179,11 +222,11 @@ export default function LenormandPage() {
               </div>
             ))}
             <div className="mt-4 p-4 bg-amber-900/20 rounded-xl border border-amber-500/20">
-              <h4 className="text-lg font-bold text-white mb-2">🌟 Genel Sentez</h4>
+              <h4 className="text-lg font-bold text-white mb-2">🌟 {t("fortune.reading.synthesis")}</h4>
               <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
             </div>
             {result.advice && (<div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
-              <span className="text-amber-400 font-semibold text-sm">💡 Tavsiye: </span><span className="text-gray-300 text-sm">{result.advice}</span>
+              <span className="text-amber-400 font-semibold text-sm">💡 {t("fortune.reading.advice")}: </span><span className="text-gray-300 text-sm">{result.advice}</span>
             </div>)}
           </div>
           <CosmicButton 
@@ -192,7 +235,7 @@ export default function LenormandPage() {
             onClick={() => { setPhase("setup"); setSelectedCards([]); setResult(null); }}
             icon="↺"
           >
-            Yeni Fal Baktır
+            {t("fortune.common.result.retry")}
           </CosmicButton>
         </div></section>
       )}

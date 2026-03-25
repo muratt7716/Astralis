@@ -7,12 +7,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { person1, person2, language } = body;
 
-    if (!person1 || !person2) {
+      const errorMsgs: Record<string, string> = {
+        tr: "Her iki kişinin de bilgileri gereklidir.",
+        en: "Information for both people is required.",
+        ar: "معلومات كلا الشخصين مطلوبة.",
+        de: "Informationen für beide Personen sind erforderlich.",
+        fr: "Les informations pour les deux personnes sont requises."
+      };
       return NextResponse.json(
-        { error: "Her iki kişinin de bilgileri gereklidir." },
+        { error: errorMsgs[language as SupportedLanguage] || errorMsgs.tr },
         { status: 400 }
       );
-    }
 
     const lang: SupportedLanguage = ["tr", "en", "ar", "de", "fr"].includes(language)
       ? (language as SupportedLanguage)
@@ -43,14 +48,36 @@ export async function POST(request: NextRequest) {
     
     // Fallback if Gemini fails
     if (!interpretation) {
+      const fallbackDescs: Record<SupportedLanguage, string> = {
+        tr: "Kozmik analizi şu an yükleyemiyoruz. Ancak harita açılarına göre yukarıdaki listelenen gezegen bağlantıları ikili ilişkinizin dinamiklerini belirliyor.",
+        en: "We cannot load the cosmic analysis right now. However, the planetary connections listed above determine the dynamics of your relationship according to the chart angles.",
+        ar: "لا يمكننا تحميل التحليل الكوني حاليًا. ومع ذلك، فإن الروابط الكوكبية المدرجة أعلاه تحدد ديناميكيات علاقتكما وفقًا لزوايا الخريطة.",
+        de: "Wir können die kosmische Analyse derzeit nicht laden. Die oben aufgeführten planetaren Verbindungen bestimmen jedoch die Dynamik Ihrer Beziehung gemäß den Horoskopaspekten.",
+        fr: "Nous ne pouvons pas charger l'analyse cosmique pour le moment. Cependant, les connexions planétaires listées ci-dessus déterminent la dynamique de votre relation selon les angles du thème."
+      };
+      const fallbackStrengths: Record<SupportedLanguage, string[]> = {
+        tr: ["Uyumlu açılar keşfedilmeyi bekliyor"],
+        en: ["Harmonious aspects are waiting to be explored"],
+        ar: ["جوانب متناغمة تنتظر الاستكشاف"],
+        de: ["Harmonische Aspekte warten darauf, entdeckt zu werden"],
+        fr: ["Des aspects harmonieux attendent d'être explorés"]
+      };
+      const fallbackChallenges: Record<SupportedLanguage, string[]> = {
+        tr: ["Zorlu açılar üzerinde çalışma gerektirir"],
+        en: ["Challenging aspects require work"],
+        ar: ["الجوانب الصعبة تتطلب العمل"],
+        de: ["Herausfordernde Aspekte erfordern Arbeit"],
+        fr: ["Les aspects difficiles nécessitent du travail"]
+      };
+
       interpretation = {
         overallScore: 50,
         loveScore: 50,
         friendshipScore: 50,
         workScore: 50,
-        description: "Kozmik analizi şu an yükleyemiyoruz. Ancak harita açılarına göre yukarıdaki listelenen gezegen bağlantıları ikili ilişkinizin dinamiklerini belirliyor.",
-        strengths: ["Uyumlu açılar keşfedilmeyi bekliyor"],
-        challenges: ["Zorlu açılar üzerinde çalışma gerektirir"]
+        description: fallbackDescs[lang],
+        strengths: fallbackStrengths[lang],
+        challenges: fallbackChallenges[lang]
       };
     }
 

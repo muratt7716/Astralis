@@ -1,17 +1,14 @@
-import Link from "next/link";
-import type { Metadata } from "next";
-import Logo from "@/components/Cosmic/Logo";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Mistik Fallar | Astralis",
-  description: "Tarot, Katina, Lenormand, Kahve Falı, İskandinav Rünleri, I Ching ve Kristal Küre — mistik kehanet merkezi.",
-};
+import Link from "next/link";
+import Logo from "@/components/Cosmic/Logo";
+import { useTranslation } from "@/lib/i18n";
 
 interface DivinationSystem {
   id: string;
   emoji: string;
-  name: string;
-  desc: string;
+  nameKey: string;
+  descKey: string;
   href: string;
   theme: {
     gradient: string;
@@ -26,8 +23,8 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "tarot", 
     emoji: "🃏", 
-    name: "Tarot", 
-    desc: "78 kartlık kadim kehanet sistemi. 22 Majör Arkana'nın güçlü sembolik dili.", 
+    nameKey: "fortune.tarot.title", 
+    descKey: "fortune.tarot.full_desc", 
     href: "/fallar/tarot",
     theme: {
       gradient: "from-purple-950/80 to-[#1a0533]",
@@ -40,8 +37,8 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "katina", 
     emoji: "🌸", 
-    name: "Katina", 
-    desc: "Türk geleneğinin sevilen kartları. Sıcak ve sezgisel bir okuma deneyimi.", 
+    nameKey: "fortune.katina.title", 
+    descKey: "fortune.katina.full_desc", 
     href: "/fallar/katina",
     theme: {
       gradient: "from-rose-950/80 to-[#2e0a1a]",
@@ -54,8 +51,8 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "lenormand", 
     emoji: "🏵️", 
-    name: "Lenormand", 
-    desc: "36 kartın kombine gücü. Kartlar yan yana okunarak derinliğe ulaşır.", 
+    nameKey: "fortune.lenormand.title", 
+    descKey: "fortune.lenormand.full_desc", 
     href: "/fallar/lenormand",
     theme: {
       gradient: "from-amber-950/80 to-[#331a05]",
@@ -68,8 +65,8 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "kahve", 
     emoji: "☕", 
-    name: "Kahve Falı", 
-    desc: "Fincanından fotoğraf yükle, AI telvelerdeki sembolleri görsün! Ya da sanal fincan çevir.", 
+    nameKey: "fortune.kahve.title", 
+    descKey: "fortune.kahve.full_desc", 
     href: "/fallar/kahve",
     theme: {
       gradient: "from-yellow-950/80 to-[#2b1d02]",
@@ -82,8 +79,8 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "runler", 
     emoji: "ᚱ", 
-    name: "İskadinav Rünleri", 
-    desc: "Viking bilgeliğinin 24 taşı. Odin'un kehanetini kutsal rünlerle keşfet.", 
+    nameKey: "fortune.runler.title", 
+    descKey: "fortune.runler.desc", 
     href: "/fallar/runler",
     theme: {
       gradient: "from-blue-950/80 to-[#051a33]",
@@ -96,8 +93,8 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "iching", 
     emoji: "☯️", 
-    name: "I Ching", 
-    desc: "Değişimler Kitabı. Bozuk para at, heksagramını bul, kadim Çin bilgeliğine ulaş.", 
+    nameKey: "fortune.iching.title", 
+    descKey: "fortune.iching.desc", 
     href: "/fallar/iching",
     theme: {
       gradient: "from-emerald-950/80 to-[#052e1a]",
@@ -110,14 +107,14 @@ const divinationSystems: DivinationSystem[] = [
   { 
     id: "kristal", 
     emoji: "🔮", 
-    name: "Kristal Küre", 
-    desc: "Saf kozmik sezgisel okuma. Sorunuzu yazın, evrensel bilinç size cevap versin.", 
+    nameKey: "fortune.kristal.title", 
+    descKey: "fortune.kristal.desc", 
     href: "/fallar/kristal",
     theme: {
       gradient: "from-violet-950/80 to-[#2a0533]",
       border: "border-violet-500/30",
       glow: "shadow-violet-500/20",
-      svgColor: "rgba(139, 92, 246, 0.2)",
+      svgColor: "rgba(139, 92, 146, 0.2)",
       iconBg: "bg-violet-500/10"
     }
   },
@@ -179,6 +176,8 @@ function DivinationIcon({ id, emoji, color }: { id: string, emoji: string, color
 }
 
 export default function FallarPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="cosmic-gradient min-h-screen">
       <section className="pt-24 pb-12 px-4">
@@ -188,11 +187,10 @@ export default function FallarPage() {
             <Logo size={80} className="relative float" />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold font-serif mb-6 tracking-tight">
-            <span className="gradient-text">Mistik Fallar Merkezi</span>
+            <span className="gradient-text">{t("fallar.hero.title")}</span>
           </h1>
           <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Kadim kehanet sistemlerinin bilgeliği, kozmik sezginin gücüyle buluşuyor.
-            Bir fal seçin ve evrensel rehberliğinizi alın.
+            {t("fallar.hero.desc")}
           </p>
         </div>
       </section>
@@ -221,9 +219,9 @@ export default function FallarPage() {
 
                 <DivinationIcon id={sys.id} emoji={sys.emoji} color={sys.theme.svgColor} />
                 
-                <h3 className="text-3xl font-bold text-white mb-4 font-serif tracking-tight">{sys.name}</h3>
+                <h3 className="text-3xl font-bold text-white mb-4 font-serif tracking-tight">{t(sys.nameKey)}</h3>
                 <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-10 flex-grow max-w-xs">
-                  {sys.desc}
+                  {t(sys.descKey)}
                 </p>
                 
                 <div className={`
@@ -232,7 +230,7 @@ export default function FallarPage() {
                   group-hover:bg-gradient-to-r group-hover:${sys.theme.gradient.replace('from-', 'from-').replace('to-', 'to-')} 
                   group-hover:border-white/40 shadow-lg transition-all duration-300
                 `}>
-                  Keşfet →
+                  {t("fallar.explore.btn")} →
                 </div>
               </div>
             </Link>
