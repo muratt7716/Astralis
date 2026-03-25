@@ -1,13 +1,8 @@
 "use client";
 import { zodiacSigns } from "@/data/zodiac";
 import ZodiacCard from "@/components/ZodiacCard";
-import type { Metadata } from "next";
 import { useTranslation } from "@/lib/i18n";
 
-export const metadata: Metadata = {
-  title: "Tüm Burçlar | Astralis",
-  description: "12 burcun detaylı özellikleri, elementleri, yönetici gezegenleri ve kişilik analizleri.",
-};
 export default function BurclarPage() {
   const { t } = useTranslation();
 

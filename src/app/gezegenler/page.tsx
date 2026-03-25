@@ -1,17 +1,11 @@
 "use client";
 
 import { planets } from "@/data/planets";
-import { zodiacSigns } from "@/data/zodiac";
 import { getCurrentCelestialEvents } from "@/lib/astrology";
-import type { Metadata } from "next";
 import PlanetCard from "@/components/PlanetCard";
 import CosmicBackground from "@/components/CosmicBackground";
 import { useTranslation } from "@/lib/i18n";
 
-export const metadata: Metadata = {
-  title: "Gezegenler & Astroloji Bilgileri | Astralis",
-  description: "Gezegenlerin astrolojik anlamları, etkileri ve burçlar üzerindeki rolleri.",
-};
 
 export default function GezegenlerPage() {
   const { t } = useTranslation();
