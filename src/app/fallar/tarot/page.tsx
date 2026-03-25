@@ -256,7 +256,7 @@ export default function TarotPage() {
             {!result && (
               <div className="max-w-3xl mx-auto mt-8">
                 {loading ? (
-                  <CosmicLoader label={t("fortune.reading.loading")} />
+                  <CosmicLoader label={t("fortune.reading.loading", { name: selectedTeller?.name || "" })} />
                 ) : (
                   <>
                     <div className="text-center mb-6">
