@@ -66,10 +66,10 @@ export async function GET(
     });
   }
 
-  // Try Gemini API
-  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "your_api_key_here") {
+  // Try Vertex AI API
+  if (!process.env.GOOGLE_CLOUD_PROJECT) {
     return NextResponse.json({ 
-      error: "Sistem yapılandırma hatası: AI API anahtarı eksik.",
+      error: "Sistem yapılandırma hatası: Vertex AI yapılandırması eksik.",
       success: false 
     }, { status: 500 });
   }

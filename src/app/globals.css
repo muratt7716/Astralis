@@ -47,6 +47,20 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
+.gradient-text-amber {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-sky {
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8, #0284c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* Glass card effect */
 .glass-card {
   background: rgba(255, 255, 255, 0.03);

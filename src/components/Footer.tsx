@@ -27,28 +27,14 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div>
+          {/* Quick Links / Zodiac */}
+          <div className="md:col-span-2">
             <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">{t("nav.zodiac")}</h3>
-            <ul className="space-y-2">
-              {firstHalf.map((sign) => (
+            <ul className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4">
+              {[...firstHalf, ...secondHalf].map((sign) => (
                 <li key={sign}>
                   <Link href={`/burclar/${sign}`}
-                    className="text-gray-500 hover:text-purple-400 text-sm transition-colors">
-                    {t(`zodiac.${sign}`)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">{t("home.explore.title")}</h3>
-            <ul className="space-y-2">
-              {secondHalf.map((sign) => (
-                <li key={sign}>
-                  <Link href={`/burclar/${sign}`}
-                    className="text-gray-500 hover:text-purple-400 text-sm transition-colors">
+                    className="text-gray-500 hover:text-purple-400 text-sm transition-colors block">
                     {t(`zodiac.${sign}`)}
                   </Link>
                 </li>
@@ -57,10 +43,11 @@ export default function Footer() {
           </div>
 
           {/* Features */}
-          <div>
-            <h3 className="text-white font-brand font-semibold mb-4 text-sm uppercase tracking-wider">{t("site.name")}</h3>
+          <div className="md:col-span-1">
+            <h3 className="text-white font-brand font-semibold mb-4 text-sm uppercase tracking-wider">{t("site.name")} Araçları</h3>
             <ul className="space-y-2">
               <li><Link href="/yorumlar" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.horoscope")}</Link></li>
+              <li><Link href="/numeroloji" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">Numeroloji</Link></li>
               <li><Link href="/hesaplayici" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.calculator")}</Link></li>
               <li><Link href="/dogum-haritasi" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.birthchart")}</Link></li>
               <li><Link href="/uyumluluk" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.compatibility")}</Link></li>

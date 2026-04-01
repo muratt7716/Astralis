@@ -37,8 +37,8 @@ export default function HomePage() {
                   key={sign.id}
                   className="absolute text-lg spin-slow"
                   style={{
-                    left: `${x}%`,
-                    top: `${y}%`,
+                    left: `${Number(x.toFixed(4))}%`,
+                    top: `${Number(y.toFixed(4))}%`,
                     transform: "translate(-50%, -50%)",
                     animationDirection: "reverse",
                   }}
@@ -87,12 +87,13 @@ export default function HomePage() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-serif">{t("home.explore.title")}</h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("home.explore.subtitle")}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {[
               { icon: <CosmicIcon name="horoscope" size={48} />, title: t("nav.horoscope"), desc: t("home.feature.horoscope.desc"), href: "/yorumlar", theme: "from-purple-900/40 to-indigo-950/60" },
               { icon: <CosmicIcon name="birthchart" size={48} />, title: t("nav.birthchart"), desc: t("home.feature.chart.desc"), href: "/dogum-haritasi", theme: "from-blue-900/40 to-cyan-950/60" },
               { icon: <CosmicIcon name="compatibility" size={48} />, title: t("nav.compatibility"), desc: t("home.feature.compatibility.desc"), href: "/uyumluluk", theme: "from-rose-900/40 to-pink-950/60" },
               { icon: <CosmicIcon name="planets" size={48} />, title: t("nav.planets"), desc: t("home.feature.planets.desc"), href: "/gezegenler", theme: "from-amber-900/40 to-orange-950/60" },
+              { icon: <span className="text-4xl">🔢</span>, title: "Numeroloji", desc: "Pisagor ve Keldani yöntemleriyle ruhunun numerolojik sırlarını çöz.", href: "/numeroloji", theme: "from-fuchsia-900/40 to-purple-950/60" },
             ].map((feature, idx) => (
               <Link key={feature.title} href={feature.href} className="group">
                 <div className={`
@@ -257,8 +258,8 @@ export default function HomePage() {
                         key={sign.id}
                         className="absolute text-3xl opacity-40 hover:opacity-100 transition-opacity"
                         style={{
-                          left: `${x}%`,
-                          top: `${y}%`,
+                          left: `${Number(x.toFixed(4))}%`,
+                          top: `${Number(y.toFixed(4))}%`,
                           transform: "translate(-50%, -50%)",
                         }}
                       >

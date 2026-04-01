@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // 3. Generate Interpretation with Gemini
     let interpretation = null;
     
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "your_api_key_here") {
+    if (process.env.GOOGLE_CLOUD_PROJECT) {
       interpretation = await generateSynastryInterpretation(chart1, chart2, synastryAspects, lang);
     }
     

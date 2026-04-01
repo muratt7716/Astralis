@@ -17,6 +17,16 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `Astralis | ${t("hero.title.1")} ${t("hero.title.2")}`,
     description: t("hero.subtitle"),
     keywords: "astrology, zodiac, horoscopes, tarot, birth chart, coffee fortune, astroloji, burçlar, günlük burç yorumu, doğum haritası, fal",
+    manifest: '/manifest.json',
+    themeColor: '#0d0415',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'Astralis',
+    },
+    icons: {
+      apple: '/icon-192.png',
+    },
   };
 }
 

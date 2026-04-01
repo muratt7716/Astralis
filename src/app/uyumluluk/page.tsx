@@ -4,13 +4,16 @@ import { useState, useMemo, useEffect } from "react";
 import { turkishCities } from "@/data/cities";
 import { countries } from "@/data/countries";
 import { useTranslation } from "@/lib/i18n";
-import { getZodiacById } from "@/data/zodiac";
+import { getZodiacById, zodiacSigns } from "@/data/zodiac";
 import CosmicInput from "@/components/Cosmic/CosmicInput";
 import CosmicSelect from "@/components/Cosmic/CosmicSelect";
 import CosmicButton from "@/components/Cosmic/CosmicButton";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 import PlanetIcon from "@/components/PlanetIcon";
 import Logo from "@/components/Cosmic/Logo";
+import SynastryMatrix from "@/components/Cosmic/SynastryMatrix";
+import { calculateLifePath } from "@/lib/numerology/pythagoras";
+import { getLifePathCompatibility } from "@/lib/numerology/compatibility";
 
 const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
   const sign = getZodiacById(signId);
@@ -56,6 +59,13 @@ export default function UyumlulukPage() {
   const [p2, setP2] = useState({
     day: "", month: "", year: "", hour: "", minute: "", country: "TR", city: "", manualCity: ""
   });
+  
+  const [activeTab, setActiveTab] = useState<"simple" | "personal" | "matrix">("simple");
+  
+  // Simple Sign Compatibility State
+  const [sign1, setSign1] = useState<string>("");
+  const [sign2, setSign2] = useState<string>("");
+  const [simpleResult, setSimpleResult] = useState<any>(null);
 
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -63,6 +73,36 @@ export default function UyumlulukPage() {
 
   const updateP1 = (field: string, val: string) => setP1(prev => ({ ...prev, [field]: val }));
   const updateP2 = (field: string, val: string) => setP2(prev => ({ ...prev, [field]: val }));
+
+  const handleSimpleCalculate = async () => {
+    if (!sign1 || !sign2) {
+      setError(t("error.generic"));
+      return;
+    }
+    setError("");
+    setLoading(true);
+    setSimpleResult(null);
+
+    try {
+      const res = await fetch(`/api/compatibility?lang=${language}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sign1, sign2 }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSimpleResult(data.data);
+      } else {
+        setError(data.error || t("error.calc"));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(t("error.connection"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getCityData = (countryCode: string, cityName: string) => {
     if (countryCode === "TR") {
@@ -137,6 +177,31 @@ export default function UyumlulukPage() {
       </div>
     );
   };
+
+  const renderSignPicker = (selectedId: string, onSelect: (id: string) => void, label: string) => (
+    <div className="glass-card p-6 border-t-4 border-t-purple-500 shadow-2xl">
+      <h3 className="text-xl font-bold text-white mb-6 text-center uppercase tracking-widest">{label}</h3>
+      <div className="grid grid-cols-4 gap-3">
+        {zodiacSigns.map((sign) => (
+          <button
+            key={sign.id}
+            onClick={() => onSelect(sign.id)}
+            className={`
+              flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-500 border
+              ${selectedId === sign.id 
+                ? "bg-purple-500/30 border-purple-400 scale-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]" 
+                : "bg-white/5 border-transparent hover:bg-white/10 hover:border-white/20"}
+            `}
+          >
+            <span className="text-2xl mb-1">{sign.symbol}</span>
+            <span className="text-[10px] text-gray-400 font-bold uppercase truncate w-full text-center">
+               {t(sign.nameKey).split(" ")[0]}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   const renderPersonForm = (person: any, updateFn: any, title: string, emoji: string) => {
     const isTr = person.country === "TR";
@@ -242,42 +307,131 @@ export default function UyumlulukPage() {
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             {t("compatibility.desc")}
           </p>
-        </div>
-      </section>
 
-      <section className="pb-8 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-6">
-            {renderPersonForm(p1, updateP1, t("compatibility.person1"), "✨")}
-            {renderPersonForm(p2, updateP2, t("compatibility.person2"), "🌟")}
+          <div className="flex items-center justify-center gap-2 mt-12 bg-white/5 p-1.5 rounded-2xl border border-white/10 max-w-lg mx-auto">
+            <button
+              onClick={() => setActiveTab("simple")}
+              className={`flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === "simple" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              {t("compatibility.tabs.simple")}
+            </button>
+            <button
+              onClick={() => setActiveTab("personal")}
+              className={`flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === "personal" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              {t("compatibility.tabs.personal")}
+            </button>
+            <button
+              onClick={() => setActiveTab("matrix")}
+              className={`flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === "matrix" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              {t("compatibility.tabs.matrix")}
+            </button>
           </div>
-
-          {error && <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-center">{error}</div>}
-
-          <CosmicButton
-            fullWidth
-            onClick={handleCalculate}
-            disabled={loading}
-            className="mt-8 group overflow-hidden relative"
-          >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              {loading ? t("compatibility.calculating") : t("compatibility.calculate")}
-              {!loading && <span className="group-hover:translate-x-1 transition-transform">→</span>}
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          </CosmicButton>
-
-          {loading && (
-            <div className="mt-12 fade-in">
-              <CosmicLoader label={t("compatibility.calculating")} />
-            </div>
-          )}
         </div>
       </section>
 
-      {result && result.interpretation && (
+      {activeTab === "simple" ? (
         <section className="pb-20 px-4">
-          <div className="max-w-5xl mx-auto space-y-16 fade-in-up">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              {renderSignPicker(sign1, setSign1, t("burc_uyumu.select_first"))}
+              {renderSignPicker(sign2, setSign2, t("burc_uyumu.select_second"))}
+            </div>
+
+            {error && <div className="mt-8 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-center font-bold tracking-wide">{error}</div>}
+
+            <div className="mt-12 text-center">
+              <CosmicButton
+                size="lg"
+                onClick={handleSimpleCalculate}
+                disabled={loading || !sign1 || !sign2}
+                className="px-12 relative group overflow-hidden"
+              >
+                <span className="relative z-10">
+                   {loading ? t("burc_uyumu.analyzing") : t("burc_uyumu.analyze")}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </CosmicButton>
+            </div>
+
+            {loading && (
+              <div className="mt-16 fade-in">
+                <CosmicLoader label={t("burc_uyumu.analyzing")} />
+              </div>
+            )}
+
+            {simpleResult && (
+              <div className="mt-16 fade-in-up">
+                {/* Simple Result Card */}
+                <div className="glass-card overflow-hidden border-b-4 border-b-pink-500 shadow-2xl relative">
+                  <div className="p-8 md:p-12 relative z-10 text-center">
+                    <div className="flex items-center justify-center gap-8 mb-12">
+                       <div className="flex flex-col items-center">
+                          <div className="text-6xl mb-4">{getZodiacById(sign1)?.symbol}</div>
+                          <span className="text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign1}`)}</span>
+                       </div>
+                       <div className="relative">
+                          <div className="w-24 h-24 rounded-full border-4 border-pink-500 flex flex-col items-center justify-center bg-black/40">
+                             <span className="text-2xl font-black text-white">{simpleResult.overallScore}%</span>
+                          </div>
+                       </div>
+                       <div className="flex flex-col items-center">
+                          <div className="text-6xl mb-4">{getZodiacById(sign2)?.symbol}</div>
+                          <span className="text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign2}`)}</span>
+                       </div>
+                    </div>
+                    <p className="text-gray-300 text-lg italic leading-relaxed max-w-2xl mx-auto">
+                       "{simpleResult.description}"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : activeTab === "personal" ? (
+        <>
+          <section className="pb-8 px-4">
+            <div className="max-w-5xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-6">
+                {renderPersonForm(p1, updateP1, t("compatibility.person1"), "✨")}
+                {renderPersonForm(p2, updateP2, t("compatibility.person2"), "🌟")}
+              </div>
+
+              {error && <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-center">{error}</div>}
+
+              <CosmicButton
+                fullWidth
+                onClick={handleCalculate}
+                disabled={loading}
+                className="mt-8 group overflow-hidden relative"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {loading ? t("compatibility.calculating") : t("compatibility.calculate")}
+                  {!loading && <span className="group-hover:translate-x-1 transition-transform">→</span>}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </CosmicButton>
+
+              {loading && (
+                <div className="mt-12 fade-in">
+                  <CosmicLoader label={t("compatibility.calculating")} />
+                </div>
+              )}
+            </div>
+          </section>
+
+          {result && result.interpretation && (
+            <section className="pb-20 px-4">
+              <div className="max-w-5xl mx-auto space-y-16 fade-in-up">
+                {/* ... (Existing result UI stays same) */}
 
             {/* Main Analysis Grid: Cosmic Bond + Summary */}
             <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-8 items-stretch">
@@ -411,6 +565,51 @@ export default function UyumlulukPage() {
               </div>
             </div>
 
+            {/* Numerology Integration */}
+            {p1.year && p2.year && (
+              <div className="glass-card mb-10 p-8 border-l-4 border-l-fuchsia-500 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 blur-[80px] pointer-events-none" />
+                <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-widest flex items-center gap-3 relative z-10">
+                  <span className="text-3xl text-fuchsia-400 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]">🔢</span> Numerolojik Sinastri (Yaşam Yolu Uyumu)
+                </h3>
+                {(() => {
+                  const numMonth1 = parseInt(p1.month.padStart(2, '0'));
+                  const lp1 = calculateLifePath(`${p1.year}-${numMonth1}-${p1.day.padStart(2, '0')}T00:00:00.000Z`);
+                  const numMonth2 = parseInt(p2.month.padStart(2, '0'));
+                  const lp2 = calculateLifePath(`${p2.year}-${numMonth2}-${p2.day.padStart(2, '0')}T00:00:00.000Z`);
+                  const numRes = getLifePathCompatibility(lp1, lp2, language);
+                  return (
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+                      <div className="flex items-center gap-6 flex-1 justify-center md:justify-start">
+                        <div className="text-center group-hover:transform group-hover:scale-110 transition-transform">
+                           <span className="block text-[10px] text-gray-400 mb-1 uppercase tracking-widest">{t("compatibility.person1")} Yaş. Y.</span>
+                           <span className="text-4xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{lp1}</span>
+                        </div>
+                        <div className="text-3xl text-fuchsia-500 font-light animate-pulse">∞</div>
+                        <div className="text-center group-hover:transform group-hover:scale-110 transition-transform">
+                           <span className="block text-[10px] text-gray-400 mb-1 uppercase tracking-widest">{t("compatibility.person2")} Yaş. Y.</span>
+                           <span className="text-4xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{lp2}</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner text-center md:text-left">
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+                           <span className="px-4 py-1.5 bg-fuchsia-500/20 text-fuchsia-300 font-bold uppercase tracking-widest text-xs rounded-full border border-fuchsia-500/30">
+                             Skor: {numRes.score}%
+                           </span>
+                           <span className={`text-[10px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest border border-white/10 ${numRes.typeId === 'soulmate' ? 'text-pink-400 bg-pink-500/10' : numRes.typeId === 'harmonious' ? 'text-green-400 bg-green-500/10' : numRes.typeId === 'challenging' ? 'text-red-400 bg-red-500/10' : 'text-amber-400 bg-amber-500/10'}`}>
+                             {numRes.type}
+                           </span>
+                        </div>
+                        <p className="text-gray-300 font-light italic text-sm md:text-[15px] leading-relaxed">
+                           "{numRes.description}"
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* Analysis Grid (Strengths & Challenges) */}
             <div className="grid md:grid-cols-2 gap-10">
               <div className="glass-card p-10 border-l-8 border-l-green-500 bg-gradient-to-br from-green-500/10 via-transparent to-black/10 shadow-2xl group hover:transform hover:translate-y-[-4px] transition-all duration-500">
@@ -527,6 +726,18 @@ export default function UyumlulukPage() {
           </div>
         </section>
       )}
-    </div>
-  );
+    </>
+    ) : (
+      <section className="pb-20 px-4">
+        <div className="max-w-6xl mx-auto text-center mb-12">
+           <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{t("compatibility.matrix.title")}</h2>
+           <p className="text-gray-400">{t("compatibility.matrix.desc")}</p>
+        </div>
+        <div className="max-w-6xl mx-auto">
+           <SynastryMatrix />
+        </div>
+      </section>
+    )}
+  </div>
+);
 }

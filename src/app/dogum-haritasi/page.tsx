@@ -25,6 +25,12 @@ const useIsClient = () => {
 export default function DogumHaritasiPage() {
   const isClient = useIsClient();
   const { t, language } = useTranslation();
+  
+  const [showFinder, setShowFinder] = useState(false);
+  const [fDay, setFDay] = useState("");
+  const [fMonth, setFMonth] = useState("");
+  const [fResult, setFResult] = useState<any>(null);
+
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
@@ -73,6 +79,13 @@ export default function DogumHaritasiPage() {
     finally { setLoading(false); }
   };
 
+  const findSunSign = () => {
+    if (!fDay || !fMonth) return;
+    const { getZodiacByDate } = require("@/data/zodiac");
+    const sign = getZodiacByDate(parseInt(fMonth), parseInt(fDay));
+    setFResult(sign);
+  };
+
   const harmonyColor = (h: string) =>
     h === "positive" ? "text-green-400 bg-green-500/10 border-green-500/20" :
     h === "negative" ? "text-red-400 bg-red-500/10 border-red-500/20" :
@@ -96,6 +109,72 @@ export default function DogumHaritasiPage() {
       {/* Form */}
       <section className="pb-8 px-4">
         <div className="max-w-3xl mx-auto">
+          {/* Quick Finder Toggle */}
+          <div className="mb-6 text-center">
+            <button 
+              onClick={() => setShowFinder(!showFinder)}
+              className="text-xs font-black uppercase tracking-[0.2em] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 mx-auto bg-purple-500/5 px-4 py-2 rounded-full border border-purple-500/10"
+            >
+              ✨ {showFinder ? "Hızlı Bulucuyu Kapat" : "Burcunu Hemen Öğren"}
+            </button>
+          </div>
+
+          {showFinder && (
+            <div className="glass-card p-6 mb-8 border-purple-500/30 animate-in fade-in slide-in-from-top-4">
+              <h3 className="text-sm font-bold text-white mb-4 text-center uppercase tracking-widest">Hızlı Burç Bulucu</h3>
+              <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="flex-1">
+                  <CosmicSelect
+                    label={t("chart.day")}
+                    value={fDay}
+                    onChange={e => setFDay(e.target.value)}
+                    options={[
+                      { value: "", label: t("chart.day") },
+                      ...Array.from({ length: 31 }, (_, i) => ({ value: (i + 1).toString(), label: (i + 1).toString() }))
+                    ]}
+                  />
+                </div>
+                <div className="flex-1">
+                  <CosmicSelect
+                    label={t("chart.month")}
+                    value={fMonth}
+                    onChange={e => setFMonth(e.target.value)}
+                    options={[
+                      { value: "", label: t("chart.month") },
+                      ...[t("month.jan"), t("month.feb"), t("month.mar"), t("month.apr"), t("month.may"), t("month.jun"), t("month.jul"), t("month.aug"), t("month.sep"), t("month.oct"), t("month.nov"), t("month.dec")].map((m, i) => ({ value: (i + 1).toString(), label: m }))
+                    ]}
+                  />
+                </div>
+                <button 
+                  onClick={findSunSign}
+                  className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/20"
+                >
+                  Bul
+                </button>
+              </div>
+
+              {fResult && (
+                <div className="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 animate-in zoom-in-95">
+                  <span className="text-4xl">{fResult.symbol}</span>
+                  <div>
+                    <p className="text-white font-bold">{t(`zodiac.${fResult.id}`)}</p>
+                    <p className="text-gray-500 text-[10px] uppercase tracking-widest">{fResult.dateRange}</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setDay(fDay);
+                      setMonth(fMonth);
+                      setShowFinder(false);
+                    }}
+                    className="ml-auto text-[10px] font-black uppercase text-pink-400 hover:underline"
+                  >
+                    Forma Aktar →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="glass-card p-8">
             {/* Date */}
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">📅 {t("chart.date")}</h2>
@@ -124,7 +203,7 @@ export default function DogumHaritasiPage() {
                 onChange={(e) => setYear(e.target.value)}
                 options={[
                   { value: "", label: t("chart.year") },
-                  ...Array.from({ length: 80 }, (_, i) => ({ value: (2026 - i).toString(), label: (2026 - i).toString() }))
+                  ...Array.from({ length: 120 }, (_, i) => ({ value: (new Date().getFullYear() - i).toString(), label: (new Date().getFullYear() - i).toString() }))
                 ]}
               />
             </div>

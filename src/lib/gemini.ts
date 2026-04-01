@@ -1,6 +1,26 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// 1. Çevre değişkeninden JSON'ı ayrıştır
+let credentials: any = {};
+try {
+  credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "{}");
+  // 2. OpenSSL hatasını (DECODER routines::unsupported) önlemek için 
+  // private_key içindeki bozuk satır sonlarını (escaped newlines) düzelt
+  if (credentials.private_key) {
+    credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
+  }
+} catch (error) {
+  console.error("Google Service Account JSON ayrıştırma hatası:", error);
+}
+
+const ai = new GoogleGenAI({
+  project: process.env.GOOGLE_CLOUD_PROJECT,
+  location: process.env.GOOGLE_CLOUD_LOCATION,
+  vertexai: true,
+  googleAuthOptions: {
+    credentials,
+  },
+});
 
 export type SupportedLanguage = "tr" | "en" | "ar" | "de" | "fr";
 
@@ -21,9 +41,11 @@ async function callGeminiWithFallback(prompt: string): Promise<string> {
 
   for (const modelName of models) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      return result.response.text().trim();
+      const result = await ai.models.generateContent({
+        model: modelName,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+      return result.text?.trim() || "";
     } catch (error) {
       console.warn(`Gemini API failed with model ${modelName}. Trying next...`, error);
       lastError = error;
@@ -226,28 +248,45 @@ Analyze the astrological compatibility between two zodiac signs.
 CONTEXT:
 - Language: ${lang}
 - Audience: modern users who want insightful, emotionally intelligent, and realistic relationship advice.
-- Tone: balanced (highlighting both magic and friction), engaging, and specific.
+    TASK:
+    Analyze the deep astrological alignment and psychological compatibility between these two zodiac signs.
+    - Sign 1: "${sign1Name}" (${sign1})
+    - Sign 2: "${sign2Name}" (${sign2})
 
-STRICT OUTPUT RULES:
-- Return ONLY valid JSON
-- No markdown, no explanations, no extra text
-- Keep structure EXACTLY as defined
+    CONTEXT:
+    - Language: ${lang}
+    - Audience: Sophisticated users seeking profound, emotionally intelligent, and realistic relationship guidance.
+    - Tone: Balanced, poetic yet grounded, highly analytical, and empathetic. Avoid shallow clichés.
 
-OUTPUT FORMAT:
-{
-  "overallScore": number (0-100),
-  "loveScore": number (0-100),
-  "friendshipScore": number (0-100),
-  "workScore": number (0-100),
-  "description": "5-7 sentences detailing the core dynamic, how they interact emotionally, mentally, and practically.",
-  "strengths": ["3-5 specific bullet points emphasizing what makes them great together"],
-  "challenges": ["3-5 specific bullet points emphasizing potential friction or misunderstandings"]
-}
+    STRICT OUTPUT RULES:
+    - Return ONLY valid JSON.
+    - No markdown, no explanations, no extra text.
+    - Keep structure EXACTLY as defined.
 
-QUALITY REQUIREMENTS:
-- Do not be overly generic. Mention elemental interactions (Fire vs Water, Earth vs Air etc) subtly.
-- Ensure the scores roughly reflect traditional astrological synastry.
-- Write fluently and naturally in ${lang}.`;
+    OUTPUT FORMAT:
+    {
+      "overallScore": number (0-100),
+      "loveScore": number (0-100),
+      "friendshipScore": number (0-100),
+      "workScore": number (0-100),
+      "description": "7-10 long, analytical sentences. Synthesize their qualities (cardinal, fixed, mutable) and elements (Fire, Earth, Air, Water). Explain the core psychological contract, how they resolve conflict, and what they teach each other on a soul level. Use sophisticated language.",
+      "strengths": [
+        "A detailed point about emotional or psychic resonance (2-3 sentences).",
+        "A detailed point about intellectual or social synergy (2-3 sentences).",
+        "A detailed point about their shared life vision or growth potential (2-3 sentences)."
+      ],
+      "challenges": [
+        "A profound analysis of a potential shadow dynamic or ego clash (2-3 sentences).",
+        "A specific communication or value-based friction point (2-3 sentences).",
+        "Practical advice on what usually causes a breakdown and how to avoid it (2-3 sentences)."
+      ]
+    }
+
+    QUALITY REQUIREMENTS:
+    - Focus on the 'Why' behind the attraction and friction.
+    - Use the elemental/quality archetypes to explain behavior.
+    - Ensure the scores are astrologically sound.
+    - Write fluently and elegantly in ${lang}. Ensure it feels like a premium session.`;
 
   try {
     const text = await callGeminiWithFallback(prompt);
@@ -280,10 +319,10 @@ export async function generateSynastryInterpretation(
   language: SupportedLanguage = "tr"
 ) {
   const lang = languageNames[language];
-  
+
   // Sort aspects by importance (intensity) and send top 18 for comprehensive reading
-  const sortedAspects = [...synastryAspects].sort((a,b) => b.intensity - a.intensity);
-  const aspectListStr = sortedAspects.slice(0, 18).map(a => 
+  const sortedAspects = [...synastryAspects].sort((a, b) => b.intensity - a.intensity);
+  const aspectListStr = sortedAspects.slice(0, 18).map(a =>
     `- Planet 1 ${a.planet1Id} ⯈ Planet 2 ${a.planet2Id}: ${a.typeId} (${a.orb}° orb) - ${a.harmony}`
   ).join("\n");
 
@@ -356,7 +395,7 @@ export async function generateTransitInterpretation(
   const dateStr = new Date().toISOString().split("T")[0];
 
   // We only send the top 5 transits so we don't overwhelm the prompt
-  const transitListStr = transits.slice(0, 5).map(t => 
+  const transitListStr = transits.slice(0, 5).map(t =>
     `- Transit ${t.transitPlanetId} ${t.typeId} Natal ${t.natalPlanetId} (Orb: ${t.orb}°, Harmony: ${t.harmony})`
   ).join("\n");
 
@@ -438,7 +477,7 @@ export async function generateDivinationReading(
     return entry;
   }).join("\n");
 
-  const personaSection = persona 
+  const personaSection = persona
     ? `\nCRITICAL PERSONALITY: You are interpreting as "${persona.name}". ${persona.style}\n`
     : "";
 
@@ -497,7 +536,7 @@ export async function generateCoffeeReading(
 ) {
   const langName = languageNames[lang];
 
-  const personaSection = persona 
+  const personaSection = persona
     ? `\nCRITICAL PERSONALITY: You are interpreting as "${persona.name}". ${persona.style}\n`
     : "";
 
@@ -535,22 +574,27 @@ OUTPUT FORMAT:
 
   for (const modelName of visionModels) {
     try {
-      const model = genAI.getGenerativeModel({
+      const result = await ai.models.generateContent({
         model: modelName,
-        safetySettings: [
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT" as any, threshold: "BLOCK_LOW_AND_ABOVE" as any },
-          { category: "HARM_CATEGORY_HARASSMENT" as any, threshold: "BLOCK_LOW_AND_ABOVE" as any },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT" as any, threshold: "BLOCK_MEDIUM_AND_ABOVE" as any },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: imageBase64 } },
+            ],
+          },
         ],
+        config: {
+          safetySettings: [
+            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT" as any, threshold: "BLOCK_LOW_AND_ABOVE" as any },
+            { category: "HARM_CATEGORY_HARASSMENT" as any, threshold: "BLOCK_LOW_AND_ABOVE" as any },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT" as any, threshold: "BLOCK_MEDIUM_AND_ABOVE" as any },
+          ],
+        },
       });
 
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { mimeType, data: imageBase64 } },
-      ]);
-
-      const text = result.response.text().trim();
-      return parseGeminiJson(text);
+      return parseGeminiJson(result.text?.trim() || "");
     } catch (error) {
       console.warn(`Coffee reading failed with ${modelName}:`, error);
       lastError = error;
