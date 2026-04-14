@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ClientHoroscopeCardProps {
@@ -14,7 +14,25 @@ export default function ClientHoroscopeCard({ signId, period }: ClientHoroscopeC
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const [shouldFetch, setShouldFetch] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldFetch(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldFetch) return;
     let isMounted = true;
     setLoading(true);
     setError(false);
@@ -38,11 +56,11 @@ export default function ClientHoroscopeCard({ signId, period }: ClientHoroscopeC
       });
 
     return () => { isMounted = false; };
-  }, [signId, period, language]);
+  }, [shouldFetch, signId, period, language]);
 
   if (loading) {
     return (
-      <div className="glass-card p-6 md:p-8 animate-pulse text-center">
+      <div ref={cardRef} className="glass-card p-6 md:p-8 animate-pulse text-center min-h-[300px]">
         <h3 className="text-xl font-bold text-white mb-4">✨ {t("chart.interpreting")}</h3>
         <div className="h-4 bg-white/10 rounded w-full mb-2"></div>
         <div className="h-4 bg-white/10 rounded w-5/6 mb-4"></div>
@@ -57,14 +75,14 @@ export default function ClientHoroscopeCard({ signId, period }: ClientHoroscopeC
 
   if (error || !data) {
     return (
-      <div className="glass-card p-6 md:p-8 border-red-500/30 text-center">
+      <div ref={cardRef} className="glass-card p-6 md:p-8 border-red-500/30 text-center min-h-[300px]">
         <p className="text-red-400">{t("error.connection")}</p>
       </div>
     );
   }
 
   return (
-    <div className="glass-card p-6 md:p-8 relative overflow-hidden group">
+    <div ref={cardRef} className="glass-card p-6 md:p-8 relative overflow-hidden group min-h-[300px]">
       {/* Decorative glow */}
       <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-colors"></div>
       
