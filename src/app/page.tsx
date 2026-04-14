@@ -61,7 +61,7 @@ export default function HomePage() {
             {t("hero.subtitle")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/hesaplayici">
+            <Link href="/dogum-haritasi">
               <CosmicButton size="lg" icon="⭐">
                 {t("hero.cta.calc")}
               </CosmicButton>
@@ -245,7 +245,7 @@ export default function HomePage() {
                       {t("home.featured.cta")}
                     </CosmicButton>
                   </Link>
-                  <Link href="/hesaplayici">
+                  <Link href="/dogum-haritasi">
                     <CosmicButton size="lg" variant="secondary">
                       {t("nav.calculator")}
                     </CosmicButton>
