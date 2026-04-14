@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,6 +7,10 @@ import Providers from "@/components/Providers";
 
 import { cookies } from "next/headers";
 import { translations, SupportedLanguage, languages } from "@/lib/i18n-shared";
+
+export const viewport: Viewport = {
+  themeColor: '#0d0415',
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies();
@@ -18,7 +22,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("hero.subtitle"),
     keywords: "astrology, zodiac, horoscopes, tarot, birth chart, coffee fortune, astroloji, burçlar, günlük burç yorumu, doğum haritası, fal",
     manifest: '/manifest.json',
-    themeColor: '#0d0415',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',

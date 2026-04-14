@@ -1,7 +1,11 @@
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { generateTransitInterpretation, type SupportedLanguage } from "@/lib/gemini";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const { transits, language } = body;
@@ -17,11 +21,11 @@ export async function POST(request: NextRequest) {
       ? (language as SupportedLanguage)
       : "tr";
 
-    // Try Vertex AI API
-    if (!process.env.GOOGLE_CLOUD_PROJECT) {
-      return NextResponse.json({ 
-        error: "Sistem yapılandırma hatası: Vertex AI yapılandırması eksik.",
-        success: false 
+    // Try AI API (Vertex AI or Groq fallback)
+    if (!process.env.GOOGLE_CLOUD_PROJECT && !process.env.GROQ_API_KEY) {
+      return NextResponse.json({
+        error: "Sistem yapılandırma hatası: AI yapılandırması eksik.",
+        success: false
       }, { status: 500 });
     }
 
@@ -35,9 +39,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Transit analizi şu anda oluşturulamadı. Lütfen daha sonra tekrar deneyin.",
-      success: false 
+      success: false
     }, { status: 500 });
 
   } catch (error) {

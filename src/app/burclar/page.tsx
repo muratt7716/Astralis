@@ -251,7 +251,7 @@ export default function BurclarPage() {
       </section>
 
       {/* Planet Library */}
-      <section className="pb-32 px-4 relative z-10">
+      <section id="gezegenler" className="pb-32 px-4 relative z-10 scroll-mt-24">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="flex items-center gap-4 mb-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>

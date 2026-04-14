@@ -232,7 +232,7 @@ export default function NumerologyProfileCard({ data, fullName, dob, lang }: Car
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
                       <h4 className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
                         <span className="text-sm">💼</span> {t("num.lbl.mission")}

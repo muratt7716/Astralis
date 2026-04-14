@@ -1,8 +1,12 @@
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { generateCompatibility, SupportedLanguage } from "@/lib/gemini";
 import { zodiacSigns } from "@/data/zodiac";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const lang = (searchParams.get("lang") || "tr") as SupportedLanguage;

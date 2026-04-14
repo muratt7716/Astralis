@@ -1,3 +1,4 @@
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import {
   generateDivinationReading,
@@ -8,6 +9,9 @@ import {
 } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
+  const rateLimitResponse = checkRateLimit(req);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json();
     const { type, cards, question, language, imageBase64, mimeType, virtual, persona } = body;

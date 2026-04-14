@@ -137,6 +137,48 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
           </div>
         </section>
 
+        {/* Detailed Zodiac Analysis */}
+        <section className="mb-12">
+          <h2 className="text-3xl font-bold text-white mb-8 text-center">{t("zodiac.detail.title")}</h2>
+          <div className="space-y-8">
+            {/* Personality */}
+            <div className="glass-card p-6 md:p-8 hover:border-purple-500/30 transition-colors">
+              <h3 className="text-xl font-bold text-purple-300 mb-4">{t("zodiac.detail.section.personality")}</h3>
+              <p className="text-gray-300 leading-relaxed text-[15px]">{t(`zodiac.${signId}.personality`)}</p>
+            </div>
+
+            {/* Love */}
+            <div className="glass-card p-6 md:p-8 hover:border-pink-500/30 transition-colors border-pink-500/10">
+              <h3 className="text-xl font-bold text-pink-300 mb-4">{t("zodiac.detail.section.love")}</h3>
+              <p className="text-gray-300 leading-relaxed text-[15px]">{t(`zodiac.${signId}.love`)}</p>
+            </div>
+
+            {/* Career */}
+            <div className="glass-card p-6 md:p-8 hover:border-amber-500/30 transition-colors border-amber-500/10">
+              <h3 className="text-xl font-bold text-amber-300 mb-4">{t("zodiac.detail.section.career")}</h3>
+              <p className="text-gray-300 leading-relaxed text-[15px]">{t(`zodiac.${signId}.career`)}</p>
+            </div>
+
+            {/* Health */}
+            <div className="glass-card p-6 md:p-8 hover:border-emerald-500/30 transition-colors border-emerald-500/10">
+              <h3 className="text-xl font-bold text-emerald-300 mb-4">{t("zodiac.detail.section.health")}</h3>
+              <p className="text-gray-300 leading-relaxed text-[15px]">{t(`zodiac.${signId}.health`)}</p>
+            </div>
+
+            {/* Weaknesses */}
+            <div className="glass-card p-6 md:p-8 hover:border-red-500/30 transition-colors border-red-500/10">
+              <h3 className="text-xl font-bold text-red-300 mb-4">{t("zodiac.detail.section.weaknesses")}</h3>
+              <p className="text-gray-300 leading-relaxed text-[15px]">{t(`zodiac.${signId}.weaknesses`)}</p>
+            </div>
+
+            {/* Famous People */}
+            <div className="glass-card p-6 md:p-8 hover:border-sky-500/30 transition-colors border-sky-500/10">
+              <h3 className="text-xl font-bold text-sky-300 mb-4">{t("zodiac.detail.section.famous")}</h3>
+              <p className="text-gray-300 leading-relaxed text-[15px]">{t(`zodiac.${signId}.famous`)}</p>
+            </div>
+          </div>
+        </section>
+
         {/* Navigation */}
         <div className="flex justify-center gap-4">
           <Link href="/burclar" className="px-6 py-3 rounded-xl border border-purple-500/30 text-purple-300 hover:bg-purple-500/10 transition-all">

@@ -1,3 +1,4 @@
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { getZodiacById } from "@/data/zodiac";
 import { generateHoroscope, type SupportedLanguage } from "@/lib/gemini";
@@ -45,6 +46,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ sign: string }> }
 ) {
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { sign } = await params;
   const searchParams = request.nextUrl.searchParams;
   const period = (searchParams.get("period") || "daily") as "daily" | "weekly" | "monthly" | "yearly";
@@ -66,11 +70,11 @@ export async function GET(
     });
   }
 
-  // Try Vertex AI API
-  if (!process.env.GOOGLE_CLOUD_PROJECT) {
-    return NextResponse.json({ 
-      error: "Sistem yapılandırma hatası: Vertex AI yapılandırması eksik.",
-      success: false 
+  // Try AI API (Vertex AI or Groq fallback)
+  if (!process.env.GOOGLE_CLOUD_PROJECT && !process.env.GROQ_API_KEY) {
+    return NextResponse.json({
+      error: "Sistem yapılandırma hatası: AI yapılandırması eksik.",
+      success: false
     }, { status: 500 });
   }
 
@@ -90,8 +94,8 @@ export async function GET(
     });
   }
 
-  return NextResponse.json({ 
+  return NextResponse.json({
     error: "Astrolojik analiz şu anda oluşturulamadı. Lütfen daha sonra tekrar deneyin.",
-    success: false 
+    success: false
   }, { status: 500 });
 }

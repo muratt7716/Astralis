@@ -51,7 +51,7 @@ export default function Footer() {
               <li><Link href="/hesaplayici" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.calculator")}</Link></li>
               <li><Link href="/dogum-haritasi" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.birthchart")}</Link></li>
               <li><Link href="/uyumluluk" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.compatibility")}</Link></li>
-              <li><Link href="/gezegenler" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.planets")}</Link></li>
+              <li><Link href="/burclar#gezegenler" className="text-gray-500 hover:text-purple-400 text-sm transition-colors">{t("nav.planets")}</Link></li>
             </ul>
           </div>
         </div>

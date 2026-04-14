@@ -92,8 +92,8 @@ export default function HomePage() {
               { icon: <CosmicIcon name="horoscope" size={48} />, title: t("nav.horoscope"), desc: t("home.feature.horoscope.desc"), href: "/yorumlar", theme: "from-purple-900/40 to-indigo-950/60" },
               { icon: <CosmicIcon name="birthchart" size={48} />, title: t("nav.birthchart"), desc: t("home.feature.chart.desc"), href: "/dogum-haritasi", theme: "from-blue-900/40 to-cyan-950/60" },
               { icon: <CosmicIcon name="compatibility" size={48} />, title: t("nav.compatibility"), desc: t("home.feature.compatibility.desc"), href: "/uyumluluk", theme: "from-rose-900/40 to-pink-950/60" },
-              { icon: <CosmicIcon name="planets" size={48} />, title: t("nav.planets"), desc: t("home.feature.planets.desc"), href: "/gezegenler", theme: "from-amber-900/40 to-orange-950/60" },
-              { icon: <span className="text-4xl">🔢</span>, title: "Numeroloji", desc: "Pisagor ve Keldani yöntemleriyle ruhunun numerolojik sırlarını çöz.", href: "/numeroloji", theme: "from-fuchsia-900/40 to-purple-950/60" },
+              { icon: <CosmicIcon name="planets" size={48} />, title: t("nav.planets"), desc: t("home.feature.planets.desc"), href: "/burclar#gezegenler", theme: "from-amber-900/40 to-orange-950/60" },
+              { icon: <span className="text-4xl">🔢</span>, title: t("nav.numeroloji"), desc: t("home.feature.numeroloji.desc"), href: "/numeroloji", theme: "from-fuchsia-900/40 to-purple-950/60" },
             ].map((feature, idx) => (
               <Link key={feature.title} href={feature.href} className="group">
                 <div className={`
@@ -132,59 +132,77 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Mistik Fallar Section */}
+      {/* ✨ Mistik Portal */}
       <section className="py-24 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-serif tracking-tight flex items-center justify-center gap-3">
-              <Logo size={48} /> {t("home.mystic.title")}
+              <Logo size={48} /> {t("home.analytics.title")}
             </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("home.mystic.subtitle")}</p>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("home.analytics.subtitle")}</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { id: "tarot", nameKey: "fortune.tarot.title", href: "/fallar/tarot", theme: "from-purple-900/40 to-indigo-950/60" },
-              { id: "katina", nameKey: "fortune.katina.title", href: "/fallar/katina", theme: "from-rose-900/40 to-rose-950/60" },
-              { id: "lenormand", nameKey: "fortune.lenormand.title", href: "/fallar/lenormand", theme: "from-amber-900/40 to-amber-950/60" },
-              { id: "kahve", nameKey: "fortune.kahve.title", href: "/fallar/kahve", theme: "from-yellow-900/40 to-yellow-950/60" },
-              { id: "runler", nameKey: "fortune.runler.title", href: "/fallar/runler", theme: "from-blue-900/40 to-blue-950/60" },
-              { id: "iching", nameKey: "fortune.iching.title", href: "/fallar/iching", theme: "from-emerald-900/40 to-emerald-950/60" },
-              { id: "kristal", nameKey: "fortune.kristal.title", href: "/fallar/kristal", theme: "from-violet-900/40 to-violet-950/60" },
-            ].map((fal, idx) => (
-              <Link key={fal.nameKey} href={fal.href} className="group">
+              { icon: "🧬", titleKey: "analytics.biorhythm.title", descKey: "analytics.biorhythm.desc", href: "/biyoritim", theme: "from-cyan-900/40 to-blue-950/60" },
+              { icon: "🌙", titleKey: "analytics.dream.title", descKey: "analytics.dream.desc", href: "/ruya-analizi", theme: "from-violet-900/40 to-purple-950/60" },
+              { icon: "🔢", titleKey: "analytics.name_num.title", descKey: "analytics.name_num.desc", href: "/numeroloji", theme: "from-fuchsia-900/40 to-pink-950/60" },
+            ].map((tool, idx) => (
+              <Link key={tool.titleKey} href={tool.href} className="group">
                 <div className={`
-                  relative rounded-3xl p-8 text-center h-full flex flex-col items-center justify-center
-                  bg-gradient-to-br ${fal.theme} border border-white/10
-                  enhanced-glass transition-all duration-700 hover:scale-[1.1]
-                  hover:border-purple-500/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]
-                  fade-in-up group-hover:z-20
-                `} style={{ animationDelay: `${idx * 0.05}s` }}>
-                  
-                  {/* Floating Icon Container */}
-                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 
-                    group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 relative z-10">
-                    <CosmicIcon name={fal.id as any} size={48} />
+                  relative overflow-hidden rounded-[2.5rem] p-10 h-full 
+                  bg-gradient-to-br ${tool.theme} border border-white/10
+                  enhanced-glass hover:scale-[1.05] transition-all duration-700
+                  hover:border-purple-500/50 hover:shadow-[0_0_50px_rgba(168,85,247,0.25)]
+                  fade-in-up flex flex-col items-center text-center
+                `} style={{ animationDelay: `${idx * 0.1}s` }}>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-700 relative z-10 shadow-inner">
+                    <span className="text-5xl">{tool.icon}</span>
                   </div>
-                  
-                  <p className="text-white text-xs font-brand font-bold tracking-[0.2em] uppercase relative z-10 group-hover:text-purple-300 transition-colors">
-                    {t(fal.nameKey)}
+                  <h3 className="text-2xl font-brand font-bold text-white mb-4 tracking-wide relative z-10 group-hover:text-purple-300 transition-colors">
+                    {t(tool.titleKey)}
+                  </h3>
+                  <p className="text-gray-400 text-sm md:text-base leading-relaxed relative z-10 group-hover:text-gray-200 transition-colors">
+                    {t(tool.descKey)}
                   </p>
-                  
-                  {/* Subtle reveal hint */}
-                  <div className="mt-4 opacity-0 group-hover:opacity-100 transition-all duration-700 transform translate-y-2 group-hover:translate-y-0 relative z-10">
-                    <span className="text-[8px] font-bold text-white/40 tracking-[0.1em] uppercase">{t("fallar.explore.btn")}</span>
+                  <div className="mt-8 pt-6 border-t border-white/5 w-full relative z-10 opacity-0 group-hover:opacity-100 transition-all duration-700 transform translate-y-4 group-hover:translate-y-0">
+                    <span className="text-xs font-bold text-purple-400 tracking-[0.3em] uppercase">{t("analytics.cta")} →</span>
                   </div>
-
-                  {/* Background light spot */}
-                  <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all duration-700" />
                 </div>
               </Link>
             ))}
           </div>
-          <div className="text-center mt-12">
-            <Link href="/fallar">
-              <CosmicButton variant="ghost">{t("home.mystic.all")}</CosmicButton>
-            </Link>
+
+          {/* Kadim Sistemler: I Ching, Rünler, Kristal Küre */}
+          <div className="mt-16">
+            <h3 className="text-center text-2xl font-bold text-white mb-8 font-serif">{t("home.ancient.title")}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              {[
+                { id: "iching", nameKey: "fortune.iching.title", href: "/fallar/iching", theme: "from-emerald-900/40 to-emerald-950/60" },
+                { id: "runler", nameKey: "fortune.runler.title", href: "/fallar/runler", theme: "from-blue-900/40 to-blue-950/60" },
+                { id: "kristal", nameKey: "fortune.kristal.title", href: "/fallar/kristal", theme: "from-violet-900/40 to-violet-950/60" },
+              ].map((item, idx) => (
+                <Link key={item.id} href={item.href} className="group">
+                  <div className={`
+                    relative rounded-3xl p-8 text-center h-full flex flex-col items-center justify-center
+                    bg-gradient-to-br ${item.theme} border border-white/10
+                    enhanced-glass transition-all duration-700 hover:scale-[1.08]
+                    hover:border-purple-500/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]
+                    fade-in-up
+                  `} style={{ animationDelay: `${idx * 0.05}s` }}>
+                    <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 
+                      group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 relative z-10">
+                      <CosmicIcon name={item.id as any} size={48} />
+                    </div>
+                    <p className="text-white text-xs font-brand font-bold tracking-[0.2em] uppercase relative z-10 group-hover:text-purple-300 transition-colors">
+                      {t(item.nameKey)}
+                    </p>
+                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-3xl" />
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>

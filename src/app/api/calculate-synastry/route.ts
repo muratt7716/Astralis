@@ -1,16 +1,20 @@
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { calculateBirthChart, calculateSynastryAspects } from "@/lib/astrology";
 import { generateSynastryInterpretation, SupportedLanguage } from "@/lib/gemini";
- 
+
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const { person1, person2, language } = body;
-    
+
     const lang: SupportedLanguage = ["tr", "en", "ar", "de", "fr"].includes(language)
       ? (language as SupportedLanguage)
       : "tr";
- 
+
     if (!person1 || !person2) {
       const errorMsgs: Record<SupportedLanguage, string> = {
         tr: "Her iki kişinin de bilgileri gereklidir.",
@@ -42,11 +46,11 @@ export async function POST(request: NextRequest) {
 
     // 3. Generate Interpretation with Gemini
     let interpretation = null;
-    
-    if (process.env.GOOGLE_CLOUD_PROJECT) {
+
+    if (process.env.GOOGLE_CLOUD_PROJECT || process.env.GROQ_API_KEY) {
       interpretation = await generateSynastryInterpretation(chart1, chart2, synastryAspects, lang);
     }
-    
+
     // Fallback if Gemini fails
     if (!interpretation) {
       const fallbackDescs: Record<SupportedLanguage, string> = {

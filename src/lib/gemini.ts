@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { GoogleGenAI } from "@google/genai";
 
 // 1. Çevre değişkeninden JSON'ı ayrıştır
@@ -35,7 +36,7 @@ const languageNames: Record<SupportedLanguage, string> = {
 /**
  * Helper to call Gemini with a fallback model if the primary fails.
  */
-async function callGeminiWithFallback(prompt: string): Promise<string> {
+export async function callGeminiWithFallback(prompt: string): Promise<string> {
   const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
   let lastError: any;
 
@@ -77,7 +78,7 @@ function getDeterministicNumber(seed: string, min: number, max: number): number 
 /**
  * Generate daily/weekly/monthly/yearly horoscope reading
  */
-export async function generateHoroscope(
+async function _generateHoroscope(
   sign: string,
   signName: string,
   period: "daily" | "weekly" | "monthly" | "yearly",
@@ -144,7 +145,7 @@ QUALITY REQUIREMENTS:
 /**
  * Generate detailed birth chart interpretation
  */
-export async function generateBirthChartInterpretation(
+async function _generateBirthChartInterpretation(
   chartData: {
     sunSign: string;
     moonSign: string;
@@ -229,7 +230,7 @@ QUALITY REQUIREMENTS:
 /**
  * Generate relationship compatibility between two signs
  */
-export async function generateCompatibility(
+async function _generateCompatibility(
   sign1: string,
   sign1Name: string,
   sign2: string,
@@ -451,7 +452,7 @@ interface DivinationCard {
  * Generate an AI divination reading for text-based systems.
  * Uses standard 2.5-lite → 2.5-flash fallback.
  */
-export async function generateDivinationReading(
+async function _generateDivinationReading(
   type: DivinationType,
   cards: DivinationCard[],
   question: string,
@@ -527,7 +528,7 @@ QUALITY REQUIREMENTS:
  * Uses premium 3-model Vision chain: gemini-3-flash → 2.5-flash → 2.5-flash-lite
  * Includes dual-layer safety guardrails.
  */
-export async function generateCoffeeReading(
+async function _generateCoffeeReading(
   imageBase64: string,
   mimeType: string,
   question: string,
@@ -609,7 +610,7 @@ OUTPUT FORMAT:
  * Generate a virtual (no-photo) coffee reading.
  * Gemini imagines the symbols itself.
  */
-export async function generateVirtualCoffeeReading(
+async function _generateVirtualCoffeeReading(
   question: string,
   lang: SupportedLanguage,
   persona?: { name: string; style: string }
@@ -649,3 +650,11 @@ Write fluently and elegantly in ${langName}`;
     return null;
   }
 }
+
+// --- NEXT.JS NATIVE CACHING WRAPPERS ---
+export const generateHoroscope = unstable_cache(_generateHoroscope, ["__gemini_generateHoroscope"], { revalidate: 86400 });
+export const generateBirthChartInterpretation = unstable_cache(_generateBirthChartInterpretation, ["__gemini_generateBirthChartInterpretation"], { revalidate: 2592000 });
+export const generateCompatibility = unstable_cache(_generateCompatibility, ["__gemini_generateCompatibility"], { revalidate: 2592000 });
+export const generateCoffeeReading = unstable_cache(_generateCoffeeReading, ["__gemini_generateCoffeeReading"], { revalidate: 86400 });
+export const generateVirtualCoffeeReading = unstable_cache(_generateVirtualCoffeeReading, ["__gemini_generateVirtualCoffeeReading"], { revalidate: 86400 });
+export const generateDivinationReading = unstable_cache(_generateDivinationReading, ["__gemini_generateDivinationReading"], { revalidate: 86400 });

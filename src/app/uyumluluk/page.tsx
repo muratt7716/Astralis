@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { turkishCities } from "@/data/cities";
 import { countries } from "@/data/countries";
 import { useTranslation } from "@/lib/i18n";
@@ -14,6 +15,7 @@ import Logo from "@/components/Cosmic/Logo";
 import SynastryMatrix from "@/components/Cosmic/SynastryMatrix";
 import { calculateLifePath } from "@/lib/numerology/pythagoras";
 import { getLifePathCompatibility } from "@/lib/numerology/compatibility";
+import { calculateBiorhythmCompatibility } from "@/lib/biorhythm";
 
 const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
   const sign = getZodiacById(signId);
@@ -42,8 +44,10 @@ const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
   );
 };
 
-export default function UyumlulukPage() {
+function UyumlulukContent() {
   const { t, language } = useTranslation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -60,11 +64,11 @@ export default function UyumlulukPage() {
     day: "", month: "", year: "", hour: "", minute: "", country: "TR", city: "", manualCity: ""
   });
   
-  const [activeTab, setActiveTab] = useState<"simple" | "personal" | "matrix">("simple");
+  const [activeTab, setActiveTab] = useState<"simple" | "personal" | "matrix">((searchParams?.get("tab") as any) || "simple");
   
   // Simple Sign Compatibility State
-  const [sign1, setSign1] = useState<string>("");
-  const [sign2, setSign2] = useState<string>("");
+  const [sign1, setSign1] = useState(searchParams?.get("s1") || "");
+  const [sign2, setSign2] = useState(searchParams?.get("s2") || "");
   const [simpleResult, setSimpleResult] = useState<any>(null);
 
   const [result, setResult] = useState<any>(null);
@@ -73,6 +77,17 @@ export default function UyumlulukPage() {
 
   const updateP1 = (field: string, val: string) => setP1(prev => ({ ...prev, [field]: val }));
   const updateP2 = (field: string, val: string) => setP2(prev => ({ ...prev, [field]: val }));
+
+  
+  useEffect(() => {
+    if (searchParams?.get("s1") && searchParams?.get("s2") && activeTab === "simple") {
+       handleSimpleCalculate();
+    }
+  }, [searchParams]);
+
+  const pushState = (s1: string, s2: string) => {
+    router.push(`?tab=simple&s1=${s1}&s2=${s2}`, { scroll: false });
+  };
 
   const handleSimpleCalculate = async () => {
     if (!sign1 || !sign2) {
@@ -84,6 +99,7 @@ export default function UyumlulukPage() {
     setSimpleResult(null);
 
     try {
+      pushState(sign1, sign2);
       const res = await fetch(`/api/compatibility?lang=${language}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -610,6 +626,51 @@ export default function UyumlulukPage() {
               </div>
             )}
 
+            {/* Biorhythm Compatibility Integration */}
+            {p1.year && p2.year && (
+              <div className="glass-card mb-10 p-8 md:p-10 border-l-4 border-l-emerald-500 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] pointer-events-none" />
+                <h3 className="text-2xl font-black text-white mb-8 uppercase tracking-widest flex items-center gap-4 relative z-10">
+                  <span className="text-4xl text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">🧬</span> {t("bio.compat.title") || "Biyoritim Uyumu"}
+                </h3>
+                {(() => {
+                  const numMonth1 = parseInt(p1.month.padStart(2, '0')) - 1;
+                  const bd1 = new Date(parseInt(p1.year), numMonth1, parseInt(p1.day.padStart(2, '0')));
+                  const numMonth2 = parseInt(p2.month.padStart(2, '0')) - 1;
+                  const bd2 = new Date(parseInt(p2.year), numMonth2, parseInt(p2.day.padStart(2, '0')));
+                  const bCompat = calculateBiorhythmCompatibility(bd1, bd2);
+                  return (
+                    <div className="relative z-10">
+                      <p className="text-gray-300 text-sm md:text-base mb-8 max-w-2xl italic font-light">"{t("bio.compat.desc")}"</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
+                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 shadow-inner">
+                           <span className="text-emerald-500 text-4xl block mb-4 animate-pulse-slow">💪</span>
+                           <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest block mb-2">{t("bio.physical")}</span>
+                           <span className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{bCompat.physical}%</span>
+                        </div>
+                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-pink-500/30 hover:bg-pink-500/5 transition-all duration-300 shadow-inner">
+                           <span className="text-pink-500 text-4xl block mb-4 animate-pulse-slow">💗</span>
+                           <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest block mb-2">{t("bio.emotional")}</span>
+                           <span className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{bCompat.emotional}%</span>
+                        </div>
+                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 shadow-inner">
+                           <span className="text-blue-500 text-4xl block mb-4 animate-pulse-slow">🧠</span>
+                           <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest block mb-2">{t("bio.intellectual")}</span>
+                           <span className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{bCompat.intellectual}%</span>
+                        </div>
+                        <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-400/10 rounded-[2rem] p-6 border border-emerald-400/40 relative overflow-hidden group/star shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col justify-center">
+                           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/0 to-emerald-300/20 opacity-0 group-hover/star:opacity-100 transition-opacity" />
+                           <span className="text-white text-3xl md:text-4xl block mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">⭐</span>
+                           <span className="text-[11px] text-emerald-200 font-black uppercase tracking-widest block mb-2">{t("bio.compat.score")}</span>
+                           <span className="text-4xl font-black text-white drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]">{bCompat.average}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* Analysis Grid (Strengths & Challenges) */}
             <div className="grid md:grid-cols-2 gap-10">
               <div className="glass-card p-10 border-l-8 border-l-green-500 bg-gradient-to-br from-green-500/10 via-transparent to-black/10 shadow-2xl group hover:transform hover:translate-y-[-4px] transition-all duration-500">
@@ -740,4 +801,13 @@ export default function UyumlulukPage() {
     )}
   </div>
 );
+}
+
+
+export default function UyumlulukPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen cosmic-gradient" />}>
+      <UyumlulukContent />
+    </Suspense>
+  );
 }
