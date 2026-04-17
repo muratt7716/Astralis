@@ -26,9 +26,31 @@ export async function GET(request: Request) {
         },
       }
     );
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data: { session } } = await supabase.auth.exchangeCodeForSession(code);
+    
+    if (session?.user) {
+      // Check if profile exists
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        // Set a cookie to flag that the user has a profile
+        // This helps the middleware redirect without a DB lookup
+        cookieStore.set('has-profile', 'true', {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+          sameSite: 'lax',
+        });
+        
+        // User already has a profile, go to dashboard
+        return NextResponse.redirect(`${getURL()}profil`);
+      }
+    }
   }
 
-  // URL'e gidilecek yer: Onboarding sayfası
+  // New user or no profile found, go to onboarding
   return NextResponse.redirect(`${getURL()}onboarding`);
 }

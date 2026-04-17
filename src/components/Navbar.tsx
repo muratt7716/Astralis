@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from "@/lib/i18n";
-import { useAuth, signOut } from "@/lib/auth-helpers";
+import { useAuth } from "@/lib/auth-helpers";
 import { logInteraction, getActionByPath } from "@/lib/logging";
 import Logo from "@/components/Cosmic/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -30,7 +30,7 @@ export default function Navbar() {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);

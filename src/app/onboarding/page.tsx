@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { OnboardingForm } from "@/components/Cosmic/OnboardingForm";
-import { signInWithGoogle, updateProfile, uploadAvatar } from "@/lib/auth-helpers";
+import { useAuth, signInWithGoogle, updateProfile, uploadAvatar } from "@/lib/auth-helpers";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n";
@@ -27,42 +27,36 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { t, language, dir } = useTranslation();
   const isRTL = dir === "rtl";
+  const { user, profile, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [session, setSession] = useState<any>(null);
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        
-        if (profile) {
-          router.push("/profil");
-        }
-      }
-    });
+    if (!authLoading && user && profile) {
+      router.push("/profil");
+    }
+  }, [user, profile, authLoading, router]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router]);
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="space-y-4 text-center">
+          <div className="w-12 h-12 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto" />
+          <p className="text-[10px] text-white/20 uppercase tracking-[0.3em]">{t("profile.loading")}</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleOnboardingSubmit = async (formData: any) => {
-    if (!session) {
+    if (!user) {
       alert(t("onboarding.error.auth"));
       return;
     }
 
     setIsSubmitting(true);
     try {
-      let avatarUrl = session.user.user_metadata?.avatar_url;
+      let avatarUrl = user.user_metadata?.avatar_url;
 
       if (selectedAvatar) {
         const optimizedFile = await compressImage(selectedAvatar);
@@ -122,7 +116,7 @@ export default function OnboardingPage() {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full z-0" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/10 blur-[120px] rounded-full z-0" />
       
-      {!session ? (
+      {!user ? (
         <div className="relative z-10 w-full max-w-md p-8 rounded-[2.5rem] border border-white/10 bg-black/40 backdrop-blur-2xl text-center space-y-8 shadow-2xl">
           <div className="space-y-4">
              <h1 className="text-4xl font-brand font-bold text-white tracking-tight">{t("auth.login.title")}</h1>
@@ -147,8 +141,8 @@ export default function OnboardingPage() {
           imageSrc="https://images.pexels.com/photos/16880954/pexels-photo-16880954.jpeg"
           title={t("onboarding.title")}
           description={t("onboarding.desc")}
-          avatarFallback={session.user.email?.[0].toUpperCase()}
-          avatarSrc={session.user.user_metadata?.avatar_url}
+          avatarFallback={user.email?.[0].toUpperCase()}
+          avatarSrc={user.user_metadata?.avatar_url}
           inputPlaceholder={t("onboarding.username.placeholder")}
           buttonText={t("onboarding.btn.submit")}
           onAvatarChange={setSelectedAvatar}

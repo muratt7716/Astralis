@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { generateDeepCosmicInsight, SupportedLanguage } from "@/lib/gemini";
 import { calculateBirthChart, getCurrentCelestialEvents } from "@/lib/astrology";
 import fs from "fs/promises";

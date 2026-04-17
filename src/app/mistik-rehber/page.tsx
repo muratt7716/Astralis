@@ -91,7 +91,7 @@ export default function MistikRehberPage() {
   const router = useRouter();
   const isRTL = dir === "rtl";
 
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, updateProfile } = useAuth();
   const [activeIndex, setActiveIndex] = useState(0);
   const [selecting, setSelecting] = useState(false);
   const [direction, setDirection] = useState(0);
@@ -126,37 +126,14 @@ export default function MistikRehberPage() {
   }, []);
 
   const handleSelect = async () => {
-    console.log("handleSelect clicked! Current profile:", profile);
-    let currentProfile = profile;
-    if (!currentProfile) {
-      console.log("Profile missing, attempting to fetch...");
-      setSelecting(true);
-      try {
-        currentProfile = await getCurrentProfile();
-        console.log("Fetched profile:", currentProfile);
-      } catch (err) {
-        console.error("Profile fetch error:", err);
-      }
-    }
+    if (!user) return;
 
-    if (!currentProfile) {
-      setSelecting(false);
-      alert(t("onboarding.error.auth"));
-      return;
-    }
+    // 1. Instant optimistic update through context
+    // This will update the local state and cache immediately
+    updateProfile({ selected_guide_id: guide.id });
 
-    console.log("Proceeding with profile:", currentProfile.id, "Guide:", guide.id);
-    setSelecting(true);
-    try {
-      console.log("Calling updateProfile...");
-      await updateProfile({ selected_guide_id: guide.id });
-      console.log("updateProfile success! Redirecting...");
-      router.push("/profil");
-    } catch (err: any) {
-      console.error("Selection error:", err);
-      alert(t("onboarding.error.generic") + ": " + err.message);
-      setSelecting(false);
-    }
+    // 2. Instant redirection - No waiting for DB sync
+    router.push("/profil");
   };
 
   // Keyboard navigation
@@ -187,233 +164,261 @@ export default function MistikRehberPage() {
 
   return (
     <div
-      className={cn("min-h-screen bg-[#030303] text-white overflow-hidden relative", isRTL ? "rtl" : "ltr")}
+      className={cn("min-h-screen bg-[#030303] text-white overflow-y-auto lg:overflow-hidden relative selection:bg-purple-500/30", isRTL ? "rtl" : "ltr")}
       dir={dir}
       ref={containerRef}
     >
-      {/* Atmospheric background glow that changes with guide */}
+      {/* Premium Background Glow — Multi-layered for depth */}
       <AnimatePresence mode="wait">
         <motion.div
           key={guide.id + "-bg"}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+          transition={{ duration: 1.5 }}
           className="fixed inset-0 z-0 pointer-events-none"
         >
+          {/* Dynamic spotlights */}
           <div
-            className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[200px] opacity-20"
+            className="absolute top-[-10%] right-[-5%] w-[80%] h-[80%] rounded-full blur-[150px] opacity-20 transform-gpu"
             style={{ background: `radial-gradient(circle, ${guide.glow}, transparent 70%)` }}
           />
           <div
-            className="absolute bottom-[-30%] left-[-15%] w-[60%] h-[60%] rounded-full blur-[180px] opacity-10"
+            className="absolute bottom-[-20%] left-[-10%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-15 transform-gpu"
             style={{ background: `radial-gradient(circle, ${guide.glow}, transparent 70%)` }}
           />
-          {/* Grain overlay */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
+
+          {/* Atmospheric StarField simulation overlay */}
+          <div className="absolute inset-0 opacity-[0.15] mix-blend-screen overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30" />
+          </div>
+
+          {/* Grain for cinematic texture */}
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
         </motion.div>
       </AnimatePresence>
 
-      {/* Top bar */}
-      <div className="relative z-20 flex items-center justify-between px-6 md:px-12 pt-8">
+      {/* Navigation & Header Section */}
+      <header className="relative z-30 flex items-center justify-between px-6 md:px-12 py-6 max-w-7xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-white/30 hover:text-white transition-colors text-sm group"
+          className="group flex items-center gap-3 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08] text-white/40 hover:text-white hover:bg-white/[0.08] transition-all"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="hidden sm:inline font-light tracking-wide">{t("mistik.back")}</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest">{t("mistik.back")}</span>
         </button>
 
-        <div className="flex items-center gap-2 text-white/20 text-[10px] font-bold uppercase tracking-[0.4em]">
-          <Sparkles className="w-3 h-3" />
-          {t("mistik.guide_selection")}
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-2 text-white/10 text-[9px] font-bold uppercase tracking-[0.6em] mb-1">
+            <Sparkles className="w-3 h-3" />
+            V O I D S I G H T
+          </div>
+          <div className="text-white/40 text-[10px] font-mono tracking-widest bg-white/[0.03] px-3 py-1 rounded-full border border-white/[0.05]">
+            {String(activeIndex + 1).padStart(2, "0")} / {String(GUIDES.length).padStart(2, "0")}
+          </div>
         </div>
 
-        <div className="text-white/20 text-[10px] font-mono tracking-wider">
-          {String(activeIndex + 1).padStart(2, "0")} / {String(GUIDES.length).padStart(2, "0")}
-        </div>
-      </div>
+        <div className="w-24 hidden md:block" /> {/* Visual balance spacer */}
+      </header>
 
-      {/* Main content */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-center min-h-[calc(100vh-80px)] px-6 md:px-12 lg:px-20 gap-8 lg:gap-0">
+      {/* Hero Section — Optimized for Responsiveness */}
+      <main className="relative z-20 flex flex-col lg:flex-row items-center justify-center min-h-[calc(100vh-160px)] px-6 lg:px-12 pb-32 lg:pb-0 gap-12 lg:gap-20 max-w-[1600px] mx-auto">
 
-        {/* Left: Guide Image */}
-        <div className="relative w-full lg:w-1/2 flex items-center justify-center py-8 lg:py-0">
-          {/* Navigation arrows — desktop */}
-          <button
-            onClick={() => navigate(-1)}
-            className="hidden lg:flex absolute left-0 xl:left-8 z-30 w-14 h-14 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm items-center justify-center text-white/40 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+        {/* Visual Content (Avatar) */}
+        <div className="relative w-full lg:w-[45%] xl:w-[40%] flex items-center justify-center order-1 lg:order-none group/avatar-container">
 
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={guide.id}
               custom={direction}
-              initial={{ opacity: 0, x: direction > 0 ? 100 : -100, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: direction > 0 ? -100 : 100, scale: 0.9 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="relative"
+              initial={{ opacity: 0, x: direction > 0 ? 60 : -60, scale: 0.9, filter: "blur(20px)" }}
+              animate={{ opacity: 1, x: 0, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: direction > 0 ? -60 : 60, scale: 0.9, filter: "blur(20px)" }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full flex justify-center"
             >
-              {/* Glow ring behind avatar */}
-              <div
-                className="absolute inset-0 rounded-[3rem] blur-[80px] opacity-30 scale-110"
-                style={{ background: `linear-gradient(135deg, ${guide.glow}, transparent)` }}
-              />
+              {/* Decorative light arcs */}
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 -z-10 bg-gradient-to-tr from-purple-500/0 via-white/10 to-purple-500/0 blur-3xl opacity-30 h-[120%] w-[120%]" />
 
-              {/* Main image container */}
-              <div className="relative w-[280px] h-[380px] sm:w-[320px] sm:h-[440px] lg:w-[380px] lg:h-[520px] rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl group isolate transform-gpu">
-                <img
-                  src={guide.image}
-                  alt={guide.name}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                {/* Bottom gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+              {/* Premium Card Design — 1:1 Square Aspect Ratio for Zero Cropping */}
+              <div className="relative group perspective-2000">
+                <div className="relative w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[480px] lg:h-[480px] xl:w-[580px] xl:h-[580px] 2xl:w-[640px] 2xl:h-[640px] rounded-[3rem] p-[1.5px] overflow-hidden bg-gradient-to-b from-white/30 to-transparent transition-transform duration-1000 ease-out-expo hover:rotate-y-6 shadow-[0_40px_100px_rgba(0,0,0,0.9)]">
+                  <div className="absolute inset-0 bg-[#070707] rounded-[3rem]" />
+                  
+                  {/* Image — No zoom, perfect 1:1 match */}
+                  <div className="relative w-full h-full rounded-[3rem] overflow-hidden">
+                    <img
+                      src={guide.image}
+                      alt={guide.name}
+                      className="absolute inset-0 w-full h-full object-cover opacity-90 transition-all duration-1000"
+                    />
 
-                {/* Quote overlay */}
-                <div className="absolute bottom-0 inset-x-0 p-8">
-                  <p className="text-white/60 text-sm italic font-serif leading-relaxed">
-                    &ldquo;{guide.quote}&rdquo;
-                  </p>
+                    {/* Shadow & Gradient Overlays */}
+                    <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-transparent opacity-60" />
+
+                    {/* Badge */}
+                    <div className={cn("absolute top-8 right-8 w-14 h-14 rounded-3xl flex items-center justify-center backdrop-blur-2xl border border-white/10 shadow-2xl transition-all duration-700 group-hover:scale-110", guide.accentBg)}>
+                      <GuideIcon className={cn("w-6 h-6 drop-shadow-glow", guide.accentText)} />
+                    </div>
+
+                    {/* Bottom Info Overlay */}
+                    <div className="absolute bottom-0 inset-x-0 p-10 space-y-6">
+                      <div className="space-y-2">
+                        <div className={cn("text-[10px] sm:text-[11px] font-black uppercase tracking-[0.4em]", guide.accentText)}>
+                          {guide.title}
+                        </div>
+                        <h2 className="text-4xl sm:text-5xl font-brand font-bold text-white tracking-tighter leading-none">
+                          {guide.name}
+                        </h2>
+                      </div>
+                      <p className="text-white/60 text-sm sm:text-base italic font-light leading-relaxed max-w-[90%]">
+                        &ldquo;{guide.quote}&rdquo;
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Icon badge */}
-                <div className={cn("absolute top-6 right-6 w-12 h-12 rounded-2xl flex items-center justify-center backdrop-blur-md border", guide.accentBg, guide.accentBorder)}>
-                  <GuideIcon className={cn("w-5 h-5", guide.accentText)} />
-                </div>
+                {/* Ground reflection */}
+                <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[90%] h-40 bg-gradient-to-b from-white/10 to-transparent blur-3xl opacity-30 -z-10" />
               </div>
             </motion.div>
           </AnimatePresence>
 
-          <button
-            onClick={() => navigate(1)}
-            className="hidden lg:flex absolute right-0 xl:right-8 z-30 w-14 h-14 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm items-center justify-center text-white/40 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
 
-        {/* Right: Guide Info */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start lg:pl-12 xl:pl-20 pb-12 lg:pb-0">
+        {/* Info Content (About Guide) */}
+        <div className="w-full lg:w-[55%] xl:w-[50%] flex flex-col items-center lg:items-start text-center lg:text-left order-2 lg:order-none pb-12 lg:pb-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={guide.id + "-info"}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-              className="max-w-md text-center lg:text-left"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="max-w-xl w-full flex flex-col items-center lg:items-start"
             >
-              {/* Title label */}
-              <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.25em] mb-6", guide.accentBg, guide.accentBorder, guide.accentText)}>
-                <GuideIcon className="w-3 h-3" />
-                {guide.title}
-              </div>
-
-              {/* Name */}
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-brand font-bold tracking-tight mb-6">
-                <span className={cn("bg-gradient-to-r bg-clip-text text-transparent", guide.gradient)}>
-                  {guide.name}
-                </span>
-              </h1>
-
-              {/* Bio */}
-              <p className="text-white/40 text-base lg:text-lg leading-relaxed font-light mb-8">
+              {/* Bio Description */}
+              <p className="text-white/60 text-lg md:text-xl leading-relaxed font-light mb-8 lg:mb-12 px-6 lg:px-0 max-w-lg">
                 {guide.bio}
               </p>
 
               {/* Traits */}
-              <div className="flex flex-wrap gap-2 mb-10 justify-center lg:justify-start">
+              <div className="flex flex-wrap gap-3 mb-10 lg:mb-16 justify-center lg:justify-start">
                 {guide.traits.map(trait => (
                   <span
                     key={trait}
-                    className="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] font-bold text-white/50 uppercase tracking-[0.15em]"
+                    className="px-6 py-2 rounded-full bg-white/[0.03] border border-white/[0.08] text-[11px] font-bold text-white/50 uppercase tracking-[0.2em] hover:bg-white/[0.08] hover:text-white transition-all cursor-default"
                   >
                     {trait}
                   </span>
                 ))}
               </div>
 
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center lg:items-start">
+              {/* Selection Button */}
+              <div className="w-full sm:w-auto px-6 lg:px-0 z-40">
                 <button
                   onClick={handleSelect}
                   disabled={selecting}
                   className={cn(
-                    "relative h-16 px-10 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all duration-300 overflow-hidden group",
-                    "bg-white text-black hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.25)] active:scale-[0.97]",
-                    selecting && "opacity-60 pointer-events-none"
+                    "relative w-full lg:w-[320px] h-20 rounded-3xl font-black text-[13px] uppercase tracking-[0.25em] transition-all duration-700 group overflow-hidden shadow-[0_20px_60px_-15px_rgba(255,255,255,0.15)]",
+                    "bg-white text-black hover:bg-white/90 active:scale-95",
+                    selecting && "opacity-50 pointer-events-none"
                   )}
                 >
-                  <span className="relative z-10 flex items-center gap-3">
-                    {!profile && !selecting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : selecting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="relative z-10 flex items-center justify-center gap-4">
+                    {selecting ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : profile?.selected_guide_id === guide.id ? (
+                      <Zap className="w-5 h-5 fill-current" />
                     ) : (
-                      <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className="w-5 h-5" />
                     )}
-                    {!profile && !selecting ? "Yükleniyor..." : profile?.selected_guide_id === guide.id ? t("mistik.current_guide") : t("mistik.select_guide")}
+                    {selecting ? "Transmisyona Bağlanılıyor..." : profile?.selected_guide_id === guide.id ? "Şu Anki Rehberin" : "Bu Rehberi Seç"}
                   </span>
+
+                  {/* Subtle shine effect */}
+                  <div className="absolute top-0 -inset-x-full h-full w-1/2 z-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 group-hover:animate-shine" />
                 </button>
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
+      </main>
 
-      {/* Bottom: Guide Thumbnails */}
-      <div className="fixed bottom-0 inset-x-0 z-30 pointer-events-none">
-        <div className="flex items-end justify-center gap-3 pb-8 px-6 pointer-events-auto">
-          {GUIDES.map((g, i) => {
-            const isActive = i === activeIndex;
-            return (
-              <button
-                key={g.id}
-                onClick={() => { setDirection(i > activeIndex ? 1 : -1); setActiveIndex(i); }}
-                className={cn(
-                  "relative rounded-2xl overflow-hidden transition-all duration-500 border-2",
-                  isActive
-                    ? "w-16 h-20 sm:w-20 sm:h-24 border-white/40 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.5)]"
-                    : "w-12 h-16 sm:w-14 sm:h-18 border-white/[0.06] opacity-40 hover:opacity-70 hover:border-white/15"
-                )}
-              >
-                <img
-                  src={g.image}
-                  alt={g.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                {isActive && (
-                  <motion.div
-                    layoutId="guide-indicator"
-                    className="absolute inset-x-0 bottom-0 h-1"
-                    style={{ background: `linear-gradient(to right, ${g.glow}, transparent)` }}
-                  />
-                )}
-              </button>
-            );
-          })}
+      {/* Modern Horizontal Pager Navigation */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 bg-gradient-to-t from-black via-black/80 to-transparent pb-8 pt-20 px-4">
+        <div className="max-w-md mx-auto relative">
+          {/* Scrollable container for thumbnails */}
+          <div className="flex items-center justify-center gap-4 overflow-x-auto no-scrollbar py-4 px-2">
+            {GUIDES.map((g, i) => {
+              const isActive = i === activeIndex;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => { setDirection(i > activeIndex ? 1 : -1); setActiveIndex(i); }}
+                  className={cn(
+                    "group relative flex-shrink-0 transition-all duration-500",
+                    isActive ? "scale-110" : "scale-90 hover:scale-95 grayscale opacity-30 hover:grayscale-0 hover:opacity-100"
+                  )}
+                >
+                  {/* Thumbnail Ring */}
+                  <div className={cn(
+                    "w-12 h-12 md:w-16 md:h-16 rounded-2xl p-[1px] transition-all duration-500",
+                    isActive ? "bg-gradient-to-tr from-white to-white/20" : "bg-white/5"
+                  )}>
+                    <div className="w-full h-full rounded-2xl overflow-hidden bg-black/40">
+                      <img src={g.image} alt={g.name} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+
+                  {/* Tooltip-like Indicator */}
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-nav-dot"
+                        className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white shadow-[0_0_10px_white]"
+                      />
+                    )}
+                  </AnimatePresence>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile Arrows — Positioned safely outside thumbnails */}
+          <div className="lg:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none px-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 pointer-events-auto active:scale-90 transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => navigate(1)}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 pointer-events-auto active:scale-90 transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile swipe navigation */}
-      <div className="lg:hidden fixed bottom-28 inset-x-0 z-20 flex items-center justify-center gap-6 pointer-events-none">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-12 h-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white active:scale-90 transition-all pointer-events-auto"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => navigate(1)}
-          className="w-12 h-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white active:scale-90 transition-all pointer-events-auto"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
+      <style jsx global>{`
+        .perspective-1000 { perspective: 1000px; }
+        .rotate-y-2:hover { transform: rotateY(8deg) rotateX(2deg); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .drop-shadow-glow { filter: drop-shadow(0 0 10px currentColor); }
+        @keyframes shine {
+          0% { left: -100%; transition-property: left; }
+          100% { left: 100%; transition-property: left; }
+        }
+        .animate-shine {
+          animation: shine 1.5s ease-in-out infinite;
+        }
+        .ease-out-expo { transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+      `}</style>
     </div>
   );
 }

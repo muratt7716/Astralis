@@ -1,5 +1,6 @@
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
   generateDivinationReading,
   generateCoffeeReading,
@@ -18,10 +19,7 @@ export async function POST(req: NextRequest) {
 
     const { type, cards, question, language, imageBase64, mimeType, virtual, persona, userId } = body;
     
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "Kullanıcı kimliği gerekli." }, { status: 400 });
-    }
-
+    // Proceed even without userId, but logging will be skipped for anonymous/flickering sessions
     const lang = (language || "tr") as SupportedLanguage;
 
     let result: any = null;
@@ -39,7 +37,6 @@ export async function POST(req: NextRequest) {
     // New: Logical logging to interaction_logs
     if (userId) {
       try {
-        const { supabaseAdmin } = await import("@/lib/supabase");
         // Normalize types to match logging.ts and ProfilePage icons
         const typeMap: Record<string, string> = {
           "rune": "runler",

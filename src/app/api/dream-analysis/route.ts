@@ -1,6 +1,7 @@
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { callGeminiWithFallback, SupportedLanguage } from "@/lib/gemini";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: NextRequest) {
   const rateLimitResponse = checkRateLimit(request);
@@ -83,7 +84,6 @@ CRITICAL RULES:
 
     if (userId) {
       try {
-        const { supabaseAdmin } = await import("@/lib/supabase");
         await supabaseAdmin.from("interaction_logs").insert({
           user_id: userId,
           action_type: "dream",

@@ -1,173 +1,32 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, getCurrentProfile, updateProfile, uploadAvatar, signOut } from "@/lib/auth-helpers";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import useSWR from 'swr';
+import { useAuth, uploadAvatar } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
-import { compressImage } from "@/lib/image-utils";
-import { getZodiacByDate, zodiacSigns } from "@/data/zodiac";
-import { getPlanetById } from "@/data/planets";
-import { calculateBirthChart } from "@/lib/astrology";
-import { logInteraction } from "@/lib/logging";
-import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import PlanetIcon from "@/components/PlanetIcon";
-import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
-import {
-  User,
-  Calendar,
-  MapPin,
-  Clock,
-  Save,
-  Upload,
-  Loader2,
-  Sparkles,
-  MessageSquare,
-  Globe,
-  ChevronRight,
-  Hash,
-  CheckCircle2,
-  X,
-  LogOut,
-  Orbit,
-  Sun,
-  Moon,
-  Sunrise,
-  Heart,
-  Shield,
-  Zap,
-  Flame,
-  Waves,
-  Target,
-  Anchor,
-  RefreshCw,
-  Eye,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 
-// --- Constants ---
-
-const GUIDES = [
-  {
-    id: "melisa", name: "Melisa", image: "/avatars/melisa.png", role: "Empatik Rehber",
-    bio: "Hayatın her alanındaki olaylara kalbinin gözüyle bakar. Şefkat ve derin bir empatiyle yaklaşır.",
-    traits: ["Empatik", "Şefkatli", "Duygusal Zeka"],
-    gradient: "from-rose-500/20 to-pink-500/20", accent: "text-rose-400", glow: "rgba(244,63,94,0.3)",
-    borderAccent: "border-rose-500/30", bgAccent: "bg-rose-500/10",
-  },
-  {
-    id: "aras", name: "Aras", image: "/avatars/aras.png", role: "Pragmatik Analist",
-    bio: "Karmaşık durumları keskin mantık süzgecinden geçirir. Net ve stratejik tavsiyeler verir.",
-    traits: ["Rasyonel", "Net", "Stratejik"],
-    gradient: "from-blue-500/20 to-cyan-500/20", accent: "text-blue-400", glow: "rgba(59,130,246,0.3)",
-    borderAccent: "border-blue-500/30", bgAccent: "bg-blue-500/10",
-  },
-  {
-    id: "umut", name: "Umut", image: "/avatars/umut.png", role: "Dostane Eleştirmen",
-    bio: "En dürüst aynayı tutan modern bir dost. Esprileriyle dağıtır, gerçekleri yüzünüze çarpar.",
-    traits: ["Dürüst", "Esprili", "Samimi"],
-    gradient: "from-amber-500/20 to-orange-500/20", accent: "text-amber-400", glow: "rgba(245,158,11,0.3)",
-    borderAccent: "border-amber-500/30", bgAccent: "bg-amber-500/10",
-  },
-  {
-    id: "hekate", name: "Hekate", image: "/avatars/hekate.png", role: "Kadim Bilge",
-    bio: "Kadim sembollerin ve ruhsal şifanın derin bilgisine sahip. Bin yıllık bilgelikle yaklaşır.",
-    traits: ["Mistik", "Bilge", "Gözlemci"],
-    gradient: "from-violet-500/20 to-purple-500/20", accent: "text-violet-400", glow: "rgba(139,92,246,0.3)",
-    borderAccent: "border-violet-500/30", bgAccent: "bg-violet-500/10",
-  },
-  {
-    id: "selin", name: "Selin", image: "/avatars/selin.png", role: "Modern Gözlemci",
-    bio: "Yaşamı matematiksel ve astrolojik kesinlikle analiz eder. Nokta atışı öngörüler sunar.",
-    traits: ["Analitik", "Detaycı", "Dakik"],
-    gradient: "from-emerald-500/20 to-teal-500/20", accent: "text-emerald-400", glow: "rgba(16,185,129,0.3)",
-    borderAccent: "border-emerald-500/30", bgAccent: "bg-emerald-500/10",
-  },
-];
-
-const ALL_TOOLS = [
-  { id: "astrology", name: "Doğum Haritası", icon: <CosmicIcon name="birthchart" size={20} />, href: "/dogum-haritasi", color: "text-amber-400", bg: "bg-amber-500/10" },
-  { id: "dream", name: "Rüya Analizi", icon: <CosmicIcon name="dream" size={20} />, href: "/ruya-analizi", color: "text-purple-400", bg: "bg-purple-500/10" },
-  { id: "bio", name: "Biyoritim", icon: <CosmicIcon name="biorhythm" size={20} />, href: "/biyoritim", color: "text-cyan-400", bg: "bg-cyan-500/10" },
-  { id: "sphere", name: "Kristal Küre", icon: <CosmicIcon name="kristal" size={20} />, href: "/fallar/kristal", color: "text-rose-400", bg: "bg-rose-500/10" },
-  { id: "numerology", name: "Numeroloji", icon: <CosmicIcon name="numerology" size={20} />, href: "/numeroloji", color: "text-indigo-400", bg: "bg-indigo-500/10" },
-];
-
-const LANGUAGES = [
-  { code: "tr", name: "Türkçe" },
-  { code: "en", name: "English" },
-  { code: "de", name: "Deutsch" },
-  { code: "fr", name: "Français" },
-  { code: "es", name: "Español" },
-];
-
-const RELATIONSHIP_KEYS = [
-  { value: "single", key: "profile.rel.single" },
-  { value: "relationship", key: "profile.rel.relationship" },
-  { value: "complicated", key: "profile.rel.complicated" },
-  { value: "married", key: "profile.rel.married" },
-  { value: "platonik", key: "profile.rel.platonik" },
-];
-
-const LIFE_FOCUS_KEYS = [
-  { value: "general", key: "profile.focus.general" },
-  { value: "love", key: "profile.focus.love" },
-  { value: "career", key: "profile.focus.career" },
-  { value: "health", key: "profile.focus.health" },
-  { value: "spiritual", key: "profile.focus.spiritual" },
-];
-
-// --- Section label component ---
-function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("flex items-center gap-3 mb-6", className)}>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/25">{children}</span>
-      <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
-    </div>
-  );
-}
-
-// --- Toast ---
-function Toast({ message, visible, onClose }: { message: string; visible: boolean; onClose: () => void }) {
-  useEffect(() => {
-    if (visible) { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }
-  }, [visible, onClose]);
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl bg-emerald-500/90 backdrop-blur-xl text-white text-sm font-medium shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] flex items-center gap-2"
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          {message}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-// --- Utils ---
-const normalizePlanetId = (name: string) => {
-  const map: Record<string, string> = {
-    "güneş": "gunes",
-    "ay": "ay",
-    "merkür": "merkur",
-    "venüs": "venus",
-    "mars": "mars",
-    "jüpiter": "jupiter",
-    "satürn": "saturn",
-    "uranüs": "uranus",
-    "neptün": "neptun",
-    "plüton": "pluton"
-  };
-  return map[name.toLowerCase()] || name.toLowerCase();
+// SWR Fetcher
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API fetch failed');
+  return res.json();
 };
+import { compressImage } from "@/lib/image-utils";
+import { getZodiacByDate } from "@/data/zodiac";
+import { calculateBirthChart } from "@/lib/astrology";
+
+// Components
+import { ProfileHero } from "@/components/Profile/ProfileHero";
+import { DailyInsight } from "@/components/Profile/DailyInsight";
+import { CosmicStats } from "@/components/Profile/CosmicStats";
+import { ActiveGuideCard } from "@/components/Profile/ActiveGuideCard";
+import { ActivityFeed, ActivityDetailModal } from "@/components/Profile/ActivityFeed";
+import { SettingsDrawer } from "@/components/Profile/SettingsDrawer";
+import { Toast } from "@/components/Profile/ProfileUI";
+
+// Constants
+import { GUIDES } from "@/components/Profile/ProfileConstants";
 
 // ============================
 // MAIN COMPONENT
@@ -176,47 +35,46 @@ const normalizePlanetId = (name: string) => {
 export default function ProfilePage() {
   const router = useRouter();
   const { t, dir } = useTranslation();
-  const isRTL = dir === "rtl";
-  const { user, profile: authProfile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, signOut, updateProfile } = useAuth();
 
   const [saving, setSaving] = useState(false);
-  
-  // Initial Identity State (Must be null at start to match Server SSR)
-  const [profile, setProfile] = useState<any>(null);
-  const [activeGuideId, setActiveGuideId] = useState<string>("melisa");
-  const [horoscopeData, setHoroscopeData] = useState<any>(null);
-  const [topToolIds, setTopToolIds] = useState<string[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
+  // Date for SWR Key (Europe/Istanbul)
+  const today = useMemo(() => new Intl.DateTimeFormat('tr-TR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Europe/Istanbul'
+  }).format(new Date()).split('.').reverse().join('-'), []);
 
-  // Synchronous Hydration from Cache (Client-Only)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // SWR Hooks
+  const { data: horoscopeRes, isValidating: fetchingHoroscope } = useSWR(
+    user?.id ? `/api/ai/daily-horoscope?userId=${user.id}&lang=${profile?.language || 'tr'}&d=${today}` : null,
+    fetcher,
+    { revalidateOnFocus: false, revalidateIfStale: false }
+  );
 
-    // Load Profile
-    const cachedProfile = localStorage.getItem("last-cosmic-profile");
-    if (cachedProfile) {
-      const parsed = JSON.parse(cachedProfile);
-      setProfile(parsed);
-      setActiveGuideId(parsed.selected_guide_id || "melisa");
-      
-      // Load Dependent Strings
-      const cachedTools = localStorage.getItem(`top-tools-${parsed.id}`);
-      const cachedActs = localStorage.getItem(`activities-${parsed.id}`);
-      const cachedHoro = localStorage.getItem(`horoscope-${parsed.id}`);
-      
-      if (cachedTools) setTopToolIds(JSON.parse(cachedTools));
-      if (cachedActs) setActivities(JSON.parse(cachedActs));
-      if (cachedHoro) setHoroscopeData(JSON.parse(cachedHoro));
-    }
-  }, []);
+  const { data: activityRes } = useSWR(
+    user?.id ? `/api/user/activity?userId=${user.id}&limit=5` : null,
+    fetcher
+  );
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
-  const [fetchingHoroscope, setFetchingHoroscope] = useState(false);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
+  const { data: toolsRes } = useSWR(
+    user?.id ? `/api/user/top-tools?userId=${user.id}` : null,
+    fetcher
+  );
+
+  // Derived data
+  const horoscopeData = useMemo(() => horoscopeRes?.horoscope || horoscopeRes, [horoscopeRes]);
+  const activities = useMemo(() => activityRes?.activities || (Array.isArray(activityRes) ? activityRes : []), [activityRes]);
+  const topToolIds = useMemo(() => toolsRes?.toolIds || [], [toolsRes]);
+
+  // UI States (Restored)
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastVisible, setToastVisible] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -228,180 +86,68 @@ export default function ProfilePage() {
     language: "tr",
   });
 
-  const showToast = useCallback((msg: string) => {
-    setToastMsg(msg);
-    setToastVisible(true);
-  }, []);
-
-  const getCachedData = useCallback(() => {
-    if (typeof window === 'undefined') return { activities: [], topTools: [], horoscope: null };
-    const savedActivities = localStorage.getItem(`activities-${user?.id}`);
-    const savedTools = localStorage.getItem(`top-tools-${user?.id}`);
-    const savedHoroscope = localStorage.getItem(`horoscope-${user?.id}`);
-    return {
-      activities: savedActivities ? JSON.parse(savedActivities) : [],
-      topTools: savedTools ? JSON.parse(savedTools) : [],
-      horoscope: savedHoroscope ? JSON.parse(savedHoroscope) : null
-    };
-  }, [user?.id]);
-
-  // Handle Navbar visibility toggling for settings
   useEffect(() => {
-    if (settingsOpen) {
-      document.documentElement.classList.add('hide-nav');
-    } else {
-      document.documentElement.classList.remove('hide-nav');
-    }
-    return () => document.documentElement.classList.remove('hide-nav');
-  }, [settingsOpen]);
-
-  const fetchDynamicData = useCallback(async (userId: string, currentProfile?: any) => {
-    const today = new Date().toISOString().split("T")[0];
-    const cachedHoroscope = currentProfile?.daily_horoscope;
-    const hasValidHoroscope = cachedHoroscope?.date === today && cachedHoroscope?.language === (currentProfile?.language || 'tr');
-
-    // If we have a valid horoscope in the profile, don't show the initial loader
-    if (!hasValidHoroscope || !horoscopeData) {
-      setFetchingHoroscope(true);
-    }
-
-    try {
-      // 1. Fetch Horoscope (Potentially slow, don't let it block others if it's already in cache)
-      const fetchHoroscope = async () => {
-        try {
-          const hRes = await fetch(`/api/ai/daily-horoscope?userId=${userId}`);
-          const hData = await hRes.json();
-          if (hData.horoscope) {
-            setHoroscopeData(hData.horoscope);
-            localStorage.setItem(`horoscope-${userId}`, JSON.stringify(hData.horoscope));
-          }
-        } catch (e) { console.error("Horoscope fetch failed", e); }
-        finally { setFetchingHoroscope(false); }
-      };
-
-      // 2. Fetch Tools & Activities (Fast, update UI immediately)
-      const fetchGenericData = async () => {
-        try {
-          // Add cache-busting timestamp
-          const ts = Date.now();
-          const [tRes, aRes] = await Promise.all([
-            fetch(`/api/user/top-tools?userId=${userId}&_=${ts}`),
-            fetch(`/api/user/activity?userId=${userId}&_=${ts}`),
-          ]);
-          const [tData, aData] = await Promise.all([tRes.json(), aRes.json()]);
-
-          if (tData.topTools) {
-            setTopToolIds(tData.topTools);
-            localStorage.setItem(`top-tools-${userId}`, JSON.stringify(tData.topTools));
-          }
-
-          if (aData.activities) {
-            console.log("[Profile] Fetched Activities for user:", userId, aData.activities);
-            setActivities(aData.activities);
-            localStorage.setItem(`activities-${userId}`, JSON.stringify(aData.activities));
-          }
-        } catch (e) { console.error("Generic data fetch failed", e); }
-      };
-
-      // Kick both off, but hHoroscope won't block the UI for tools/activities
-      fetchHoroscope();
-      fetchGenericData();
-
-    } catch (err) {
-      console.error("Dynamic data fetch failed", err);
-      setFetchingHoroscope(false);
-    }
-  }, []); // Fixed: Removed horoscopeData to prevent loops
-
-  // 1. Unified Identity Trace
-  const displayProfile = profile || authProfile;
-
-  // 2. Identity Synchronization & Redirects
-  useEffect(() => {
-    // Definitive log-out check
     if (!authLoading && !user) {
       router.push("/onboarding");
       return;
     }
 
-    // Sync from Auth Provider to Local State + Cache
-    if (authProfile) {
-      setProfile(authProfile);
-      localStorage.setItem("last-cosmic-profile", JSON.stringify(authProfile));
-      
-      setFormData(prev => ({
-        ...prev,
-        full_name: authProfile.full_name || "",
-        birth_date: authProfile.birth_date || "",
-        birth_time: authProfile.birth_time || "",
-        birth_city: authProfile.birth_city || "",
-        relationship_status: authProfile.relationship_status || "single",
-        life_focus: authProfile.life_focus || "general",
-        language: authProfile.language || "tr",
-      }));
-
-      fetchDynamicData(user.id, authProfile);
-    } 
-    // Handle authenticated user with NO profile record (prevent hang)
-    else if (!authLoading && user && !profile) {
-      console.warn("User logged in but profile missing. Escaping to onboarding.");
-      router.push("/onboarding");
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        birth_date: profile.birth_date || "",
+        birth_time: profile.birth_time || "",
+        birth_city: profile.birth_city || "",
+        relationship_status: profile.relationship_status || "single",
+        life_focus: profile.life_focus || "general",
+        language: profile.language || "tr",
+      });
     }
-  }, [user, authProfile, authLoading, router, fetchDynamicData]);
+  }, [user, profile, authLoading, router]);
 
-  // 5. Derived Data Memos
+  // Derived Data
   const zodiacSign = useMemo(() => {
-    const dDate = displayProfile?.birth_date;
+    const dDate = profile?.birth_date;
     if (!dDate) return null;
     const d = new Date(dDate);
     return getZodiacByDate(d.getMonth() + 1, d.getDate());
-  }, [displayProfile?.birth_date]);
+  }, [profile?.birth_date]);
 
   const birthChart = useMemo(() => {
-    if (!displayProfile?.birth_date || !displayProfile?.birth_time) return null;
+    if (!profile?.birth_date || !profile?.birth_time) return null;
     try {
-      const d = new Date(displayProfile.birth_date);
-      const [h, m] = displayProfile.birth_time.split(":").map(Number);
+      const d = new Date(profile.birth_date);
+      const [h, m] = profile.birth_time.split(":").map(Number);
       return calculateBirthChart(
         d.getFullYear(), d.getMonth() + 1, d.getDate(),
         h, m,
-        displayProfile.latitude || 39.9, displayProfile.longitude || 32.8
+        profile.latitude || 39.9, profile.longitude || 32.8
       );
     } catch { return null; }
-  }, [displayProfile]);
+  }, [profile]);
 
-  const risingSignName = birthChart?.risingSign?.name || displayProfile?.rising_sign || null;
-  const risingSignId = birthChart?.risingSign?.id || zodiacSigns.find(z => z.name === displayProfile?.rising_sign)?.id || null;
-  const moonSignName = birthChart?.moonSign?.name || displayProfile?.moon_sign || null;
-  const moonSignId = birthChart?.moonSign?.id || zodiacSigns.find(z => z.name === displayProfile?.moon_sign)?.id || null;
+  const risingSignName = birthChart?.risingSign?.name || profile?.rising_sign || null;
+  const risingSignId = birthChart?.risingSign?.id || null;
+  const moonSignName = birthChart?.moonSign?.name || profile?.moon_sign || null;
+  const moonSignId = birthChart?.moonSign?.id || null;
 
-  const topTools = useMemo(() => {
-    if (topToolIds.length === 0) return [];
-    return topToolIds.map(id => ALL_TOOLS.find(t => t.id === id)).filter(Boolean);
-  }, [topToolIds]);
+  const activeGuide = useMemo(() => 
+    GUIDES.find(g => g.id === (profile?.selected_guide_id || "melisa")) || GUIDES[0], 
+  [profile?.selected_guide_id]);
 
-  const activeGuide = useMemo(() => GUIDES.find(g => g.id === activeGuideId) || GUIDES[0], [activeGuideId]);
-
-  // 6. Resilient Loading & Safety Returns
-  if (!displayProfile && authLoading) {
-    return (
-      <div className="min-h-screen bg-[#050508] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 text-white/20 animate-spin" />
-          <p className="text-white/20 text-xs tracking-[0.3em] uppercase">{t("profile.loading")}</p>
-        </div>
-      </div>
-    );
+  if (!profile && authLoading) {
+    return <div className="min-h-screen bg-[#050508] flex items-center justify-center text-white/20">Loading...</div>;
   }
 
-  if (!displayProfile && !authLoading) return null;
+  if (!profile && !authLoading) return null;
 
-  // 7. Handlers
+  // Handlers
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedAvatar(file);
       setPreviewUrl(URL.createObjectURL(file));
+      showToast(t("profile.avatar_ready"));
     }
   };
 
@@ -409,847 +155,101 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      let avatarUrl = displayProfile.avatar_url;
+      let avatarUrl = profile.avatar_url;
       if (selectedAvatar) {
-        const optimizedFile = await compressImage(selectedAvatar);
-        avatarUrl = await uploadAvatar(optimizedFile);
+        const optimized = await compressImage(selectedAvatar);
+        avatarUrl = await uploadAvatar(optimized);
       }
-      const isLangChanged = formData.language !== displayProfile.language;
       await updateProfile({ ...formData, avatar_url: avatarUrl });
-      const updated = await getCurrentProfile();
-      setProfile(updated);
-      if (isLangChanged) fetchDynamicData(displayProfile.id);
       showToast(t("profile.saved"));
       setSettingsOpen(false);
     } catch (err: any) {
-      showToast("Hata: " + err.message);
+      showToast("Error: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSelectGuide = async (id: string) => {
-    setActiveGuideId(id);
-    try {
-      await updateProfile({ selected_guide_id: id });
-      logInteraction(displayProfile.id, "select_guide", `Guide selected: ${id}`);
-      showToast(`${GUIDES.find(g => g.id === id)?.name} ${t("profile.guide_selected")}`);
-    } catch (err) {
-      console.error("Failed to save guide selection", err);
-    }
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setToastVisible(true);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
+  const normalizePlanetId = (name: string) => {
+    const map: Record<string, string> = { "güneş": "gunes", "ay": "ay", "merkür": "merkur", "venüs": "venus", "mars": "mars", "jüpiter": "jupiter", "satürn": "saturn", "uranüs": "uranus", "neptün": "neptun", "plüton": "pluton" };
+    return map[name.toLowerCase()] || name.toLowerCase();
   };
-
-  // ============================
-  // RENDER
-  // ============================
 
   return (
-    <div className={cn("min-h-screen bg-[#050508] text-white flex flex-col selection:bg-purple-500/30", isRTL ? "rtl" : "ltr")} dir={dir}>
-
-      {/* Atmospheric bg */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[200px] opacity-[0.07]" style={{ background: `radial-gradient(circle, ${activeGuide.glow}, transparent 70%)` }} />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[180px] opacity-[0.05] bg-indigo-600" />
-        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+    <div className="min-h-screen bg-[#050508] text-white selection:bg-purple-500/30 font-sans pb-24 overflow-x-hidden" dir={dir}>
+      {/* Background elements */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-50%] w-full h-full bg-indigo-500/5 blur-[120px] rounded-full animate-pulse-slow" />
+        <div className="absolute bottom-[-10%] right-[-50%] w-full h-full bg-purple-500/5 blur-[120px] rounded-full animate-pulse-slow delay-700" />
       </div>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-5 md:px-8 pt-28 pb-20 w-full flex-grow">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 lg:px-12 pt-28 md:pt-32">
+        <ProfileHero
+          profile={profile}
+          zodiacSign={zodiacSign}
+          risingSignName={risingSignName}
+          risingSignId={risingSignId}
+          moonSignName={moonSignName}
+          moonSignId={moonSignId}
+          onSettingsOpen={() => setSettingsOpen(true)}
+          onSignOut={signOut}
+          previewUrl={previewUrl}
+          onAvatarChange={handleAvatarChange}
+        />
 
-        {/* ========== HERO: Identity ========== */}
-        <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-12">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-            {/* Avatar */}
-            <div className="relative group/avatar shrink-0">
-              <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full scale-110 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-700" />
-              <Avatar className="w-24 h-24 md:w-28 md:h-28 ring-2 ring-white/[0.06] group-hover/avatar:ring-white/20 transition-all duration-500">
-                <AvatarImage src={previewUrl || displayProfile.avatar_url} className="object-cover" />
-                <AvatarFallback className="text-3xl bg-white/5 text-white/40 font-serif">{displayProfile.full_name?.[0]}</AvatarFallback>
-              </Avatar>
-              <label className="absolute bottom-0 right-0 p-2 bg-white/10 backdrop-blur-md rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-90 border border-white/10 opacity-0 group-hover/avatar:opacity-100 translate-y-1 group-hover/avatar:translate-y-0 duration-300">
-                <Upload className="w-3.5 h-3.5 text-white/70" />
-                <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
-              </label>
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-white mb-2">
-                {displayProfile.full_name}
-              </h1>
-
-              {/* Zodiac triple */}
-              {zodiacSign && (
-                <div className="flex items-center gap-2.5 justify-center md:justify-start mb-4 flex-wrap">
-                  {/* Sun sign */}
-                  <div className="flex items-center gap-2.5 pl-2 pr-4 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 group/badge hover:bg-amber-500/15 transition-all">
-                    <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center">
-                      <ZodiacIcon signId={zodiacSign.id} variant="classic" size={16} glowColor="#f59e0b" className="text-amber-400" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] font-bold text-amber-400/50 uppercase tracking-[0.2em] leading-none">{t("profile.sun_sign") || "Güneş"}</span>
-                      <span className="text-[11px] font-bold text-amber-300 leading-tight">{zodiacSign.name}</span>
-                    </div>
-                  </div>
-
-                  {/* Rising sign */}
-                  {risingSignName && risingSignId && (
-                    <div className="flex items-center gap-2.5 pl-2 pr-4 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 group/badge hover:bg-orange-500/15 transition-all">
-                      <div className="w-7 h-7 rounded-lg bg-orange-500/15 flex items-center justify-center">
-                        <ZodiacIcon signId={risingSignId} variant="classic" size={16} glowColor="#f97316" className="text-orange-400" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-bold text-orange-400/50 uppercase tracking-[0.2em] leading-none">{t("profile.rising_sign") || "Yükselen"}</span>
-                        <span className="text-[11px] font-bold text-orange-300 leading-tight">{risingSignName}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Moon sign */}
-                  {moonSignName && moonSignId && (
-                    <div className="flex items-center gap-2.5 pl-2 pr-4 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 group/badge hover:bg-blue-500/15 transition-all">
-                      <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center">
-                        <ZodiacIcon signId={moonSignId} variant="classic" size={16} glowColor="#3b82f6" className="text-blue-400" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-bold text-blue-400/50 uppercase tracking-[0.2em] leading-none">{t("profile.moon_sign") || "Ay"}</span>
-                        <span className="text-[11px] font-bold text-blue-300 leading-tight">{moonSignName}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Meta row */}
-              <div className="flex items-center gap-4 justify-center md:justify-start text-white/25 text-xs flex-wrap">
-                {formData.birth_date && (
-                  <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {formData.birth_date}</span>
-                )}
-                {formData.birth_time && (
-                  <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {formData.birth_time}</span>
-                )}
-                {formData.birth_city && (
-                  <span className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /> {formData.birth_city}</span>
-                )}
-                {zodiacSign && (
-                  <>
-                    <span className="w-px h-3 bg-white/10" />
-                    <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {zodiacSign.element}</span>
-                    <span className="text-white/15">·</span>
-                    <span>{zodiacSign.rulingPlanet}</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white/40 hover:text-white hover:bg-white/[0.08] transition-all text-xs font-medium"
-              >
-                {t("profile.settings")}
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white/20 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/15 transition-all"
-                title={t("profile.sign_out")}
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* ========== MAIN GRID ========== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <ActiveGuideCard
+            activeGuide={activeGuide}
+            activeGuideId={profile.selected_guide_id || "melisa"}
+            onStartChat={() => router.push(`/mistik-rehber/${activeGuide.id}`)}
+            onChangeGuide={() => router.push("/mistik-rehber")}
+          />
 
-          {/* --- COL 1: Guide + Quick Tools --- */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-4 space-y-6">
-
-            {/* Active Guide */}
-            <div className={cn("relative rounded-[2rem] overflow-hidden border p-8 group isolate transform-gpu", activeGuide.borderAccent)} style={{ background: `linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.8))` }}>
-              {/* Guide image bg */}
-              <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
-                <img src={activeGuide.image} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
-              </div>
-
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-8">
-                  <span className={cn("text-[10px] font-bold uppercase tracking-[0.3em]", activeGuide.accent)}>{t("profile.active_guide")}</span>
-                  <div className={cn("w-2 h-2 rounded-full animate-pulse", activeGuide.bgAccent)} style={{ boxShadow: `0 0 12px ${activeGuide.glow}` }} />
-                </div>
-
-                <div className="flex items-center gap-5 mb-6">
-                  <div className="relative">
-                    <Avatar className={cn("w-20 h-20 border-2", activeGuide.borderAccent)}>
-                      <AvatarImage src={activeGuide.image} className="object-cover" />
-                      <AvatarFallback className="bg-white/5">{activeGuide.name[0]}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-2xl font-serif font-bold text-white leading-tight">{activeGuide.name}</h3>
-                    <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mt-1", activeGuide.accent)}>{activeGuide.role}</p>
-                  </div>
-                </div>
-
-                <p className="text-white/40 text-[13px] leading-relaxed mb-6 italic">"{activeGuide.bio}"</p>
-
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {activeGuide.traits.map((trait: string) => (
-                    <span key={trait} className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] shrink-0">{trait}</span>
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => router.push(`/mistik-rehber/${activeGuideId}`)}
-                    className="w-full h-12 rounded-2xl bg-white text-black text-[12px] font-black uppercase tracking-widest hover:bg-white/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                  >
-                    <MessageSquare className="w-4 h-4" /> {t("profile.start_chat")}
-                  </button>
-                  <button
-                    onClick={() => router.push("/mistik-rehber")}
-                    className={cn("w-full h-12 rounded-2xl border text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-white/5", activeGuide.borderAccent, activeGuide.accent)}
-                  >
-                    {t("profile.change_guide")}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Tools */}
-            <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-6">
-              <SectionLabel>{t("profile.tools")}</SectionLabel>
-              <div className="grid grid-cols-1 gap-2.5">
-                {ALL_TOOLS.map(tool => (
-                  <button
-                    key={tool.id}
-                    onClick={() => router.push(tool.href)}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.06] hover:border-white/10 transition-all group text-left"
-                  >
-                    <div className={cn("shrink-0 transition-transform group-hover:scale-110 duration-500", tool.color)}>{tool.icon}</div>
-                    <span className="text-[11px] font-bold text-white/40 group-hover:text-white/70 transition-colors tracking-widest uppercase">{tool.name}</span>
-                    <ChevronRight className="w-3.5 h-3.5 ml-auto text-white/10 group-hover:text-white/30 transition-all group-hover:translate-x-1" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* --- COL 2: Daily Insight + Zodiac Detail --- */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-8 space-y-6">
-
-            {/* Daily Insight - Wider and richer */}
-            <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-8 relative overflow-hidden flex flex-col justify-between min-h-[350px]">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[120px] rounded-full -mr-20 -mt-20 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/5 blur-[100px] rounded-full -ml-10 -mb-10 pointer-events-none" />
-
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-10">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                      <Sparkles className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/20 block">{t("profile.daily_flow")}</span>
-                      <span className="text-[9px] text-white/10 uppercase tracking-widest mt-0.5 block">{new Date().toLocaleDateString(dir === 'rtl' ? 'ar-EG' : 'tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                    </div>
-                  </div>
-                  {fetchingHoroscope && <Loader2 className="w-4 h-4 animate-spin text-purple-400/40" />}
-                </div>
-
-                <div className="max-w-2xl">
-                  <h2 className={cn(
-                    "text-3xl md:text-4xl font-serif font-bold tracking-tight leading-tight mb-6 transition-all duration-1000",
-                    fetchingHoroscope ? "opacity-20 blur-md" : "opacity-100"
-                  )}>
-                    {horoscopeData?.title || t("profile.daily_preparing")}
-                  </h2>
-
-                  <div className={cn(
-                    "text-white/40 text-base leading-relaxed space-y-4 transition-all duration-1000 font-light",
-                    fetchingHoroscope ? "opacity-20 blur-md" : "opacity-100"
-                  )}>
-                    {horoscopeData?.text ? (
-                      horoscopeData.text.split('\n\n').map((para: string, i: number) => (
-                        <p key={i}>{para}</p>
-                      ))
-                    ) : (
-                      <p>{t("profile.daily_analyzing")}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Energy Scores */}
-              {horoscopeData?.energyScores && (
-                <div className="relative z-10 pt-8 mt-8 border-t border-white/[0.05]">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { key: "love", label: t("profile.energy.love") || "Aşk", icon: <Heart className="w-3.5 h-3.5" />, color: "text-rose-400", bg: "bg-rose-500" },
-                      { key: "career", label: t("profile.energy.career") || "Kariyer", icon: <Zap className="w-3.5 h-3.5" />, color: "text-amber-400", bg: "bg-amber-500" },
-                      { key: "health", label: t("profile.energy.health") || "Sağlık", icon: <Shield className="w-3.5 h-3.5" />, color: "text-emerald-400", bg: "bg-emerald-500" },
-                      { key: "spiritual", label: t("profile.energy.spiritual") || "Ruhsal", icon: <Eye className="w-3.5 h-3.5" />, color: "text-violet-400", bg: "bg-violet-500" },
-                    ].map(({ key, label, icon, color, bg }) => {
-                      const score = Number(horoscopeData.energyScores[key]) || 0;
-                      return (
-                        <div key={key} className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={color}>{icon}</span>
-                            <span className="text-[9px] font-bold text-white/25 uppercase tracking-widest">{label}</span>
-                            <span className={cn("ml-auto text-xs font-black", color)}>{score}</span>
-                          </div>
-                          <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${score}%` }}
-                              transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-                              className={cn("h-full rounded-full", bg)}
-                              style={{ opacity: 0.6 }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Advice + Lucky Elements + Planet of the Day */}
-              <div className="relative z-10 pt-6 mt-6 border-t border-white/[0.05] flex flex-col md:flex-row gap-6">
-                {/* Advice */}
-                <div className="flex-1 flex items-start gap-4">
-                  <div className="shrink-0 w-px h-12 bg-gradient-to-b from-purple-500/50 to-transparent hidden sm:block mt-1" />
-                  <div>
-                    <p className="text-[10px] text-white/10 uppercase tracking-[0.3em] mb-2 font-bold">{t("profile.daily_advice_label")}</p>
-                    <p className="text-sm text-purple-300/50 italic leading-relaxed font-serif">
-                      &ldquo;{horoscopeData?.advice || t("profile.daily_advice_default")}&rdquo;
-                    </p>
-                  </div>
-                </div>
-
-                {/* Lucky Elements & Planet of the Day */}
-                {(horoscopeData?.luckyElements || horoscopeData?.planetOfTheDay) && (
-                  <div className="shrink-0 flex flex-row md:flex-col gap-3">
-                    {horoscopeData.luckyElements && (
-                      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[8px] text-white/15 uppercase tracking-widest font-bold">{t("profile.lucky") || "Şanslı"}</span>
-                          <span className="text-[11px] text-white/40">
-                            <span className="text-amber-400/60">{horoscopeData.luckyElements.color}</span>
-                            <span className="text-white/10 mx-1.5">·</span>
-                            <span className="text-emerald-400/60">{horoscopeData.luckyElements.number}</span>
-                            <span className="text-white/10 mx-1.5">·</span>
-                            <span className="text-blue-400/60">{horoscopeData.luckyElements.time}</span>
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {horoscopeData.planetOfTheDay && (
-                      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <Orbit className="w-4 h-4 text-indigo-400/50" />
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[8px] text-white/15 uppercase tracking-widest font-bold">{t("profile.planet_of_day") || "Günün Gezegeni"}</span>
-                          <span className="text-[11px] text-indigo-300/50 font-medium">{horoscopeData.planetOfTheDay.name}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Zodiac Stats + Personality */}
-            {zodiacSign && (
-              <>
-                {/* Stats Card */}
-                <div className="rounded-[2.5rem] border border-white/[0.08] bg-white/[0.03] p-10 overflow-hidden relative group/stats isolate text-left">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none group-hover/stats:bg-white/10 transition-all duration-1000" />
-
-                  <SectionLabel>{t("astrology.label.cosmic_stats")}</SectionLabel>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-8 relative z-10">
-                    {/* Planet Visual - Large & Clean */}
-                    <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-[2rem] bg-white/[0.02] border border-white/[0.05] group/planet">
-                      {(() => {
-                        const planetId = normalizePlanetId(zodiacSign.rulingPlanet);
-                        const planetData = getPlanetById(planetId);
-                        return (
-                          <>
-                            <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border border-white/10 p-1.5 bg-black/40 ring-1 ring-white/5 overflow-hidden flex items-center justify-center">
-                              {planetData?.imageUrl ? (
-                                <img
-                                  src={planetData.imageUrl}
-                                  alt={zodiacSign.rulingPlanet}
-                                  className="w-full h-full object-cover opacity-90 group-hover/planet:opacity-100 transition-all duration-1000 scale-125 group-hover/planet:scale-110 filter brightness-110"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                                  }}
-                                />
-                              ) : null}
-                              <div className={cn("flex flex-col items-center gap-2", planetData?.imageUrl ? "hidden" : "")}>
-                                <CosmicIcon name="planet" size={64} className="text-white/20" />
-                              </div>
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                            </div>
-                            <div className="mt-6 text-center">
-                              <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] block mb-2">{t("astrology.label.planet")}</span>
-                              <span className="text-2xl font-serif font-black text-white tracking-tight">{t(zodiacSign.rulingPlanetKey)}</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Stats Grid - 2x2 Balanced */}
-                    <div className="lg:col-span-7 flex flex-col gap-4 justify-between">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full">
-                        <div className="p-3 md:p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
-                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-2 font-black">{t("astrology.label.element")}</p>
-                          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-2.5">
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover/stat:scale-110 transition-transform flex-shrink-0">
-                              <CosmicIcon
-                                name={zodiacSign.elementKey.split('.').pop() as any || "earth"}
-                                size={20}
-                                className="group-hover/stat:rotate-12 transition-transform duration-500"
-                              />
-                            </div>
-                            <span className="text-xs sm:text-base md:text-lg font-serif font-black text-white text-center sm:text-left leading-tight">{t(zodiacSign.elementKey)}</span>
-                          </div>
-                        </div>
-                        <div className="p-3 md:p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
-                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-2 font-black">{t("astrology.label.quality")}</p>
-                          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-2.5">
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 group-hover/stat:scale-110 transition-transform flex-shrink-0">
-                              {(() => {
-                                const q = zodiacSign.qualityKey.split('.').pop();
-                                if (q === 'cardinal') return <Target className="w-5 h-5 text-purple-400" />;
-                                if (q === 'fixed') return <Anchor className="w-5 h-5 text-purple-400" />;
-                                return <RefreshCw className="w-5 h-5 text-purple-400" />;
-                              })()}
-                            </div>
-                            <span className="text-xs sm:text-base md:text-lg font-serif font-black text-white text-center sm:text-left leading-tight">{t(zodiacSign.qualityKey)}</span>
-                          </div>
-                        </div>
-                        <div className="p-3 md:p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
-                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-2 font-black">{t("astrology.label.lucky_number")}</p>
-                          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-2.5">
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover/stat:scale-110 transition-transform flex-shrink-0">
-                              <Hash className="w-5 h-5 text-emerald-400" />
-                            </div>
-                            <span className="text-xs sm:text-base md:text-lg font-serif font-black text-white text-center sm:text-left leading-tight">{zodiacSign.luckyNumbers[0]}</span>
-                          </div>
-                        </div>
-                        <div className="p-6 rounded-[2rem] bg-indigo-500/5 border border-indigo-500/10 transition-all hover:bg-indigo-500/10 hover:border-indigo-500/20 group/stat relative overflow-hidden">
-                          <p className="text-[9px] text-indigo-400/50 uppercase tracking-[0.2em] mb-4 font-black">{t("nav.compatibility")}</p>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            {zodiacSign.compatibility.slice(0, 4).map(id => (
-                              <button
-                                key={id}
-                                onClick={() => router.push(`/uyumluluk?sign1=${zodiacSign.id}&sign2=${id}`)}
-                                className="px-2 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all hover:scale-105 group/zi"
-                                title={t(`zodiac.${id}`)}
-                              >
-                                <ZodiacIcon signId={id} variant="classic" size={20} glowColor={id === 'akrep' ? '#a855f7' : '#6366f1'} className="text-white/40 group-hover/zi:text-white transition-colors" />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-10 pt-8 border-t border-white/[0.06] relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <p className="text-[9px] text-white/20 uppercase tracking-[0.4em] font-black mb-3 flex items-center gap-2">
-                        <span className="w-1.5 h-px bg-white/20" /> {t("astrology.label.field_of_influence")}
-                      </p>
-                      <p className="text-sm text-white/50 italic leading-relaxed font-light">
-                        &ldquo;{getPlanetById(normalizePlanetId(zodiacSign.rulingPlanet))?.influence || t("profile.planet_influence_default")}&rdquo;
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Personality Card */}
-                <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-8">
-                  <SectionLabel>{t("zodiac.detail.section.personality")}</SectionLabel>
-                  <p className="text-white/40 text-[13px] leading-relaxed mt-4 line-clamp-[7]">
-                    {t(`zodiac.${zodiacSign.id}.personality`)}
-                  </p>
-                  <button
-                    onClick={() => router.push(`/burclar/${zodiacSign.id}`)}
-                    className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 group"
-                  >
-                    {t("profile.view_full_zodiac") || "Tüm Burç Detaylarını Gör"}
-                    <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </>
-            )}
-
-            <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-8">
-              <div className="flex items-center justify-between mb-6">
-                <SectionLabel>{t("profile.recent_activity")}</SectionLabel>
-                <button 
-                  onClick={() => displayProfile?.id && fetchDynamicData(displayProfile.id)}
-                  className="p-2 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white/80 active:rotate-180 duration-500"
-                  title="Yenile"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {activities.length > 0 ? (
-                  activities.slice(0, 4).map(act => {
-                    return (
-                      <div 
-                        key={act.id} 
-                        onClick={() => setSelectedActivity(act)}
-                        className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group/activity cursor-pointer"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-white font-black text-sm group-hover/activity:text-blue-400 transition-colors uppercase tracking-wider">
-                              {act.action_type === 'sphere' ? 'Kristal Küre' :
-                                act.action_type === 'dream' ? 'Rüya Analizi' :
-                                  act.action_type === 'bio' ? 'Biyoritim' :
-                                    act.action_type === 'numerology' ? 'Numeroloji' :
-                                      act.action_type === 'iching' ? 'I-Ching' :
-                                        act.action_type === 'runler' ? 'Rünler' :
-                                          act.action_type === 'compatibility' ? 'Burç Uyumluluğu' :
-                                            act.action_type === 'birth_chart' ? 'Doğum Haritası' :
-                                              act.action_type}
-                            </p>
-                            <span className="text-[9px] text-white/10 font-mono">
-                              {new Date(act.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
-                            </span>
-                          </div>
-
-                          {act.description && !act.metadata?.question && (
-                            <p className="text-white/40 text-[10px] leading-relaxed line-clamp-2">{act.description}</p>
-                          )}
-
-                          {act.metadata?.question && (
-                            <div className="mt-2 space-y-2">
-                              <div className="bg-white/[0.03] p-2 rounded-lg border border-white/5">
-                                <p className="text-[8px] text-white/30 uppercase font-black mb-1">Soru</p>
-                                <p className="text-white/70 text-[10px] italic">"{act.metadata.question}"</p>
-                              </div>
-                              {act.metadata?.answer && (
-                                <div className="bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
-                                  <p className="text-[8px] text-indigo-400/50 uppercase font-black mb-1">Cevap</p>
-                                  <p className="text-white/80 text-[10px] leading-relaxed line-clamp-3">{act.metadata.answer}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="col-span-2 flex items-center justify-center py-10 opacity-20">
-                    <p className="text-[10px] italic tracking-[0.3em] uppercase">{t("profile.no_activity")}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </main>
-
-      {/* ========== SETTINGS DRAWER ========== */}
-      <AnimatePresence>
-        {settingsOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-              onClick={() => setSettingsOpen(false)}
+          <div className="lg:col-span-8 space-y-6">
+            <DailyInsight 
+              horoscopeData={horoscopeData} 
+              fetchingHoroscope={fetchingHoroscope} 
+              dir={dir} 
             />
-            <motion.div
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 z-[101] w-full max-w-md bg-[#0a0a0f] border-l border-white/[0.06] overflow-y-auto"
-            >
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-10">
-                  <h2 className="text-lg font-serif font-bold text-white">{t("profile.settings_title")}</h2>
-                  <button onClick={() => setSettingsOpen(false)} className="p-2 rounded-xl hover:bg-white/5 text-white/30 hover:text-white transition-all">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleSave} className="space-y-7">
-                  <SectionLabel>{t("profile.section_personal")}</SectionLabel>
-
-                  {/* Full Name */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_name")}</label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15" />
-                      <Input
-                        value={formData.full_name}
-                        onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                        className="bg-white/[0.04] border-white/[0.06] h-12 pl-11 rounded-xl text-sm"
-                        placeholder={t("profile.placeholder_name")}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Birth date + time */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_birth_date")}</label>
-                      <Input
-                        type="date"
-                        value={formData.birth_date}
-                        onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
-                        className="bg-white/[0.04] border-white/[0.06] h-12 rounded-xl text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_birth_time")}</label>
-                      <Input
-                        type="time"
-                        value={formData.birth_time}
-                        onChange={e => setFormData({ ...formData, birth_time: e.target.value })}
-                        className="bg-white/[0.04] border-white/[0.06] h-12 rounded-xl text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Birth city */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_birth_city")}</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15" />
-                      <Input
-                        value={formData.birth_city}
-                        onChange={e => setFormData({ ...formData, birth_city: e.target.value })}
-                        className="bg-white/[0.04] border-white/[0.06] h-12 pl-11 rounded-xl text-sm"
-                        placeholder={t("profile.placeholder_city")}
-                      />
-                    </div>
-                  </div>
-
-                  <SectionLabel>{t("profile.section_context")}</SectionLabel>
-
-                  {/* Relationship status */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_relationship")}</label>
-                    <div className="relative">
-                      <Heart className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15" />
-                      <select
-                        className="w-full h-12 rounded-xl border border-white/[0.06] bg-white/[0.04] pl-11 pr-4 text-sm text-white appearance-none focus:outline-none focus:ring-1 focus:ring-purple-500/30 transition-all"
-                        value={formData.relationship_status}
-                        onChange={e => setFormData({ ...formData, relationship_status: e.target.value })}
-                      >
-                        {RELATIONSHIP_KEYS.map(opt => (
-                          <option key={opt.value} value={opt.value} className="bg-[#0a0a0f]">{t(opt.key)}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Life Focus */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_focus")}</label>
-                    <div className="relative">
-                      <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15" />
-                      <select
-                        className="w-full h-12 rounded-xl border border-white/[0.06] bg-white/[0.04] pl-11 pr-4 text-sm text-white appearance-none focus:outline-none focus:ring-1 focus:ring-purple-500/30 transition-all"
-                        value={formData.life_focus}
-                        onChange={e => setFormData({ ...formData, life_focus: e.target.value })}
-                      >
-                        {LIFE_FOCUS_KEYS.map(opt => (
-                          <option key={opt.value} value={opt.value} className="bg-[#0a0a0f]">{t(opt.key)}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <SectionLabel>{t("profile.section_prefs")}</SectionLabel>
-
-                  {/* Language */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_language")}</label>
-                    <div className="relative">
-                      <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15" />
-                      <select
-                        className="w-full h-12 rounded-xl border border-white/[0.06] bg-white/[0.04] pl-11 pr-4 text-sm text-white appearance-none focus:outline-none focus:ring-1 focus:ring-purple-500/30 transition-all"
-                        value={formData.language}
-                        onChange={e => setFormData({ ...formData, language: e.target.value })}
-                      >
-                        {LANGUAGES.map(lang => (
-                          <option key={lang.code} value={lang.code} className="bg-[#0a0a0f]">{lang.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Save */}
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="w-full h-12 rounded-xl bg-white text-black text-xs font-bold uppercase tracking-wider hover:bg-white/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
-                  >
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    {t("profile.btn_save")}
-                  </button>
-                </form>
-
-                {/* Sign Out */}
-                <div className="mt-10 pt-6 border-t border-white/[0.04]">
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-400/60 hover:text-red-400 hover:bg-red-500/5 transition-all text-xs font-medium"
-                  >
-                    <LogOut className="w-4 h-4" /> {t("profile.sign_out")}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-      
-      {/* Activity Detail Modal */}
-      <AnimatePresence>
-        {selectedActivity && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedActivity(null)}
-              className="absolute inset-0 bg-[#050508]/90 backdrop-blur-xl"
+            
+            <CosmicStats 
+              zodiacSign={zodiacSign} 
+              normalizePlanetId={normalizePlanetId} 
             />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-2xl overflow-hidden isolate"
-            >
-              {/* Background Glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
-              
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <SectionLabel>
-                    {selectedActivity.action_type === 'sphere' ? 'Kristal Küre Analizi' :
-                     selectedActivity.action_type === 'iching' ? 'I-Ching Bilgeliği' :
-                     selectedActivity.action_type === 'runler' ? 'Rünlerin Fısıltısı' :
-                     'Aktivite Detayı'}
-                  </SectionLabel>
-                  <p className="text-[10px] text-white/30 font-mono mt-2 uppercase tracking-widest">
-                    {new Date(selectedActivity.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setSelectedActivity(null)}
-                  className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/50 hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                {selectedActivity.metadata?.question && (
-                  <div className="space-y-3">
-                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest flex items-center gap-2">
-                      <MessageSquare className="w-3 h-3" />
-                      Soru / Niyet
-                    </p>
-                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl italic text-white/60 leading-relaxed">
-                      "{selectedActivity.metadata.question}"
-                    </div>
-                  </div>
-                )}
-
-                {/* Dynamic Result Rendering */}
-                {selectedActivity.metadata?.full_result ? (
-                  <div className="space-y-6">
-                    {/* Part 1: Initial Insight / Card interpretation */}
-                    {selectedActivity.metadata.full_result.cards?.map((c: any, i: number) => (
-                      <div key={i} className="space-y-3">
-                        <p className="text-[10px] text-indigo-400/40 uppercase font-black tracking-widest flex items-center gap-2">
-                          <Eye className="w-3 h-3" />
-                          {c.position ? c.position : (c.name || 'Mistik Sezgi')}
-                        </p>
-                        <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-5 rounded-2xl text-white/80 leading-relaxed italic">
-                          {c.interpretation}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Part 2: Synthesis / Overview */}
-                    <div className="space-y-3">
-                      <p className="text-[10px] text-purple-400/40 uppercase font-black tracking-widest flex items-center gap-2">
-                        <Sparkles className="w-3 h-3" />
-                        {selectedActivity.action_type === 'sphere' ? 'Genel Bakış' : 'Sentez'}
-                      </p>
-                      <div className="bg-purple-500/[0.04] border border-purple-500/10 p-6 rounded-[2rem] text-white/90 leading-relaxed text-sm md:text-base font-serif whitespace-pre-wrap">
-                        {selectedActivity.metadata.full_result.synthesis || selectedActivity.metadata.full_result.content}
-                      </div>
-                    </div>
-
-                    {/* Part 3: Advice */}
-                    {selectedActivity.metadata.full_result.advice && (
-                      <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl flex items-center gap-3">
-                        <Sparkles className="w-4 h-4 text-purple-400/40" />
-                        <p className="text-white/50 text-[11px] italic leading-relaxed">
-                          {selectedActivity.metadata.full_result.advice}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Legacy Fallback for older logs */
-                  selectedActivity.metadata?.answer && (
-                    <div className="space-y-3">
-                      <p className="text-[10px] text-purple-400/40 uppercase font-black tracking-widest flex items-center gap-2">
-                        <Sparkles className="w-3 h-3" />
-                        Mistik Yanıt
-                      </p>
-                      <div className="bg-purple-500/[0.02] border border-purple-500/10 p-6 rounded-[2rem] text-white/90 leading-relaxed text-sm md:text-base font-serif whitespace-pre-wrap">
-                        {selectedActivity.metadata.answer}
-                      </div>
-                    </div>
-                  )
-                )}
-
-                {selectedActivity.description && !selectedActivity.metadata?.answer && !selectedActivity.metadata?.full_result && (
-                  <div className="space-y-3">
-                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Açıklama</p>
-                    <p className="text-white/60 leading-relaxed">{selectedActivity.description}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-10 flex justify-end">
-                <button 
-                  onClick={() => setSelectedActivity(null)}
-                  className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-white/50"
-                >
-                  Kapat
-                </button>
-              </div>
-            </motion.div>
+            
+            <ActivityFeed 
+              activities={activities} 
+              onSelectActivity={setSelectedActivity} 
+            />
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </div>
 
-      {/* Toast */}
-      <Toast message={toastMsg} visible={toastVisible} onClose={() => setToastVisible(false)} />
+      <SettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        formData={formData}
+        setFormData={setFormData}
+        saving={saving}
+        onSave={handleSave}
+        onSignOut={signOut}
+      />
+
+      <ActivityDetailModal 
+        activity={selectedActivity} 
+        onClose={() => setSelectedActivity(null)} 
+      />
+
+      <Toast 
+        message={toastMsg} 
+        visible={toastVisible} 
+        onClose={() => setToastVisible(false)} 
+      />
     </div>
   );
 }

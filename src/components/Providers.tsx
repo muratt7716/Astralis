@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { LanguageProvider } from "@/lib/i18n";
-import HoroscopePreloader from "@/components/Cosmic/HoroscopePreloader";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -13,8 +13,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           registration.unregister().then((success) => {
             if (success) {
               console.log('Successfully unregistered stale service worker');
-              // We don't reload here anymore to avoid loops, the app will
-              // use fresh assets on next visit or via cache headers.
             }
           });
         }
@@ -23,9 +21,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <LanguageProvider>
-      <HoroscopePreloader />
-      {children}
-    </LanguageProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        {children}
+      </LanguageProvider>
+    </AuthProvider>
   );
 }
