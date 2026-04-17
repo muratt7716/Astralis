@@ -144,15 +144,15 @@ export default function PlanetIcon({ name, className = "", size = 24 }: PlanetIc
 
   // Find the right data (handling Turkish names too)
   let activeData = planetData[planet];
-  if (!activeData && planet === "güneş") activeData = planetData.sun;
-  if (!activeData && planet === "ay") activeData = planetData.moon;
-  if (!activeData && planet === "merkür") activeData = planetData.mercury;
-  if (!activeData && planet === "venüs") activeData = planetData.venus;
-  if (!activeData && planet === "jüpiter") activeData = planetData.jupiter;
-  if (!activeData && planet === "satürn") activeData = planetData.saturn;
-  if (!activeData && planet === "uranüs") activeData = planetData.uranus;
-  if (!activeData && planet === "neptün") activeData = planetData.neptune;
-  if (!activeData && planet === "plüton") activeData = planetData.pluto;
+  if (!activeData && (planet === "güneş" || planet === "gunes")) activeData = planetData.sun;
+  if (!activeData && (planet === "ay" || planet === "moon")) activeData = planetData.moon;
+  if (!activeData && (planet === "merkür" || planet === "merkur")) activeData = planetData.mercury;
+  if (!activeData && (planet === "venüs" || planet === "venus")) activeData = planetData.venus;
+  if (!activeData && (planet === "jüpiter" || planet === "jupiter")) activeData = planetData.jupiter;
+  if (!activeData && (planet === "satürn" || planet === "saturn")) activeData = planetData.saturn;
+  if (!activeData && (planet === "uranüs" || planet === "uranus")) activeData = planetData.uranus;
+  if (!activeData && (planet === "neptün" || planet === "neptun" || planet === "neptune")) activeData = planetData.neptune;
+  if (!activeData && (planet === "plüton" || planet === "pluton" || planet === "pluto")) activeData = planetData.pluto;
 
   if (!activeData) {
     // Fallback to a generic star if name not found

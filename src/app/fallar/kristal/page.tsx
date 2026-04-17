@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
+import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import { Sparkles, Orbit, Info } from "lucide-react";
 
 export default function KristalPage() {
   const { t, language } = useTranslation();
@@ -21,10 +23,10 @@ export default function KristalPage() {
   };
 
   return (
-    <div className="cosmic-gradient min-h-screen">
-      <section className="pt-16 pb-8 px-4">
+    <div className="cosmic-gradient min-h-screen pt-32">
+      <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="text-7xl mb-4 float" style={{ animation: "float 3s ease-in-out infinite, glow-pulse 2s ease-in-out infinite alternate" }}>🔮</div>
+          <CosmicIcon name="kristal" size={80} className="mx-auto mb-6 animate-float" />
           <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.kristal.title")}</span></h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.kristal.full_desc")}</p>
         </div>
@@ -56,13 +58,15 @@ export default function KristalPage() {
             ))}
 
             <div className="p-4 bg-purple-900/20 rounded-xl border border-purple-500/20 mt-4">
-              <h4 className="text-lg font-bold text-white mb-2">🌌 {t("chart.overview")}</h4>
+              <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <Orbit className="size-5 text-purple-400" /> {t("chart.overview")}
+              </h4>
               <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
             </div>
 
             {result.advice && (
-              <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-violet-400 font-semibold text-sm">✨ {t("chart.advice")}: </span>
+              <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 flex items-center gap-3">
+                <Sparkles className="size-5 text-violet-400 shrink-0" />
                 <span className="text-gray-300 text-sm">{result.advice}</span>
               </div>
             )}

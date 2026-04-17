@@ -8,14 +8,28 @@ import { useTranslation } from "@/lib/i18n";
 import { getZodiacById, zodiacSigns } from "@/data/zodiac";
 import CosmicInput from "@/components/Cosmic/CosmicInput";
 import CosmicSelect from "@/components/Cosmic/CosmicSelect";
-import CosmicButton from "@/components/Cosmic/CosmicButton";
+import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 import PlanetIcon from "@/components/PlanetIcon";
 import Logo from "@/components/Cosmic/Logo";
 import SynastryMatrix from "@/components/Cosmic/SynastryMatrix";
+import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { calculateLifePath } from "@/lib/numerology/pythagoras";
 import { getLifePathCompatibility } from "@/lib/numerology/compatibility";
 import { calculateBiorhythmCompatibility } from "@/lib/biorhythm";
+import { 
+  User, 
+  Heart, 
+  Binary, 
+  Dna, 
+  Dumbbell, 
+  Brain, 
+  Star, 
+  CheckCircle2, 
+  AlertTriangle,
+  Zap,
+  Info
+} from "lucide-react";
 
 const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
   const sign = getZodiacById(signId);
@@ -36,7 +50,7 @@ const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
         className={`rounded-full border-2 ${ringStyle} bg-black/40 backdrop-blur-md flex items-center justify-center mb-3 mx-auto group-hover:scale-110 transition-all duration-700 shadow-2xl relative z-10`}
         style={{ width: size, height: size }}
       >
-        <span className="drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ fontSize: size * 0.45 }}>{sign.symbol}</span>
+        <ZodiacIcon signId={signId} size={size * 0.6} glowColor="#ffffff" />
       </div>
       {/* Decorative Outer Glow Ring */}
       <div className="absolute inset-0 rounded-full border border-white/5 scale-110 animate-pulse-slow pointer-events-none" />
@@ -80,12 +94,33 @@ function UyumlulukContent() {
 
   
   useEffect(() => {
-    if (searchParams?.get("s1") && searchParams?.get("s2") && activeTab === "simple") {
-       handleSimpleCalculate();
+    const s1 = searchParams?.get("s1");
+    const s2 = searchParams?.get("s2");
+    
+    if (s1 && s2 && activeTab === "simple") {
+      // 1. Sync local state with URL if they differ
+      if (s1 !== sign1 || s2 !== sign2) {
+        setSign1(s1);
+        setSign2(s2);
+      }
+
+      // 2. Auto-trigger calculation ONLY if we don't have a result yet for these specific signs
+      // This prevents infinite loops caused by router.push(...)
+      const hasResult = simpleResult && simpleResult.sign1 === s1 && simpleResult.sign2 === s2;
+      if (!hasResult && !loading && !error) {
+        handleSimpleCalculate();
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, simpleResult, loading, error]);
 
   const pushState = (s1: string, s2: string) => {
+    if (!s1 || !s2) return;
+    const currentS1 = searchParams?.get("s1");
+    const currentS2 = searchParams?.get("s2");
+    
+    // Don't push if the URL already matches the target signs
+    if (s1 === currentS1 && s2 === currentS2) return;
+    
     router.push(`?tab=simple&s1=${s1}&s2=${s2}`, { scroll: false });
   };
 
@@ -209,7 +244,9 @@ function UyumlulukContent() {
                 : "bg-white/5 border-transparent hover:bg-white/10 hover:border-white/20"}
             `}
           >
-            <span className="text-2xl mb-1">{sign.symbol}</span>
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 mb-2 shrink-0">
+              <ZodiacIcon signId={sign.id} size={40} className="w-full h-full object-cover" />
+            </div>
             <span className="text-[10px] text-gray-400 font-bold uppercase truncate w-full text-center">
                {t(sign.nameKey).split(" ")[0]}
             </span>
@@ -219,12 +256,15 @@ function UyumlulukContent() {
     </div>
   );
 
-  const renderPersonForm = (person: any, updateFn: any, title: string, emoji: string) => {
+  const renderPersonForm = (person: any, updateFn: any, title: string, Icon: any) => {
     const isTr = person.country === "TR";
     return (
-      <div className="glass-card p-6 border-t-4 border-t-pink-500 shadow-2xl">
-        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-          <span className="p-2 rounded-lg bg-pink-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">{emoji}</span> {title}
+      <div className="glass-card p-6 border-t-4 border-t-pink-500 shadow-2xl relative group">
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500">
+            <Icon className="size-5 text-pink-400" />
+          </div> 
+          {title}
         </h3>
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
@@ -313,8 +353,8 @@ function UyumlulukContent() {
   };
 
   return (
-    <div className="cosmic-gradient min-h-screen">
-      <section className="pt-16 pb-8 px-4">
+    <div className="bg-transparent min-h-screen">
+      <section className="pt-32 pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <Logo size={80} className="mx-auto mb-4 float" />
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -364,17 +404,14 @@ function UyumlulukContent() {
             {error && <div className="mt-8 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-center font-bold tracking-wide">{error}</div>}
 
             <div className="mt-12 text-center">
-              <CosmicButton
+              <GlassButton
                 size="lg"
                 onClick={handleSimpleCalculate}
                 disabled={loading || !sign1 || !sign2}
-                className="px-12 relative group overflow-hidden"
+                className="px-12"
               >
-                <span className="relative z-10">
-                   {loading ? t("burc_uyumu.analyzing") : t("burc_uyumu.analyze")}
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </CosmicButton>
+                 {loading ? t("burc_uyumu.analyzing") : t("burc_uyumu.analyze")}
+              </GlassButton>
             </div>
 
             {loading && (
@@ -390,7 +427,7 @@ function UyumlulukContent() {
                   <div className="p-8 md:p-12 relative z-10 text-center">
                     <div className="flex items-center justify-center gap-8 mb-12">
                        <div className="flex flex-col items-center">
-                          <div className="text-6xl mb-4">{getZodiacById(sign1)?.symbol}</div>
+                          <ZodiacIcon signId={sign1} size={64} glowColor="#ffffff" className="mb-4" />
                           <span className="text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign1}`)}</span>
                        </div>
                        <div className="relative">
@@ -399,7 +436,7 @@ function UyumlulukContent() {
                           </div>
                        </div>
                        <div className="flex flex-col items-center">
-                          <div className="text-6xl mb-4">{getZodiacById(sign2)?.symbol}</div>
+                          <ZodiacIcon signId={sign2} size={64} glowColor="#ffffff" className="mb-4" />
                           <span className="text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign2}`)}</span>
                        </div>
                     </div>
@@ -417,24 +454,20 @@ function UyumlulukContent() {
           <section className="pb-8 px-4">
             <div className="max-w-5xl mx-auto">
               <div className="grid md:grid-cols-2 gap-6">
-                {renderPersonForm(p1, updateP1, t("compatibility.person1"), "✨")}
-                {renderPersonForm(p2, updateP2, t("compatibility.person2"), "🌟")}
+                {renderPersonForm(p1, updateP1, t("compatibility.person1"), User)}
+                {renderPersonForm(p2, updateP2, t("compatibility.person2"), Heart)}
               </div>
 
               {error && <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-center">{error}</div>}
 
-              <CosmicButton
+              <GlassButton
                 fullWidth
                 onClick={handleCalculate}
                 disabled={loading}
-                className="mt-8 group overflow-hidden relative"
+                className="mt-8"
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {loading ? t("compatibility.calculating") : t("compatibility.calculate")}
-                  {!loading && <span className="group-hover:translate-x-1 transition-transform">→</span>}
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </CosmicButton>
+                {loading ? t("compatibility.calculating") : t("compatibility.calculate")}
+              </GlassButton>
 
               {loading && (
                 <div className="mt-12 fade-in">
@@ -492,7 +525,7 @@ function UyumlulukContent() {
                         <div className="absolute -inset-4 bg-pink-500/10 blur-3xl rounded-full opacity-60 group-hover/p1:opacity-100 transition-opacity duration-1000" />
                         <SignIcon signId={result.chart1.sunSign.id} size={100} />
                         <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-black/80 border border-white/20 flex items-center justify-center shadow-2xl backdrop-blur-xl z-20">
-                          <span className="text-lg">{getZodiacById(result.chart1.risingSign.id)?.symbol}</span>
+                          <ZodiacIcon signId={result.chart1.risingSign.id} size={24} />
                         </div>
                       </div>
                       <div className="text-center">
@@ -528,7 +561,7 @@ function UyumlulukContent() {
                         <div className="absolute -inset-4 bg-purple-500/10 blur-3xl rounded-full opacity-60 group-hover/p2:opacity-100 transition-opacity duration-1000" />
                         <SignIcon signId={result.chart2.sunSign.id} size={100} />
                         <div className="absolute -bottom-1 -left-1 w-10 h-10 rounded-full bg-black/80 border border-white/20 flex items-center justify-center shadow-2xl backdrop-blur-xl z-20">
-                          <span className="text-lg">{getZodiacById(result.chart2.risingSign.id)?.symbol}</span>
+                          <ZodiacIcon signId={result.chart2.risingSign.id} size={24} />
                         </div>
                       </div>
                       <div className="text-center">
@@ -585,8 +618,11 @@ function UyumlulukContent() {
             {p1.year && p2.year && (
               <div className="glass-card mb-10 p-8 border-l-4 border-l-fuchsia-500 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 blur-[80px] pointer-events-none" />
-                <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-widest flex items-center gap-3 relative z-10">
-                  <span className="text-3xl text-fuchsia-400 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]">🔢</span> Numerolojik Sinastri (Yaşam Yolu Uyumu)
+                <h3 className="text-2xl font-brand font-bold text-white mb-8 uppercase tracking-widest flex items-center gap-4 relative z-10">
+                  <div className="p-3 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <Binary className="size-8 text-fuchsia-400 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
+                  </div>
+                  Numerolojik Sinastri (Yaşam Yolu Uyumu)
                 </h3>
                 {(() => {
                   const numMonth1 = parseInt(p1.month.padStart(2, '0'));
@@ -630,8 +666,11 @@ function UyumlulukContent() {
             {p1.year && p2.year && (
               <div className="glass-card mb-10 p-8 md:p-10 border-l-4 border-l-emerald-500 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] pointer-events-none" />
-                <h3 className="text-2xl font-black text-white mb-8 uppercase tracking-widest flex items-center gap-4 relative z-10">
-                  <span className="text-4xl text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">🧬</span> {t("bio.compat.title") || "Biyoritim Uyumu"}
+                <h3 className="text-2xl font-brand font-bold text-white mb-10 uppercase tracking-widest flex items-center gap-4 relative z-10">
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                    <Dna className="size-8 text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                  </div>
+                  {t("bio.compat.title") || "Biyoritim Uyumu"}
                 </h3>
                 {(() => {
                   const numMonth1 = parseInt(p1.month.padStart(2, '0')) - 1;
@@ -643,24 +682,24 @@ function UyumlulukContent() {
                     <div className="relative z-10">
                       <p className="text-gray-300 text-sm md:text-base mb-8 max-w-2xl italic font-light">"{t("bio.compat.desc")}"</p>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
-                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 shadow-inner">
-                           <span className="text-emerald-500 text-4xl block mb-4 animate-pulse-slow">💪</span>
+                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 shadow-inner group/icon">
+                           <Dumbbell className="text-emerald-500 size-8 mx-auto mb-4 animate-pulse-slow group-hover/icon:scale-110 transition-transform" />
                            <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest block mb-2">{t("bio.physical")}</span>
                            <span className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{bCompat.physical}%</span>
                         </div>
-                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-pink-500/30 hover:bg-pink-500/5 transition-all duration-300 shadow-inner">
-                           <span className="text-pink-500 text-4xl block mb-4 animate-pulse-slow">💗</span>
+                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-pink-500/30 hover:bg-pink-500/5 transition-all duration-300 shadow-inner group/icon">
+                           <Heart className="text-pink-500 size-8 mx-auto mb-4 animate-pulse-slow group-hover/icon:scale-110 transition-transform" />
                            <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest block mb-2">{t("bio.emotional")}</span>
                            <span className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{bCompat.emotional}%</span>
                         </div>
-                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 shadow-inner">
-                           <span className="text-blue-500 text-4xl block mb-4 animate-pulse-slow">🧠</span>
+                        <div className="bg-black/30 rounded-[2rem] p-6 border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 shadow-inner group/icon">
+                           <Brain className="text-blue-500 size-8 mx-auto mb-4 animate-pulse-slow group-hover/icon:scale-110 transition-transform" />
                            <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest block mb-2">{t("bio.intellectual")}</span>
                            <span className="text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{bCompat.intellectual}%</span>
                         </div>
                         <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-400/10 rounded-[2rem] p-6 border border-emerald-400/40 relative overflow-hidden group/star shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-col justify-center">
                            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/0 to-emerald-300/20 opacity-0 group-hover/star:opacity-100 transition-opacity" />
-                           <span className="text-white text-3xl md:text-4xl block mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">⭐</span>
+                           <Star className="text-white size-8 mx-auto mb-4 drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
                            <span className="text-[11px] text-emerald-200 font-black uppercase tracking-widest block mb-2">{t("bio.compat.score")}</span>
                            <span className="text-4xl font-black text-white drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]">{bCompat.average}%</span>
                         </div>
@@ -674,8 +713,10 @@ function UyumlulukContent() {
             {/* Analysis Grid (Strengths & Challenges) */}
             <div className="grid md:grid-cols-2 gap-10">
               <div className="glass-card p-10 border-l-8 border-l-green-500 bg-gradient-to-br from-green-500/10 via-transparent to-black/10 shadow-2xl group hover:transform hover:translate-y-[-4px] transition-all duration-500">
-                <h3 className="text-2xl font-black text-white mb-10 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400 border border-green-500/30 shadow-inner">✅</div>
+                <h3 className="text-2xl font-brand font-bold text-white mb-10 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400 border border-green-500/30 shadow-inner group-hover:scale-110 transition-transform">
+                    <CheckCircle2 className="size-6" />
+                  </div>
                   <span className="tracking-widest uppercase">{t("compatibility.strengths")}</span>
                 </h3>
                 <ul className="space-y-8">
@@ -689,8 +730,10 @@ function UyumlulukContent() {
               </div>
 
               <div className="glass-card p-10 border-l-8 border-l-amber-500 bg-gradient-to-br from-amber-500/10 via-transparent to-black/10 shadow-2xl group hover:transform hover:translate-y-[-4px] transition-all duration-500">
-                <h3 className="text-2xl font-black text-white mb-10 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 border border-amber-500/30 shadow-inner">⚠️</div>
+                <h3 className="text-2xl font-brand font-bold text-white mb-10 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 border border-amber-500/30 shadow-inner group-hover:scale-110 transition-transform">
+                    <AlertTriangle className="size-6" />
+                  </div>
                   <span className="tracking-widest uppercase">{t("compatibility.challenges")}</span>
                 </h3>
                 <ul className="space-y-8">

@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { FortuneTeller } from "@/data/fortune-tellers";
 import FortuneTellerSelector from "@/components/Fortune/FortuneTellerSelector";
-import CosmicButton from "@/components/Cosmic/CosmicButton";
+import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 
 export default function KahvePage() {
@@ -130,16 +130,20 @@ export default function KahvePage() {
             {mode === "photo" ? (
               <div>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} disabled={loading}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-yellow-600 to-amber-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 glow">
+                <GlassButton 
+                  fullWidth
+                  onClick={() => fileInputRef.current?.click()} 
+                  disabled={loading}
+                  className="py-1"
+                >
                   📷 {t("fortune.reading.btn.kahve")} (Upload)
-                </button>
+                </GlassButton>
                 <p className="text-gray-500 text-[10px] text-center mt-2">{t("kahve.upload_warn")}</p>
               </div>
             ) : (
-              <CosmicButton fullWidth onClick={handleVirtual} disabled={loading} icon="☕">
-                {t("fortune.reading.btn.kahve")}
-              </CosmicButton>
+                <GlassButton fullWidth onClick={handleVirtual} disabled={loading}>
+                  {t("fortune.reading.btn.kahve")}
+                </GlassButton>
             )}
 
             {error && <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-center text-sm">{error}</div>}
@@ -222,14 +226,13 @@ export default function KahvePage() {
               )}
             </div>
 
-            <CosmicButton 
+            <GlassButton 
               fullWidth 
               variant="secondary"
               onClick={() => { setPhase("teller-selection"); setQuestion(""); setResult(null); }}
-              icon="↺"
             >
               {t("fortune.common.result.retry")}
-            </CosmicButton>
+            </GlassButton>
           </div>
         </section>
       )}

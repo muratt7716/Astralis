@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { GoogleGenAI } from "@google/genai";
+import { calculateBaseCompatibilityScore } from "./astrology/compatibility-logic";
 
 // 1. Çevre değişkeninden JSON'ı ayrıştır
 let credentials: any = {};
@@ -238,6 +239,7 @@ async function _generateCompatibility(
   language: SupportedLanguage = "tr"
 ) {
   const lang = languageNames[language];
+  const matrixScore = calculateBaseCompatibilityScore(sign1, sign2);
 
   const prompt = `You are a professional relationship astrologer and synastry expert.
 
@@ -245,6 +247,7 @@ TASK:
 Analyze the astrological compatibility between two zodiac signs.
 - Sign 1: "${sign1Name}" (${sign1})
 - Sign 2: "${sign2Name}" (${sign2})
+- SYSTEM COMPATIBILITY SCORE: ${matrixScore}% (Historical/System baseline). Your analysis MUST explain why they have this specific score.
 
 CONTEXT:
 - Language: ${lang}
@@ -266,11 +269,11 @@ CONTEXT:
 
     OUTPUT FORMAT:
     {
-      "overallScore": number (0-100),
+      "overallScore": ${matrixScore},
       "loveScore": number (0-100),
       "friendshipScore": number (0-100),
       "workScore": number (0-100),
-      "description": "7-10 long, analytical sentences. Synthesize their qualities (cardinal, fixed, mutable) and elements (Fire, Earth, Air, Water). Explain the core psychological contract, how they resolve conflict, and what they teach each other on a soul level. Use sophisticated language.",
+      "description": "7-10 long, analytical sentences. Synthesize their qualities (cardinal, fixed, mutable) and elements (Fire, Earth, Air, Water). Explain the core psychological contract, how they resolve conflict, and what they teach each other on a soul level. Use sophisticated language. Reference the ${matrixScore}% compatibility score in your analysis to justify why it's not higher or lower.",
       "strengths": [
         "A detailed point about emotional or psychic resonance (2-3 sentences).",
         "A detailed point about intellectual or social synergy (2-3 sentences).",
@@ -286,7 +289,7 @@ CONTEXT:
     QUALITY REQUIREMENTS:
     - Focus on the 'Why' behind the attraction and friction.
     - Use the elemental/quality archetypes to explain behavior.
-    - Ensure the scores are astrologically sound.
+    - Ensure the scores are astrologically sound and justify the system score of ${matrixScore}%.
     - Write fluently and elegantly in ${lang}. Ensure it feels like a premium session.`;
 
   try {
@@ -296,7 +299,7 @@ CONTEXT:
     return {
       sign1,
       sign2,
-      overallScore: Math.min(100, Math.max(0, Number(parsed.overallScore) || 50)),
+      overallScore: matrixScore, // Force alignment with system score
       loveScore: Math.min(100, Math.max(0, Number(parsed.loveScore) || 50)),
       friendshipScore: Math.min(100, Math.max(0, Number(parsed.friendshipScore) || 50)),
       workScore: Math.min(100, Math.max(0, Number(parsed.workScore) || 50)),
@@ -658,3 +661,120 @@ export const generateCompatibility = unstable_cache(_generateCompatibility, ["__
 export const generateCoffeeReading = unstable_cache(_generateCoffeeReading, ["__gemini_generateCoffeeReading"], { revalidate: 86400 });
 export const generateVirtualCoffeeReading = unstable_cache(_generateVirtualCoffeeReading, ["__gemini_generateVirtualCoffeeReading"], { revalidate: 86400 });
 export const generateDivinationReading = unstable_cache(_generateDivinationReading, ["__gemini_generateDivinationReading"], { revalidate: 86400 });
+
+/**
+ * Generate a hyper-personalized daily cosmic insight synthesizing natal data and transits.
+ */
+export async function generateDeepCosmicInsight(
+  userData: {
+    sunSign: string;
+    sunDegree: number;
+    moonSign: string;
+    moonDegree: number;
+    risingSign: string | null;
+    risingDegree: number | null;
+    topPlanets: string;
+    activeAspects: string;
+    lifeFocus: string;
+    gender: string;
+    relationshipStatus: string;
+    name: string;
+  },
+  celestialData: {
+    moonPhase: string;
+    transits: string;
+    retrogrades: string;
+  },
+  language: SupportedLanguage = "tr"
+) {
+  const lang = languageNames[language];
+  const dateStr = new Date().toISOString().split("T")[0];
+
+  const risingBlock = userData.risingSign
+    ? `- Yükselen (Ascendant): ${userData.risingSign} (${userData.risingDegree?.toFixed(1)}°) — dış dünyaya yansıyan maske, ilk izlenim`
+    : "- Yükselen: Bilinmiyor (doğum saati girilmemiş)";
+
+  const prompt = `Sen, yüzyılların bilgeliğini taşıyan bir Kozmik Kahin'sin. Natal astroloji, transit analiz ve Jungcu psikoloji sentezinde uzmansın. Kullanıcıya özel, derinlikli bir günlük kozmik rehberlik oluşturacaksın.
+
+══════════════════════════════════════
+KULLANICININ NATAL HARİTASI
+══════════════════════════════════════
+- İsim: ${userData.name || "Yolcu"}
+- Güneş: ${userData.sunSign} (${userData.sunDegree.toFixed(1)}°) — öz kimlik, ego, yaşam amacı
+- Ay: ${userData.moonSign} (${userData.moonDegree.toFixed(1)}°) — duygusal dünya, bilinçaltı, ihtiyaçlar
+${risingBlock}
+- Yaşam Odağı: ${userData.lifeFocus}
+- İlişki Durumu: ${userData.relationshipStatus}
+- Cinsiyet: ${userData.gender}
+
+NATAL GEZEGEN YERLEŞİMLERİ:
+${userData.topPlanets}
+
+AKTİF NATAL AÇILAR:
+${userData.activeAspects || "Hesaplanamadı"}
+
+══════════════════════════════════════
+BUGÜNKÜ GÖK HARİTASI (${dateStr})
+══════════════════════════════════════
+- Ay Evresi: ${celestialData.moonPhase}
+- Aktif Transitler: ${celestialData.transits || "Belirgin transit yok"}
+- Retrograd Gezegenler: ${celestialData.retrogrades}
+
+══════════════════════════════════════
+TALİMATLAR
+══════════════════════════════════════
+
+ADIM 1 — SENTEZ:
+Kullanıcının natal haritasını bugünkü gök olaylarıyla sentezle. Hangi transit hangi natal gezegeni tetikliyor? Bugünkü ay evresi kullanıcının Ay burcuyla nasıl etkileşiyor? Güneş burcunun derecesi ile transit gezegenler arasında orb var mı?
+
+ADIM 2 — KİŞİSELLEŞTİRME:
+"${userData.lifeFocus}" odağına göre içeriği ağırlıklandır:
+- "love" → ilişki dinamikleri, Venüs transitlerini öne çıkar
+- "career" → kariyer, Satürn/Jüpiter/10. ev etkileri
+- "health" → beden-zihin dengesi, Mars/6. ev
+- "spiritual" → ruhsal uyanış, Neptün/Plüton/12. ev
+- "general" → dengeli bir karışım
+
+ADIM 3 — YAZIM:
+${lang} dilinde yaz. Ton: Bilge, şiirsel ama havada kalmayan, otoriter ama şefkatli. Klişelerden kaçın. Spesifik gezegen ve burç isimlerini kullan. Kullanıcıya "sen" diye hitap et.
+
+══════════════════════════════════════
+ÇIKTI FORMATI (SADECE JSON)
+══════════════════════════════════════
+
+{
+  "title": "Bugün için çağrışımsal, kısa ve etkileyici bir başlık (örn: 'Sabır Simyası', 'Gölgelerin Dansı', 'Ateşin Fısıltısı')",
+  "content": "6-8 cümle. İlk cümlede bugünün kozmik atmosferini çiz. Ortada en az 1 spesifik transit-natal etkileşimini açıkla (örn: 'Transit Satürn senin natal Venüs'üne kare yapıyor — bu da...'). Son cümlelerde psikolojik derinlik ve somut yönlendirme ver. Paragraflar arasında \\n\\n kullan.",
+  "advice": "Bugün için 1-2 cümlelik pratik, uygulanabilir bilgelik. Soyut değil somut olsun.",
+  "planetOfTheDay": {
+    "name": "Bugün kullanıcı için en etkili gezegenin ADI (Türkçe)",
+    "reason": "1 kısa cümle: neden bu gezegen bugün baskın?"
+  },
+  "energyScores": {
+    "love": "1-100 arası puan — bugünkü aşk/ilişki enerjisi",
+    "career": "1-100 arası puan — kariyer/iş enerjisi",
+    "health": "1-100 arası puan — sağlık/enerji seviyesi",
+    "spiritual": "1-100 arası puan — ruhsal farkındalık"
+  },
+  "luckyElements": {
+    "color": "Bugünün şanslı rengi",
+    "number": "Bugünün şanslı sayısı (1-99)",
+    "time": "Günün en güçlü saati (örn: '14:00-16:00')"
+  }
+}
+
+KALİTE KRİTERLERİ:
+- "Bu benim için yazılmış" hissi ZORUNLU. Genel burç yorumu YASAK.
+- Enerji puanları rastgele değil, transit ve natal etkileşimlere dayansın.
+- Şanslı elementler de kozmik verilere göre belirlensin.
+- content alanında en az 1 yerde kullanıcının natal gezegen yerleşimine atıf yap.
+- JSON dışında HİÇBİR ŞEY yazma.`;
+
+  try {
+    const text = await callGeminiWithFallback(prompt);
+    return parseGeminiJson(text);
+  } catch (error) {
+    console.error("Gemini deep insight generation failed:", error);
+    return null;
+  }
+}

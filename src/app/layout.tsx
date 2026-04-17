@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import StarField from "@/components/StarField";
+import GlobalBackground from "@/components/Cosmic/GlobalBackground";
 import Providers from "@/components/Providers";
 
 import { cookies } from "next/headers";
@@ -54,12 +54,14 @@ export default async function RootLayout({
       </head>
       <body className="bg-[#070714] text-white font-sans min-h-screen antialiased">
         <Providers>
-          <StarField />
+          <GlobalBackground />
           <Navbar />
-          <main className="relative z-10 pt-16 min-h-screen">
-            {children}
-          </main>
-          <Footer />
+          <div className="relative z-10 flex flex-col min-h-screen">
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>

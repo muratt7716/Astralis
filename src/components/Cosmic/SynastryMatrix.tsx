@@ -1,42 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { zodiacSigns, getZodiacById } from "@/data/zodiac";
+import { zodiacSigns } from "@/data/zodiac";
 import { useTranslation } from "@/lib/i18n";
-
-const calculateCompatibilityScore = (s1Id: string, s2Id: string): number => {
-  if (s1Id === s2Id) return 100;
-
-  const sign1 = getZodiacById(s1Id);
-  const sign2 = getZodiacById(s2Id);
-
-  if (!sign1 || !sign2) return 50;
-
-  // Elemental Compatibility
-  const el1 = sign1.elementKey.split(".").pop();
-  const el2 = sign2.elementKey.split(".").pop();
-
-  if (el1 === el2) return 90;
-
-  const compatiblePairs = [
-    ["fire", "air"],
-    ["earth", "water"],
-  ];
-
-  const isCompatible = compatiblePairs.some(
-    (pair) => (pair[0] === el1 && pair[1] === el2) || (pair[0] === el2 && pair[1] === el1)
-  );
-
-  if (isCompatible) return 80;
-
-  // Squares and Oppositions (simplified)
-  const q1 = sign1.qualityKey.split(".").pop();
-  const q2 = sign2.qualityKey.split(".").pop();
-
-  if (q1 === q2) return 45; // Tension
-
-  return 65; // Default neutral-ish
-};
+import { calculateBaseCompatibilityScore } from "@/lib/astrology/compatibility-logic";
 
 export default function SynastryMatrix() {
   const { t } = useTranslation();
@@ -57,9 +24,8 @@ export default function SynastryMatrix() {
               key={sign.id}
               onMouseEnter={() => setHovered(prev => ({ ...prev!, c: sign.id }))}
               onMouseLeave={() => setHovered(prev => ({ ...prev!, c: "" }))}
-              className={`h-10 flex items-center justify-center border border-white/5 bg-black/40 backdrop-blur-md transition-all duration-300 ${
-                i === 11 ? "rounded-tr-2xl" : ""
-              } ${hovered?.c === sign.id ? "bg-pink-500/20 scale-105 z-10" : ""}`}
+              className={`h-10 flex items-center justify-center border border-white/5 bg-black/40 backdrop-blur-md transition-all duration-300 ${i === 11 ? "rounded-tr-2xl" : ""
+                } ${hovered?.c === sign.id ? "bg-pink-500/20 scale-105 z-10" : ""}`}
             >
               <span className="text-lg" title={t(sign.nameKey)}>{sign.symbol}</span>
             </div>
@@ -73,9 +39,8 @@ export default function SynastryMatrix() {
                 key={`row-header-${rowSign.id}`}
                 onMouseEnter={() => setHovered(prev => ({ ...prev!, r: rowSign.id }))}
                 onMouseLeave={() => setHovered(prev => ({ ...prev!, r: "" }))}
-                className={`h-10 flex items-center justify-start px-3 border border-white/5 bg-black/40 backdrop-blur-md transition-all duration-300 ${
-                  rowIndex === 11 ? "rounded-bl-2xl" : ""
-                } ${hovered?.r === rowSign.id ? "bg-pink-500/20 scale-105 z-10" : ""}`}
+                className={`h-10 flex items-center justify-start px-3 border border-white/5 bg-black/40 backdrop-blur-md transition-all duration-300 ${rowIndex === 11 ? "rounded-bl-2xl" : ""
+                  } ${hovered?.r === rowSign.id ? "bg-pink-500/20 scale-105 z-10" : ""}`}
               >
                 <span className="text-sm mr-2">{rowSign.symbol}</span>
                 <span className="text-[10px] text-gray-400 font-bold uppercase truncate">{t(rowSign.nameKey)}</span>
@@ -83,9 +48,9 @@ export default function SynastryMatrix() {
 
               {/* Data Cells */}
               {zodiacSigns.map((colSign, colIndex) => {
-                const score = calculateCompatibilityScore(rowSign.id, colSign.id);
+                const score = calculateBaseCompatibilityScore(rowSign.id, colSign.id);
                 const isSelected = hovered?.r === rowSign.id && hovered?.c === colSign.id;
-                
+
                 let bgColor = "bg-white/[0.02]";
                 if (score >= 90) bgColor = "bg-emerald-500/20 text-emerald-400";
                 else if (score >= 80) bgColor = "bg-cyan-500/20 text-cyan-400";
@@ -106,7 +71,7 @@ export default function SynastryMatrix() {
                     `}
                   >
                     <span className="text-[11px] font-black">{score}%</span>
-                    
+
                     {/* Tooltip on Hover */}
                     {isSelected && (
                       <div className={`
@@ -119,7 +84,7 @@ export default function SynastryMatrix() {
                           {t(rowSign.nameKey)} + {t(colSign.nameKey)}
                         </div>
                         <div className="text-xs text-white leading-tight">
-                           {score >= 80 ? "Mükemmel uyum ve doğal akış!" : score >= 60 ? "Uyumlu ama çaba gerektiren bir bağ." : "Zorlayıcı ama geliştirici bir etkileşim."}
+                          {score >= 80 ? "Mükemmel uyum ve doğal akış!" : score >= 60 ? "Uyumlu ama çaba gerektiren bir bağ." : "Zorlayıcı ama geliştirici bir etkileşim."}
                         </div>
                         <div className={`
                           absolute ${colIndex < 2 ? "left-4" : colIndex > 9 ? "right-4" : "left-1/2 -translate-x-1/2"} 

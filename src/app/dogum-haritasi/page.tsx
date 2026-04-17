@@ -8,13 +8,33 @@ import { useTranslation } from "@/lib/i18n";
 import BirthChartWheel from "@/components/BirthChartWheel";
 import CosmicInput from "@/components/Cosmic/CosmicInput";
 import CosmicSelect from "@/components/Cosmic/CosmicSelect";
-import CosmicButton from "@/components/Cosmic/CosmicButton";
+import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 import NextImage from "next/image";
 import { planets } from "@/data/planets";
 import PlanetIcon from "@/components/PlanetIcon";
 import Logo from "@/components/Cosmic/Logo";
+import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { useEffect } from "react";
+import { getCurrentProfile } from "@/lib/auth-helpers";
+import { logInteraction } from "@/lib/logging";
+import { 
+  Sparkles, 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Globe, 
+  ChevronUp, 
+  BarChart3, 
+  Orbit, 
+  Home, 
+  Link2,
+  CheckCircle2,
+  AlertTriangle,
+  Zap,
+  Info,
+  Lightbulb
+} from "lucide-react";
 
 const useIsClient = () => {
   const [isClient, setIsClient] = useState(false);
@@ -73,7 +93,20 @@ export default function DogumHaritasiPage() {
         }),
       });
       const data = await response.json();
-      if (data.success) { setResult(data.data); setActiveTab("overview"); }
+      if (data.success) { 
+        setResult(data.data); 
+        setActiveTab("overview"); 
+        
+        // Log Interaction
+        try {
+          const profile = await getCurrentProfile();
+          if (profile) {
+            logInteraction(profile.id, "astrology", "Doğum haritası hesaplaması yapıldı");
+          }
+        } catch (err) {
+          console.error("Log failed", err);
+        }
+      }
       else { setError(data.error || t("error.generic")); }
     } catch { setError(t("error.connection")); }
     finally { setLoading(false); }
@@ -94,7 +127,7 @@ export default function DogumHaritasiPage() {
   return (
     <div className="cosmic-gradient min-h-screen">
       {/* Header */}
-      <section className="pt-16 pb-8 px-4">
+      <section className="pt-32 pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <Logo size={80} className="mx-auto mb-4 float" />
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -113,17 +146,17 @@ export default function DogumHaritasiPage() {
           <div className="mb-6 text-center">
             <button 
               onClick={() => setShowFinder(!showFinder)}
-              className="text-xs font-black uppercase tracking-[0.2em] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-2 mx-auto bg-purple-500/5 px-4 py-2 rounded-full border border-purple-500/10"
+              className="text-xs font-black uppercase tracking-[0.2em] text-purple-400 hover:text-purple-300 transition-all duration-300 flex items-center gap-2 mx-auto bg-purple-500/5 px-4 py-2 rounded-full border border-purple-500/10 group"
             >
-              ✨ {showFinder ? "Hızlı Bulucuyu Kapat" : "Burcunu Hemen Öğren"}
+              <Sparkles className="size-3.5 group-hover:rotate-12 transition-transform" /> {showFinder ? "Hızlı Bulucuyu Kapat" : "Burcunu Hemen Öğren"}
             </button>
           </div>
 
           {showFinder && (
             <div className="glass-card p-6 mb-8 border-purple-500/30 animate-in fade-in slide-in-from-top-4">
-              <h3 className="text-sm font-bold text-white mb-4 text-center uppercase tracking-widest">Hızlı Burç Bulucu</h3>
+              <h3 className="text-sm font-bold text-white mb-4 text-center uppercase tracking-widest">{t("chart.quick_finder")}</h3>
               <div className="flex flex-col sm:flex-row gap-4 items-end">
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <CosmicSelect
                     label={t("chart.day")}
                     value={fDay}
@@ -134,7 +167,7 @@ export default function DogumHaritasiPage() {
                     ]}
                   />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <CosmicSelect
                     label={t("chart.month")}
                     value={fMonth}
@@ -147,15 +180,17 @@ export default function DogumHaritasiPage() {
                 </div>
                 <button 
                   onClick={findSunSign}
-                  className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/20"
+                  className="bg-purple-600 hover:bg-purple-500 text-white px-8 h-[50px] rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/40 whitespace-nowrap active:scale-95"
                 >
-                  Bul
+                  {t("chart.find_btn")}
                 </button>
               </div>
 
               {fResult && (
                 <div className="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 animate-in zoom-in-95">
-                  <span className="text-4xl">{fResult.symbol}</span>
+                  <div className="w-16 h-16 rounded-full overflow-hidden border border-white/10 shrink-0">
+                    <ZodiacIcon signId={fResult.id} size={64} className="w-full h-full object-cover" />
+                  </div>
                   <div>
                     <p className="text-white font-bold">{t(`zodiac.${fResult.id}`)}</p>
                     <p className="text-gray-500 text-[10px] uppercase tracking-widest">{fResult.dateRange}</p>
@@ -166,9 +201,9 @@ export default function DogumHaritasiPage() {
                       setMonth(fMonth);
                       setShowFinder(false);
                     }}
-                    className="ml-auto text-[10px] font-black uppercase text-pink-400 hover:underline"
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20 text-[10px] font-black uppercase text-pink-400 hover:bg-pink-500/20 transition-all group"
                   >
-                    Forma Aktar →
+                    {t("chart.copy_to_form")} <Sparkles className="size-3 group-hover:rotate-12 transition-transform" />
                   </button>
                 </div>
               )}
@@ -177,7 +212,12 @@ export default function DogumHaritasiPage() {
 
           <div className="glass-card p-8">
             {/* Date */}
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">📅 {t("chart.date")}</h2>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <Calendar className="size-4 text-purple-400" />
+              </div>
+              {t("chart.date")}
+            </h2>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <CosmicSelect
                 label={t("chart.day")}
@@ -209,7 +249,12 @@ export default function DogumHaritasiPage() {
             </div>
 
             {/* Time */}
-            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">🕐 {t("chart.time")} <span className="text-red-400 text-xs font-normal">({t("chart.required")})</span></h2>
+            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                <Clock className="size-4 text-pink-400" />
+              </div>
+              {t("chart.time")} <span className="text-red-400 text-xs font-normal">({t("chart.required")})</span>
+            </h2>
             <div className="grid grid-cols-2 gap-4 mb-6">
               <CosmicSelect
                 value={hour}
@@ -230,7 +275,12 @@ export default function DogumHaritasiPage() {
             </div>
 
             {/* Location */}
-            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">📍 {t("chart.location")} <span className="text-red-400 text-xs font-normal">({t("chart.required")})</span></h2>
+            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <MapPin className="size-4 text-cyan-400" />
+              </div>
+              {t("chart.location")} <span className="text-red-400 text-xs font-normal">({t("chart.required")})</span>
+            </h2>
 
             {/* Country */}
             <div className="mb-4">
@@ -277,25 +327,25 @@ export default function DogumHaritasiPage() {
             )}
 
             {isTurkey && selectedCity && (
-              <div className="mb-6 p-3 rounded-lg bg-white/3 border border-white/5 text-gray-500 text-xs">
-                📍 Koordinatlar: {selectedCity.lat.toFixed(4)}°N, {selectedCity.lng.toFixed(4)}°E | Saat dilimi: UTC+{selectedCountry?.utcOffset}
+              <div className="mb-6 p-3 rounded-lg bg-white/3 border border-white/5 text-gray-500 text-xs flex items-center gap-2">
+                <MapPin className="size-3 text-cyan-500" /> {t("chart.coordinates")}: {selectedCity.lat.toFixed(4)}°N, {selectedCity.lng.toFixed(4)}°E | {t("chart.timezone")}: UTC+{selectedCountry?.utcOffset}
               </div>
             )}
             {!isTurkey && selectedCountry && (
-              <div className="mb-6 p-3 rounded-lg bg-white/3 border border-white/5 text-gray-500 text-xs">
-                🌍 {selectedCountry.name} | Saat dilimi: UTC{selectedCountry.utcOffset >= 0 ? "+" : ""}{selectedCountry.utcOffset}
+              <div className="mb-6 p-3 rounded-lg bg-white/3 border border-white/5 text-gray-500 text-xs flex items-center gap-2">
+                <Globe className="size-3 text-indigo-500" /> {selectedCountry.name} | {t("chart.timezone")}: UTC{selectedCountry.utcOffset >= 0 ? "+" : ""}{selectedCountry.utcOffset}
               </div>
             )}
 
             {error && <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
 
-            <CosmicButton 
+            <GlassButton 
               fullWidth 
               onClick={handleCalculate} 
               disabled={loading}
             >
               {loading ? t("chart.calculating") : t("chart.calculate")}
-            </CosmicButton>
+            </GlassButton>
           </div>
 
           {loading && (
@@ -312,8 +362,8 @@ export default function DogumHaritasiPage() {
           <div className="max-w-5xl mx-auto space-y-6">
             {/* Birth Info */}
             <div className="text-center fade-in-up">
-              <p className="text-gray-500 text-sm">
-                📍 {selectedCountry?.name}{isTurkey ? `, ${city}` : (manualCity ? `, ${manualCity}` : "")}{district ? ` / ${district}` : ""} — {day}/{month}/{year}, {hour?.toString().padStart(2, "0")}:{minute?.toString().padStart(2, "0")}
+              <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
+                <MapPin className="size-3 text-cyan-500/50" /> {selectedCountry?.name}{isTurkey ? `, ${city}` : (manualCity ? `, ${manualCity}` : "")}{district ? ` / ${district}` : ""} — {day}/{month}/{year}, {hour?.toString().padStart(2, "0")}:{minute?.toString().padStart(2, "0")}
               </p>
             </div>
 
@@ -346,8 +396,8 @@ export default function DogumHaritasiPage() {
                             className="object-cover opacity-90 group-hover:scale-110 transition-transform" 
                           />
                         ) : (
-                           <div className="w-full h-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center text-3xl">
-                             {item.type === "ascendant" ? "⬆️" : "✨"}
+                           <div className="w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-600/10 flex items-center justify-center">
+                             {item.type === "ascendant" ? <ChevronUp className="size-8 text-purple-400 animate-bounce" /> : <Sparkles className="size-8 text-white animate-pulse" />}
                            </div>
                         )}
                       </div>
@@ -363,11 +413,11 @@ export default function DogumHaritasiPage() {
             {/* Tabs */}
             <div className="flex justify-center gap-2 flex-wrap fade-in-up-delay-3">
               {([
-                { key: "overview", label: `📊 ${t("chart.overview")}` },
-                { key: "planets", label: `🪐 ${t("chart.planets")}` },
-                { key: "houses", label: `🏠 ${t("chart.houses")}` },
-                { key: "aspects", label: `🔗 ${t("chart.aspects")}` },
-                { key: "transits", label: `✨ ${t("chart.transits")}` },
+                { key: "overview", label: t("chart.overview"), icon: BarChart3 },
+                { key: "planets", label: t("chart.planets"), icon: Orbit },
+                { key: "houses", label: t("chart.houses"), icon: Home },
+                { key: "aspects", label: t("chart.aspects"), icon: Link2 },
+                { key: "transits", label: t("chart.transits"), icon: Zap },
               ] as const).map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -375,6 +425,7 @@ export default function DogumHaritasiPage() {
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/5"
                   }`}>
+                  <tab.icon className="size-4 mr-2 inline-block" />
                   {tab.label}
                 </button>
               ))}
@@ -395,7 +446,12 @@ export default function DogumHaritasiPage() {
 
                 {/* Planet Summary Table */}
                 <div className="glass-card p-6 overflow-x-auto">
-                  <h3 className="text-lg font-bold text-white mb-4">🪐 {t("chart.planets")}</h3>
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
+                    <div className="p-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                      <Orbit className="size-4 text-orange-400" />
+                    </div>
+                    {t("chart.planets")}
+                  </h3>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10 text-left">
@@ -437,7 +493,14 @@ export default function DogumHaritasiPage() {
                                 <span className="font-medium">{t(`astrology.planet.${pos.planetId}`)}</span>
                               </div>
                             </td>
-                            <td className="py-4 text-amber-400 font-medium">{t(`zodiac.${pos.signId}`)}</td>
+                            <td className="py-4 text-amber-400 font-medium px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0">
+                                  <ZodiacIcon signId={pos.signId} size={32} className="w-full h-full object-cover" />
+                                </div>
+                                <span>{t(`zodiac.${pos.signId}`)}</span>
+                              </div>
+                            </td>
                             <td className="py-4 text-gray-400">
                               {pos.degree}° {pos.retrograde && <span className="text-red-400 font-bold ml-1 text-[10px]">℞</span>}
                             </td>
@@ -450,19 +513,21 @@ export default function DogumHaritasiPage() {
                 </div>
 
                 {/* Aspect Summary */}
-                <div className="glass-card p-6 border-l-4 border-amber-500/50">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                       <span className="text-2xl">🔗</span> {t("chart.aspects")} ({result.aspects.length})
+                <div className="glass-card p-8 border-l-4 border-amber-500/50">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-3">
+                       <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                         <Link2 className="size-4 text-amber-400" />
+                       </div>
+                       {t("chart.aspects")} ({result.aspects.length})
                     </h3>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Kozmik Enerji Dengesi</div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">{t("chart.energy_balance")}</div>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <div className="relative p-4 rounded-2xl bg-green-500/5 border border-green-500/10 group hover:bg-green-500/10 transition-colors">
                       <div className="absolute top-2 right-2 text-green-500/20 text-xl font-black">POS</div>
                       <p className="text-3xl font-black text-green-400 mb-1">{result.aspects.filter(a => a.harmony === "positive").length}</p>
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">Uyumlu (Akış)</p>
+                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">{t("chart.harmony.positive")}</p>
                       <div className="h-1 w-full bg-green-500/20 rounded-full mt-2 overflow-hidden">
                         <div className="h-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" style={{ width: `${(result.aspects.filter(a => a.harmony === "positive").length / result.aspects.length) * 100}%` }}></div>
                       </div>
@@ -471,7 +536,7 @@ export default function DogumHaritasiPage() {
                     <div className="relative p-4 rounded-2xl bg-red-500/5 border border-red-500/10 group hover:bg-red-500/10 transition-colors">
                       <div className="absolute top-2 right-2 text-red-500/20 text-xl font-black">NEG</div>
                       <p className="text-3xl font-black text-red-400 mb-1">{result.aspects.filter(a => a.harmony === "negative").length}</p>
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">Zorlayıcı (Gelişim)</p>
+                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">{t("chart.harmony.negative")}</p>
                       <div className="h-1 w-full bg-red-500/20 rounded-full mt-2 overflow-hidden">
                         <div className="h-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]" style={{ width: `${(result.aspects.filter(a => a.harmony === "negative").length / result.aspects.length) * 100}%` }}></div>
                       </div>
@@ -480,15 +545,16 @@ export default function DogumHaritasiPage() {
                     <div className="relative p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 group hover:bg-blue-500/10 transition-colors">
                       <div className="absolute top-2 right-2 text-blue-500/20 text-xl font-black">NEU</div>
                       <p className="text-3xl font-black text-blue-400 mb-1">{result.aspects.filter(a => a.harmony === "neutral").length}</p>
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">Nötr (Odak)</p>
+                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">{t("chart.harmony.neutral")}</p>
                       <div className="h-1 w-full bg-blue-500/20 rounded-full mt-2 overflow-hidden">
                         <div className="h-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]" style={{ width: `${(result.aspects.filter(a => a.harmony === "neutral").length / result.aspects.length) * 100}%` }}></div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-400 italic leading-relaxed">
-                    ✨ {t("chart.aspects.desc.natal")} Bu açılar, karakterinizdeki farklı güçlerin birbiriyle nasıl yardımlaştığını veya nerede sürtünme yarattığını gösterir.
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-400 italic leading-relaxed flex items-start gap-3">
+                    <Info className="size-4 text-blue-400 shrink-0 mt-0.5" />
+                    <span>{t("chart.aspects.desc.natal")} Bu açılar, karakterinizdeki farklı güçlerin birbiriyle nasıl yardımlaştığını veya nerede sürtünme yarattığını gösterir.</span>
                   </div>
                 </div>
               </div>
@@ -535,13 +601,16 @@ export default function DogumHaritasiPage() {
                                {t(`astrology.planet.${pos.planetId}`)}
                               {pos.retrograde && <span className="text-amber-400 text-sm" title="Retrograde">℞</span>}
                             </h4>
-                            <p className="text-amber-400 font-medium text-sm">
+                            <div className="flex items-center gap-2 text-amber-400 font-medium text-sm">
+                                <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10 shrink-0">
+                                  <ZodiacIcon signId={pos.signId} size={24} className="w-full h-full object-cover" />
+                                </div>
                                 {t(`zodiac.${pos.signId}`)} {pos.degree}°
-                            </p>
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Mistik Öz</div>
+                          <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">{t("chart.planet.mystic_essence")}</div>
                           <p className="text-xs text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20 shadow-inner">{t(`astrology.planet.meaning.${pos.planetId}`)}</p>
                         </div>
                       </div>
@@ -554,24 +623,24 @@ export default function DogumHaritasiPage() {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/10 hover:bg-green-500/10 transition-colors">
-                            <p className="text-[10px] uppercase font-bold text-green-400 mb-2 tracking-widest flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
-                                Olumlu Akış
-                            </p>
+                             <p className="text-[10px] uppercase font-bold text-green-400 mb-2 tracking-widest flex items-center gap-1">
+                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
+                                 {t("chart.planet.flow_pos")}
+                             </p>
                             <p className="text-xs text-gray-400 leading-tight">{t(`astrology.planet.${pos.planetId}.traits.pos`)}</p>
                           </div>
                           <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition-colors">
-                            <p className="text-[10px] uppercase font-bold text-red-400 mb-2 tracking-widest flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_rgba(248,113,113,0.5)]"></span>
-                                Zorlayıcı Alan
-                            </p>
+                             <p className="text-[10px] uppercase font-bold text-red-400 mb-2 tracking-widest flex items-center gap-1">
+                                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_rgba(248,113,113,0.5)]"></span>
+                                 {t("chart.planet.flow_neg")}
+                             </p>
                             <p className="text-xs text-gray-400 leading-tight">{t(`astrology.planet.${pos.planetId}.traits.neg`)}</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="mt-6 flex items-center justify-between text-[10px] text-gray-500 font-medium tracking-widest uppercase opacity-50">
-                        <span>Boylam Verisi</span>
+                        <span>{t("chart.planet.longitude")}</span>
                         <span>{pos.fullDegree}° {pos.retrograde ? "(RE)" : "(DIR)"}</span>
                       </div>
                     </div>
@@ -599,7 +668,12 @@ export default function DogumHaritasiPage() {
                           </span>
                           <span className="text-white font-medium text-sm">{t(`astrology.house.${house.house}`)}</span>
                         </div>
-                        <span className="text-amber-400 text-xs font-medium">{t(`zodiac.${house.signId}`)} {house.degree}°</span>
+                        <div className="flex items-center gap-2 text-amber-400 text-xs font-medium">
+                          <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
+                            <ZodiacIcon signId={house.signId} size={20} className="w-full h-full object-cover" />
+                          </div>
+                          {t(`zodiac.${house.signId}`)} {house.degree}°
+                        </div>
                       </div>
                       <p className="text-gray-400 text-[11px] leading-relaxed italic opacity-80">
                         {t(`astrology.house.${house.house}.desc`)}
@@ -625,7 +699,7 @@ export default function DogumHaritasiPage() {
                   </ul>
                 </div>
                 {result.aspects.length === 0 ? (
-                  <div className="glass-card p-6 text-center text-gray-500">Belirgin açı bulunamadı.</div>
+                   <div className="glass-card p-6 text-center text-gray-500">{t("chart.aspect.none")}</div>
                 ) : (
                   result.aspects.map((aspect, i) => (
                     <div key={i} className={`glass-card p-4 border ${harmonyColor(aspect.harmony).split(" ").filter(c => c.startsWith("border-")).join(" ")}`}>
@@ -708,7 +782,7 @@ export default function DogumHaritasiPage() {
                        {transitLoading ? (
                          <CosmicLoader label={t("chart.transits.loading")} />
                        ) : (
-                        <CosmicButton 
+                        <GlassButton 
                           fullWidth 
                           onClick={async () => {
                             setTransitLoading(true);
@@ -724,10 +798,9 @@ export default function DogumHaritasiPage() {
                             setTransitLoading(false);
                           }}
                           disabled={transitLoading || !result.transits || result.transits.length === 0}
-                          icon="✨"
                         >
                           {t("chart.transits.btn")}
-                        </CosmicButton>
+                        </GlassButton>
                        )}
                     </div>
                   ) : (
@@ -736,12 +809,12 @@ export default function DogumHaritasiPage() {
                       <h4 className="text-xl font-bold text-white mb-2">{transitInterpretation.title}</h4>
                       <p className="text-gray-300 text-sm leading-relaxed mb-4">{transitInterpretation.content}</p>
                       
-                      {transitInterpretation.advice && (
-                        <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                          <span className="font-semibold text-pink-400 block mb-1">💡 {t("chart.advice.day")}:</span>
-                          <span className="text-gray-300 text-sm">{transitInterpretation.advice}</span>
+                        <div className="p-3 rounded-lg bg-pink-500/5 border border-pink-500/10 flex items-start gap-2">
+                          <Lightbulb className="size-4 text-pink-400 shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-300">
+                            {transitInterpretation.advice}
+                          </span>
                         </div>
-                      )}
                     </div>
                   )}
                 </div>

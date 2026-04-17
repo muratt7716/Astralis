@@ -33,12 +33,12 @@ export default function PlanetCard({ planet, index }: PlanetCardProps) {
             ></div>
 
             {/* Image */}
-            <div className="relative w-full h-full float">
+            <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-white/10 shadow-[0_0_40px_rgba(255,255,255,0.1)] float">
               <Image
                 src={planet.imageUrl}
                 alt={t(`astrology.planet.${planet.id}`)}
                 fill
-                className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                className="object-cover group-hover:scale-110 transition-transform duration-1000"
                 sizes="(max-width: 768px) 128px, 160px"
               />
             </div>

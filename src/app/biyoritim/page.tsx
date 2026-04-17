@@ -7,7 +7,11 @@ import {
   calculateBiorhythmRange,
   generateBiorhythmSummary,
 } from "@/lib/biorhythm";
+import { getCurrentProfile } from "@/lib/auth-helpers";
+import { logInteraction } from "@/lib/logging";
 import { useTranslation } from "@/lib/i18n";
+import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import { AlertTriangle, Info, TrendingUp, Heart, Brain, Dumbbell, Sparkles, Eye, Palette, Waves } from "lucide-react";
 
 function BiyoritimContent() {
   const { t } = useTranslation();
@@ -49,11 +53,21 @@ function BiyoritimContent() {
     return calculateBiorhythm(parsedBirth, parsedTarget);
   }, [parsedBirth, parsedTarget, showResult]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (parsedBirth) {
       router.push(`?birth=${birthDate}&target=${targetDateInput}`, { scroll: false });
       setShowResult(true);
+      
+      // Log Interaction
+      try {
+        const profile = await getCurrentProfile();
+        if (profile) {
+          logInteraction(profile.id, "bio", "Biyoritim hesaplaması yapıldı");
+        }
+      } catch (err) {
+        console.error("Log failed", err);
+      }
     }
   };
 
@@ -72,11 +86,11 @@ function BiyoritimContent() {
   };
 
   return (
-    <div className="cosmic-gradient min-h-screen pt-24 pb-16 px-4">
+    <div className="cosmic-gradient min-h-screen pt-32 pb-16 px-4">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <span className="text-6xl mb-4 block animate-float">🧬</span>
+          <CosmicIcon name="biorhythm" size={80} className="mx-auto mb-6 animate-float" />
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-serif tracking-wide drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
             {t("bio.title")}
           </h1>
@@ -92,7 +106,7 @@ function BiyoritimContent() {
         <div className="max-w-3xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
           <div className="glass-card p-5 border-l-4 border-l-amber-500 hover:bg-white/5 transition-colors cursor-default shadow-lg">
             <h3 className="text-white font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-2">
-              <span className="text-lg drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">⚠️</span> {t("bio.guide.critical_title")}
+              <AlertTriangle className="size-5 text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]" /> {t("bio.guide.critical_title")}
             </h3>
             <p className="text-gray-400 text-[13px] leading-relaxed font-light">
               {t("bio.guide.critical_desc")}
@@ -100,7 +114,7 @@ function BiyoritimContent() {
           </div>
           <div className="glass-card p-5 border-l-4 border-l-blue-500 hover:bg-white/5 transition-colors cursor-default shadow-lg">
              <h3 className="text-white font-black uppercase tracking-widest text-[13px] flex items-center gap-2 mb-2">
-               <span className="text-lg drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">📈</span> {t("bio.guide.phases_title")}
+               <TrendingUp className="size-5 text-blue-500 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]" /> {t("bio.guide.phases_title")}
              </h3>
              <p className="text-gray-400 text-[13px] leading-relaxed font-light">
                {t("bio.guide.phases_desc")}
@@ -155,9 +169,9 @@ function BiyoritimContent() {
              
             {/* Master's Insight Alert */}
             <div className="glass-card p-6 border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-900/40 to-transparent flex gap-6 items-center">
-               <div className="hidden sm:flex text-4xl p-4 rounded-full bg-white/5 border border-white/10 shadow-inner">
-                  🧙‍♂️
-               </div>
+                <div className="hidden sm:flex p-4 rounded-full bg-purple-500/10 border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                   <Sparkles className="size-10 text-purple-400" />
+                </div>
                <div>
                  <h3 className="text-white font-black tracking-widest uppercase mb-1">{t("bio.insight.title")}</h3>
                  <p className="text-gray-300 text-sm italic font-light leading-relaxed">
@@ -187,16 +201,16 @@ function BiyoritimContent() {
             {/* Gauge Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {(activeTab === "primary" ? [
-                { id: "physical", label: t("bio.physical"), emoji: "💪", value: targetPoint.physical, cycle: "23", data: summary.physical, color: "#10b981", grad: "from-emerald-500 to-green-400" },
-                { id: "emotional", label: t("bio.emotional"), emoji: "💗", value: targetPoint.emotional, cycle: "28", data: summary.emotional, color: "#ec4899", grad: "from-pink-500 to-rose-400" },
-                { id: "intellectual", label: t("bio.intellectual"), emoji: "🧠", value: targetPoint.intellectual, cycle: "33", data: summary.intellectual, color: "#3b82f6", grad: "from-blue-500 to-cyan-400" },
+                { id: "physical", label: t("bio.physical"), icon: <Dumbbell className="size-8 text-emerald-400" />, value: targetPoint.physical, cycle: "23", data: summary.physical, color: "#10b981", grad: "from-emerald-500 to-green-400" },
+                { id: "emotional", label: t("bio.emotional"), icon: <Heart className="size-8 text-pink-400" />, value: targetPoint.emotional, cycle: "28", data: summary.emotional, color: "#ec4899", grad: "from-pink-500 to-rose-400" },
+                { id: "intellectual", label: t("bio.intellectual"), icon: <Brain className="size-8 text-blue-400" />, value: targetPoint.intellectual, cycle: "33", data: summary.intellectual, color: "#3b82f6", grad: "from-blue-500 to-cyan-400" },
               ] : [
-                { id: "intuitional", label: t("bio.intuitional"), emoji: "👁️", value: targetPoint.intuitional, cycle: "38", data: summary.intuitional, color: "#a855f7", grad: "from-purple-500 to-fuchsia-400" },
-                { id: "aesthetic", label: t("bio.aesthetic"), emoji: "🎭", value: targetPoint.aesthetic, cycle: "43", data: summary.aesthetic, color: "#f59e0b", grad: "from-amber-500 to-yellow-400" },
-                { id: "spiritual", label: t("bio.spiritual"), emoji: "🧘‍♀️", value: targetPoint.spiritual, cycle: "53", data: summary.spiritual, color: "#6366f1", grad: "from-indigo-500 to-blue-400" },
+                { id: "intuitional", label: t("bio.intuitional"), icon: <Eye className="size-8 text-purple-400" />, value: targetPoint.intuitional, cycle: "38", data: summary.intuitional, color: "#a855f7", grad: "from-purple-500 to-fuchsia-400" },
+                { id: "aesthetic", label: t("bio.aesthetic"), icon: <Palette className="size-8 text-amber-400" />, value: targetPoint.aesthetic, cycle: "43", data: summary.aesthetic, color: "#f59e0b", grad: "from-amber-500 to-yellow-400" },
+                { id: "spiritual", label: t("bio.spiritual"), icon: <Waves className="size-8 text-indigo-400" />, value: targetPoint.spiritual, cycle: "53", data: summary.spiritual, color: "#6366f1", grad: "from-indigo-500 to-blue-400" },
               ]).map((item) => (
                 <div key={item.id} className="enhanced-glass rounded-3xl p-8 border border-white/10 text-center hover:bg-white/[0.03] transition-all duration-500 hover:transform hover:scale-[1.02]">
-                  <span className="text-4xl mb-3 block opacity-80">{item.emoji}</span>
+                  <div className="flex justify-center mb-4 opacity-80">{item.icon}</div>
                   <h3 className="text-white font-black tracking-widest text-lg uppercase mb-1">{item.label}</h3>
                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-6">{t("bio.cycle")}: {item.cycle} {t("bio.days")}</p>
 

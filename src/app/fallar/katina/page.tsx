@@ -6,7 +6,7 @@ import { useTranslation } from "@/lib/i18n";
 import { FortuneTeller } from "@/data/fortune-tellers";
 import { getLocalizedName } from "@/lib/fortune-utils";
 import FortuneTellerSelector from "@/components/Fortune/FortuneTellerSelector";
-import CosmicButton from "@/components/Cosmic/CosmicButton";
+import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 
 export default function KatinaPage() {
@@ -73,13 +73,12 @@ export default function KatinaPage() {
             <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">{t("fortune.common.question.label")}</label>
             <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
           </div>
-          <CosmicButton 
+          <GlassButton 
             fullWidth 
             onClick={startSelection}
-            icon="🏵️"
           >
             {t("fortune.common.start")}
-          </CosmicButton>
+          </GlassButton>
         </div></section>
       )}
 
@@ -170,14 +169,13 @@ export default function KatinaPage() {
                     <div className="text-center mb-6">
                       <p className="text-pink-400 text-sm font-bold">{t("fortune.reading.ready", { name: selectedTeller?.name || "" })}</p>
                     </div>
-                    <CosmicButton 
+                    <GlassButton 
                       fullWidth 
                       onClick={getReading} 
                       disabled={loading}
-                      icon="✨"
                     >
                       {t("fortune.reading.btn")}
-                    </CosmicButton>
+                    </GlassButton>
                   </>
                 )}
               </div>
@@ -219,14 +217,13 @@ export default function KatinaPage() {
               </div>
             )}
           </div>
-          <CosmicButton 
+          <GlassButton 
             fullWidth 
             variant="secondary"
             onClick={() => { setPhase("setup"); setSelectedCards([]); setResult(null); }}
-            icon="↺"
           >
             {t("fortune.common.result.retry")}
-          </CosmicButton>
+          </GlassButton>
         </div></section>
       )}
     </div>

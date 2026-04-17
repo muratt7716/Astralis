@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { translations, type SupportedLanguage } from "@/lib/i18n-shared";
+import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 
 // Helper for server-side translation with interpolation
 const getT = (lang: SupportedLanguage) => (key: string, params?: Record<string, string>) => {
@@ -72,9 +73,14 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
   return (
     <div className="cosmic-gradient min-h-screen">
       {/* Hero */}
-      <section className={`pt-16 pb-12 px-4 bg-gradient-to-b ${elementColors[sign.elementKey] || ""} to-transparent`}>
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="text-7xl mb-4 float">{sign.symbol}</div>
+      <section className={`pt-32 md:pt-40 pb-12 px-4 bg-gradient-to-b ${elementColors[sign.elementKey] || ""} to-transparent`}>
+        <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
+          <div className="relative group mb-8">
+            <div className="absolute -inset-4 bg-white/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="relative w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-2 border-white/20 shadow-[0_0_50px_rgba(255,255,255,0.1)] float">
+              <ZodiacIcon signId={signId} size={224} className="w-full h-full object-cover" />
+            </div>
+          </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-2">{t(sign.nameKey)}</h1>
           <p className="text-xl text-gray-400 mb-4">{dateRange}</p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
@@ -127,8 +133,10 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {compatibleSigns.map((cs) => cs && (
               <Link key={cs.id} href={`/burclar/${cs.id}`}>
-                <div className="glass-card p-4 text-center hover:scale-105 transition-all duration-300 hover:border-purple-500/40 group">
-                  <span className="text-3xl mb-2 block group-hover:animate-bounce">{cs.symbol}</span>
+                <div className="glass-card p-4 text-center hover:scale-105 transition-all duration-300 hover:border-purple-500/40 group flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full border border-white/10 overflow-hidden mb-3 bg-black/40 group-hover:border-purple-500/30 transition-all flex items-center justify-center">
+                    <ZodiacIcon signId={cs.id} size={80} className="w-full h-full object-cover group-hover:animate-bounce" />
+                  </div>
                   <p className="text-white font-medium">{t(cs.nameKey)}</p>
                   <p className="text-gray-500 text-xs">{formatZodiacDate(cs, t)}</p>
                 </div>

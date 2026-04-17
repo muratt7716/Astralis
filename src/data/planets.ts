@@ -30,7 +30,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 1 ay",
     color: "#ffaa00",
     glow: "rgba(255, 170, 0, 0.4)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/600px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1632395627732-005012dbc286?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "ay",
@@ -46,7 +46,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 2.5 gün",
     color: "#e2e8f0",
     glow: "rgba(226, 232, 240, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/600px-FullMoon2010.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1481819613568-3701cbc70156?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "merkur",
@@ -62,7 +62,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 3-4 hafta",
     color: "#94a3b8",
     glow: "rgba(148, 163, 184, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mercury_in_true_color.jpg/600px-Mercury_in_true_color.jpg"
+    imageUrl: "https://images.pexels.com/photos/12498795/pexels-photo-12498795.jpeg"
   },
   {
     id: "venus",
@@ -78,7 +78,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 3-4 hafta",
     color: "#f472b6",
     glow: "rgba(244, 114, 182, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Venus_globe.jpg/600px-Venus_globe.jpg"
+    imageUrl: "https://cdn.mos.cms.futurecdn.net/RifjtkFLBEFgzkZqWEh69P-650-80.jpg.webp"
   },
   {
     id: "mars",
@@ -94,7 +94,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 6-7 hafta",
     color: "#ef4444",
     glow: "rgba(239, 68, 68, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/600px-OSIRIS_Mars_true_color.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "jupiter",
@@ -110,7 +110,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 1 yıl",
     color: "#fb923c",
     glow: "rgba(251, 146, 60, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg"
+    imageUrl: "https://cdn.britannica.com/66/155966-050-F18467EA/Jupiter.jpg"
   },
   {
     id: "saturn",
@@ -126,7 +126,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 2.5 yıl",
     color: "#94a3b8",
     glow: "rgba(148, 163, 184, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Saturn_%28planet%29_large.jpg/500px-Saturn_%28planet%29_large.jpg?_=20150823045304"
+    imageUrl: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "uranus",
@@ -142,7 +142,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 7 yıl",
     color: "#22d3ee",
     glow: "rgba(34, 211, 238, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Uranus2.jpg/600px-Uranus2.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1614732484003-ef9881555dc3?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "neptun",
@@ -158,7 +158,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 14 yıl",
     color: "#60a5fa",
     glow: "rgba(96, 165, 250, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Neptune_Full.jpg/600px-Neptune_Full.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   },
   {
     id: "pluton",
@@ -174,7 +174,7 @@ export const planets: Planet[] = [
     transitDuration: "Her burçta yaklaşık 12-31 yıl",
     color: "#f43f5e",
     glow: "rgba(244, 63, 94, 0.3)",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Pluto_in_True_Color_-_High-Res.jpg/600px-Pluto_in_True_Color_-_High-Res.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1614314107768-6018061b5b72?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   }
 ];
 

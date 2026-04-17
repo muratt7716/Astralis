@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { hexagrams } from "@/data/iching";
 import { useTranslation } from "@/lib/i18n";
+import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import { RefreshCw, Coins, Sparkles, Lightbulb, Info, ArrowLeft } from "lucide-react";
 
 export default function IChingPage() {
   const { t, language } = useTranslation();
@@ -45,10 +47,10 @@ export default function IChingPage() {
   };
 
   return (
-    <div className="cosmic-gradient min-h-screen">
-      <section className="pt-16 pb-8 px-4">
+    <div className="cosmic-gradient min-h-screen pt-32">
+      <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="text-6xl mb-4 float">☯️</div>
+          <CosmicIcon name="iching" size={80} className="mx-auto mb-6 animate-float" />
           <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.iching.title")}</span></h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.iching.full_desc")}</p>
         </div>
@@ -81,15 +83,17 @@ export default function IChingPage() {
           </div>
 
           {lines.length < 6 ? (
-            <button onClick={throwCoin} disabled={flipping} className="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 glow">
+            <button onClick={throwCoin} disabled={flipping} className="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-3 mx-auto">
               {flipping ? (
-                <span className="animate-spin inline-block">🪙</span>
+                <RefreshCw className="animate-spin size-6" />
               ) : (
-                `🪙 ${t("fortune.iching.coins_btn")} (${lines.length + 1}/6)`
+                <><Coins className="size-6" /> {t("fortune.iching.coins_btn")} ({lines.length + 1}/6)</>
               )}
             </button>
           ) : (
-            <button onClick={reset} className="px-6 py-2 rounded-lg bg-white/5 text-gray-400 text-sm hover:bg-white/10">↺ {t("common.back") || "Baştan Başla"}</button>
+            <button onClick={reset} className="flex items-center gap-2 mx-auto px-6 py-2 rounded-lg bg-white/5 text-gray-400 text-sm hover:bg-white/10 transition-colors">
+              <RefreshCw className="size-4" /> {t("common.back") || "Baştan Başla"}
+            </button>
           )}
         </div>
       </div></section>
@@ -124,11 +128,14 @@ export default function IChingPage() {
               </div>
             ))}
             <div className="mt-4 p-4 bg-emerald-900/20 rounded-xl border border-emerald-500/20">
-              <h4 className="text-lg font-bold text-white mb-2">🌟 {t("chart.overview")}</h4>
+              <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <Sparkles className="size-5 text-emerald-400" /> {t("chart.overview")}
+              </h4>
               <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
             </div>
-            {result.advice && (<div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
-              <span className="text-emerald-400 font-semibold text-sm">💡 {t("chart.advice")}: </span><span className="text-gray-300 text-sm">{result.advice}</span>
+            {result.advice && (<div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10 flex items-center gap-3">
+              <Lightbulb className="size-5 text-emerald-400 shrink-0" />
+              <span className="text-gray-300 text-sm">{result.advice}</span>
             </div>)}
           </div>
         </div></section>

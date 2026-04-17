@@ -6,6 +6,8 @@ import NameVibrations from '@/components/numerology/NameVibrations';
 import CyclesDashboard from '@/components/numerology/CyclesDashboard';
 import { getPythagoreanCore } from '@/lib/numerology/pythagoras';
 import { translations, SupportedLanguage } from '@/lib/i18n-shared';
+import CosmicIcon from '@/components/Cosmic/CosmicIcon';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function NumerologyPage() {
   const [fullName, setFullName] = useState('');
@@ -38,13 +40,14 @@ export default function NumerologyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0415] text-white py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white pt-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Mystical Background effects */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-900/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-900/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="text-center mb-12">
+          <CosmicIcon name="numerology" size={80} className="mx-auto mb-6 animate-float" />
           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 mb-4 pb-2">
             {t('num.hero.title')}
           </h1>
@@ -91,8 +94,9 @@ export default function NumerologyPage() {
             <div className="flex justify-center mb-8">
               <button
                 onClick={() => setIsCalculated(false)}
-                className="text-sm px-4 py-2 rounded-full border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 transition-colors"
+                className="group text-sm px-6 py-2 rounded-full border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 transition-all flex items-center gap-2"
               >
+                <ArrowLeft className="size-4 group-hover:-translate-x-1 transition-transform" /> 
                 {t('num.form.new')}
               </button>
             </div>

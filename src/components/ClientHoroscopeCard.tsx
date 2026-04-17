@@ -85,7 +85,7 @@ export default function ClientHoroscopeCard({ signId, period }: ClientHoroscopeC
     <div ref={cardRef} className="glass-card p-6 md:p-8 relative overflow-hidden group min-h-[300px]">
       {/* Decorative glow */}
       <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-colors"></div>
-      
+
       <p className="text-gray-300 leading-relaxed mb-6 font-medium relative z-10">{data.content}</p>
 
       <div className="grid md:grid-cols-3 gap-3 relative z-10">
