@@ -98,7 +98,7 @@ export default function OnboardingPage() {
   return (
     <div className={`min-h-screen w-full flex flex-col items-center justify-center p-6 bg-[#050505] relative overflow-hidden ${isRTL ? "rtl" : "ltr"}`} dir={dir}>
       {/* 3D Cosmic Background Layer */}
-      <div className="fixed inset-0 z-0">
+      <div className="fixed inset-0 z-0 pointer-events-none lg:pointer-events-auto">
         <Canvas camera={{ position: [-12, 1.5, 12], fov: 42 }}>
           <ambientLight intensity={0.7} />
           <pointLight position={[10, 10, 10]} intensity={2} />

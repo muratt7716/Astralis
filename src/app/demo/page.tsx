@@ -40,12 +40,14 @@ export default function DemoPage() {
         </h1>
       </div>
 
-      <Canvas camera={{ position: [-10, 1.5, 10], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <ParticleSphere images={pexelsImages} />
-        <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
-      </Canvas>
+      <div className="fixed inset-0 z-0 pointer-events-none lg:pointer-events-auto">
+        <Canvas camera={{ position: [-10, 1.5, 10], fov: 50 }}>
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={1} />
+          <ParticleSphere images={pexelsImages} />
+          <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+        </Canvas>
+      </div>
     </div>
   )
 }

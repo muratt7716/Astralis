@@ -22,7 +22,7 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen bg-black overflow-x-hidden mt-6">
       {/* 3D Cosmic Background Layer - FIXED: DIRECT SIBLING OF UI */}
-      <div className="fixed inset-0 z-0">
+      <div className="fixed inset-0 z-0 pointer-events-none lg:pointer-events-auto">
         <Canvas camera={{ position: [-12, 1.5, 12], fov: 42 }}>
           <ambientLight intensity={0.7} />
           <pointLight position={[10, 10, 10]} intensity={2} />

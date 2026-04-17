@@ -78,13 +78,13 @@ export default function Footer() {
                 {t("footer.newsletter_desc")}
               </p>
             </div>
-            <div className="flex flex-col gap-4 sm:flex-row bg-black/40 p-2 rounded-2xl border border-white/5 shadow-2xl">
+            <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:bg-black/40 sm:p-1.5 sm:rounded-full sm:border sm:border-white/5 sm:shadow-2xl transition-all duration-300 focus-within:sm:border-cyan-500/30">
               <input
                 type="email"
                 placeholder={t("footer.newsletter_placeholder")}
-                className="flex-1 bg-transparent border-none text-white placeholder-gray-500 px-4 py-3 focus:ring-0 focus:outline-none"
+                className="w-full sm:flex-1 bg-black/40 sm:bg-transparent border border-white/10 sm:border-none rounded-2xl sm:rounded-full text-white placeholder-gray-500 px-6 py-4 focus:ring-0 focus:outline-none text-base"
               />
-              <GlassButton size="lg" className="hover:border-cyan-500/50">
+              <GlassButton size="lg" className="hover:border-cyan-500/50 w-full sm:w-auto">
                 {t("footer.newsletter_button")}
               </GlassButton>
             </div>

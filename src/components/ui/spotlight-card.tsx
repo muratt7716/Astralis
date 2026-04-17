@@ -184,7 +184,7 @@ const GlowCard: React.FC<GlowCardProps> = ({
         ref={cardRef}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
-        style={getInlineStyles()}
+        style={{ ...getInlineStyles(), touchAction: 'pan-y' }}
         className={`
           glow-card
           ${getSizeClasses()}
