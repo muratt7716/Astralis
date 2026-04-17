@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { getURL } from '@/lib/url-helpers';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -29,5 +30,5 @@ export async function GET(request: Request) {
   }
 
   // URL'e gidilecek yer: Onboarding sayfası
-  return NextResponse.redirect(`${requestUrl.origin}/onboarding`);
+  return NextResponse.redirect(`${getURL()}onboarding`);
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import { getURL } from "./url-helpers";
 
 /**
  * Reactive auth hook — returns { user, profile, loading, signOut }
@@ -69,7 +70,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${getURL()}auth/callback`,
     },
   });
 
