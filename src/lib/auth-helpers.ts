@@ -23,7 +23,7 @@ export function useAuth() {
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
-          .single();
+          .maybeSingle();
         if (mounted && data) setProfile(data);
       }
       setLoading(false);
@@ -39,7 +39,7 @@ export function useAuth() {
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
-          .single();
+          .maybeSingle();
         if (mounted && data) setProfile(data);
       } else {
         setUser(null);
@@ -94,7 +94,7 @@ export async function getCurrentProfile() {
     .from("profiles")
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching profile:", error.message);
@@ -114,13 +114,13 @@ export async function updateProfile(profileData: any) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .update({
+    .upsert({
+      id: user.id,
       ...profileData,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", user.id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error updating profile:", error.message);

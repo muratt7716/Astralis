@@ -39,7 +39,7 @@ export default function OnboardingPage() {
           .from("profiles")
           .select("id")
           .eq("id", session.user.id)
-          .single();
+          .maybeSingle();
         
         if (profile) {
           router.push("/profil");
