@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, ReactNode } from 'react';
+import React, { useRef, ReactNode } from 'react';
 
 interface GlowCardProps {
   children: ReactNode;
@@ -36,6 +36,8 @@ const GlowCard: React.FC<GlowCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Skip glow effect on touch — only mouse
+    if (e.pointerType === 'touch') return;
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -48,7 +50,8 @@ const GlowCard: React.FC<GlowCardProps> = ({
     cardRef.current.style.setProperty('--opacity', '1');
   };
 
-  const handlePointerLeave = () => {
+  const handlePointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
     if (!cardRef.current) return;
     cardRef.current.style.setProperty('--opacity', '0');
   };
@@ -97,7 +100,6 @@ const GlowCard: React.FC<GlowCardProps> = ({
       backgroundPosition: '50% 50%',
       border: 'var(--border-size) solid transparent',
       position: 'relative' as const,
-      touchAction: 'none' as const,
     };
 
     if (width !== undefined) baseStyles.width = typeof width === 'number' ? `${width}px` : width;

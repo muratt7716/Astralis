@@ -11,6 +11,14 @@
   --font-instrument-serif: 'Instrument Serif', serif;
 }
 
+/* Disable hover scale/transform on touch devices to prevent scroll blocking */
+@media (hover: none) {
+  .group:hover > *,
+  [class*="hover:scale"] {
+    transform: none !important;
+  }
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
