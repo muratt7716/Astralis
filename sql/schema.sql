@@ -37,6 +37,7 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "avatar_url" TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "selected_guide_id" TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "language" TEXT DEFAULT 'tr';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "daily_horoscope" JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "is_premium" BOOLEAN DEFAULT false;
 
 -- Interaction Logs Geliştirmeleri
 ALTER TABLE public.interaction_logs ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
@@ -46,10 +47,14 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   guide_id TEXT NOT NULL,
-  context_summary TEXT, 
+  context_summary JSONB DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   last_message_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Eğer tablo zaten varsa context_summary tipini güncelle (TEXT → JSONB)
+-- Not: Supabase mevcut TEXT kolonu varsa bunu elle JSONB'ye çevirmeniz gerekebilir
+-- ALTER TABLE public.conversations ALTER COLUMN context_summary TYPE JSONB USING context_summary::jsonb;
 
 -- 3. MESSAGES (Sohbet Geçmişi)
 CREATE TABLE IF NOT EXISTS public.messages (
@@ -61,10 +66,11 @@ CREATE TABLE IF NOT EXISTS public.messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. MEMORIES (Mistik Hafıza)
+-- 4. MEMORIES (Mistik Hafıza — Karakter Bazlı)
 CREATE TABLE IF NOT EXISTS public.memories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  guide_id TEXT NOT NULL DEFAULT 'melisa',
   category TEXT NOT NULL,
   fact TEXT NOT NULL,
   importance INTEGER DEFAULT 1,
@@ -72,6 +78,9 @@ CREATE TABLE IF NOT EXISTS public.memories (
   last_referenced_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Eğer tablo zaten varsa guide_id ekle
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS guide_id TEXT NOT NULL DEFAULT 'melisa';
 
 -- 5. INTERACTION_LOGS (Kullanıcı Davranış Analizi)
 CREATE TABLE IF NOT EXISTS public.interaction_logs (
@@ -118,5 +127,27 @@ CREATE POLICY "Logs: users can view own" ON public.interaction_logs
 FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Logs: users can insert own" ON public.interaction_logs;
-CREATE POLICY "Logs: users can insert own" ON public.interaction_logs 
+CREATE POLICY "Logs: users can insert own" ON public.interaction_logs
 FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+-- ########################################################
+-- MİSTİK REHBER CHAT — PERFORMANS VE KISITLAMALAR
+-- ########################################################
+
+-- Performans indexleri
+CREATE INDEX IF NOT EXISTS idx_conversations_user_guide
+ON public.conversations(user_id, guide_id);
+
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_time
+ON public.messages(conversation_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_memories_user_guide
+ON public.memories(user_id, guide_id);
+
+-- Hafızada aynı bilginin tekrar kaydedilmesini önle
+ALTER TABLE public.memories
+DROP CONSTRAINT IF EXISTS memories_user_guide_fact_unique;
+
+ALTER TABLE public.memories
+ADD CONSTRAINT memories_user_guide_fact_unique
+UNIQUE (user_id, guide_id, fact);
