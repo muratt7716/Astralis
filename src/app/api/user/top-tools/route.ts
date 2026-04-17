@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     // 2. Aggregate tool usage
     const toolCounts: Record<string, number> = {};
-    logs.forEach(log => {
+    logs.forEach((log: any) => {
       // Filter out non-tool actions if necessary
       if (['tarot', 'dream', 'bio', 'sphere', 'astrology', 'numerology', 'kahve'].includes(log.action_type)) {
         toolCounts[log.action_type] = (toolCounts[log.action_type] || 0) + 1;
