@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { hexagrams } from "@/data/iching";
+import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { RefreshCw, Coins, Sparkles, Lightbulb, Info, ArrowLeft } from "lucide-react";
@@ -12,6 +13,7 @@ export default function IChingPage() {
   const [hexagram, setHexagram] = useState<typeof hexagrams[0] | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   const [flipping, setFlipping] = useState(false);
 
   const throwCoin = () => {
@@ -36,12 +38,17 @@ export default function IChingPage() {
 
   const getReading = async () => {
     if (!hexagram) return;
+    if (!user) {
+      console.warn("[IChing] User not found, logging might fail");
+    }
     setLoading(true);
     try {
+      console.log("[IChing] Calling divination API for user:", user?.id);
       const res = await fetch("/api/divination", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "iching", cards: [{ name: `${hexagram.id}. ${hexagram.name} (${hexagram.chineseName})`, meaning: `${hexagram.meaning}. ${hexagram.judgement}` }], question, language }) });
+        body: JSON.stringify({ type: "iching", cards: [{ name: `${hexagram.id}. ${hexagram.name} (${hexagram.chineseName})`, meaning: `${hexagram.meaning}. ${hexagram.judgement}` }], question, language, userId: user?.id }) });
       const data = await res.json();
       if (data.success) setResult(data.data);
+      else console.error("[IChing] API Error:", data.error);
     } catch (e) { console.error(e); }
     setLoading(false);
   };

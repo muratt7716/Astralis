@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from "@/lib/i18n";
 import { useAuth, signOut } from "@/lib/auth-helpers";
+import { logInteraction, getActionByPath } from "@/lib/logging";
 import Logo from "@/components/Cosmic/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
@@ -28,11 +29,13 @@ const AnimatedNavLink = ({ href, children }: { href: string; children: React.Rea
 export default function Navbar() {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const { user, profile, loading: authLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
+  const [isNavHidden, setIsNavHidden] = useState(false);
   const shapeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -75,6 +78,30 @@ export default function Navbar() {
     };
   }, [isOpen]);
 
+  // Handle automatic interaction logging and Navbar visibility logic
+  useEffect(() => {
+    // 1. Interaction Logging
+    if (user && pathname) {
+      const actionType = getActionByPath(pathname);
+      // Skip auto-logging for tools that have dedicated, results-based logging
+      const isToolPath = pathname.includes('/fallar/') || pathname.includes('/ruya-analizi');
+      
+      if (actionType && !isToolPath) {
+        logInteraction(user.id, actionType, `Visited: ${pathname}`);
+      }
+    }
+
+    // 2. Navbar Visibility (Check for hide-nav class on root)
+    const observer = new MutationObserver(() => {
+      setIsNavHidden(document.documentElement.classList.contains('hide-nav'));
+    });
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    setIsNavHidden(document.documentElement.classList.contains('hide-nav'));
+
+    return () => observer.disconnect();
+  }, [pathname, user]);
+
   const navLinksData = [
     { label: t("nav.zodiac"), href: '/burclar' },
     { label: t("nav.horoscope"), href: '/yorumlar' },
@@ -99,7 +126,8 @@ export default function Navbar() {
                        ${headerShapeClass}
                        border border-white/10 bg-black/40
                        w-[calc(100%-2rem)] sm:w-auto
-                       transition-all duration-500 ease-in-out`}>
+                       transition-all duration-500 ease-in-out
+                       ${isNavHidden ? 'opacity-0 pointer-events-none -translate-y-20' : 'opacity-100'}`}>
 
       <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-10">
         <div className="flex items-center">
@@ -233,7 +261,9 @@ export default function Navbar() {
       <div className={`lg:hidden flex flex-col items-center w-full transition-all ease-in-out duration-500 overflow-hidden
                        ${isOpen ? 'max-h-[1000px] opacity-100 pt-6 pb-4' : 'max-h-0 opacity-0 pt-0 pointer-events-none'}`}>
         <nav className="flex flex-col items-center space-y-4 text-sm w-full">
-          {navLinksData.map((link) => (
+          {navLinksData
+            .filter(link => !link.isMistik) // Mobile already has a grid for Mistik Portal tools
+            .map((link) => (
             <Link key={link.href} href={link.href} onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transition-colors w-full text-center tracking-widest uppercase font-light">
               {link.label}
             </Link>

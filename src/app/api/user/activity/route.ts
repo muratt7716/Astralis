@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase"; // Correctly using the standard client
+import { supabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -9,12 +9,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "UserId required" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("interaction_logs")
     .select("*")
     .eq("user_id", userId)
+    .not("action_type", "in", '("profile_visit","guide_gallery_visit","zodiac_list","horoscope_view","compatibility_view","birth_chart_view")')
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(8);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -14,49 +14,63 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { type, cards, question, language, imageBase64, mimeType, virtual, persona } = body;
+    console.log("[DivinationAPI] Request Body:", JSON.stringify(body, null, 2));
+
+    const { type, cards, question, language, imageBase64, mimeType, virtual, persona, userId } = body;
+    
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "Kullanıcı kimliği gerekli." }, { status: 400 });
+    }
+
     const lang = (language || "tr") as SupportedLanguage;
 
-    // Coffee reading (photo or virtual)
-    if (type === "coffee") {
-      if (virtual) {
-        const result = await generateVirtualCoffeeReading(question || "", lang, persona);
-        if (!result) {
-          return NextResponse.json({ success: false, error: "AI yorumu başarısız oldu." }, { status: 500 });
-        }
-        return NextResponse.json({ success: true, data: result });
-      }
-
-      if (!imageBase64 || !mimeType) {
-        return NextResponse.json({ success: false, error: "Fotoğraf gerekli." }, { status: 400 });
-      }
-
-      try {
-        const result = await generateCoffeeReading(imageBase64, mimeType, question || "", lang, persona);
-        if (result?.error === "INVALID_IMAGE") {
-          return NextResponse.json({ success: false, error: "Lütfen geçerli bir kahve fincanı fotoğrafı yükleyin. Sistemimiz gönderdiğiniz görselde telve tespit edemedi." }, { status: 400 });
-        }
-        return NextResponse.json({ success: true, data: result });
-      } catch (error) {
-        return NextResponse.json({ success: false, error: "Kahve falı yorumlanamadı." }, { status: 500 });
-      }
-    }
+    let result: any = null;
 
     // Text-based divination (tarot, katina, lenormand, rune, iching, crystal)
     if (!type || !cards || !Array.isArray(cards)) {
       return NextResponse.json({ success: false, error: "Tip ve kart bilgisi gerekli." }, { status: 400 });
     }
-
-    const result = await generateDivinationReading(
-      type as DivinationType,
-      cards,
-      question || "",
-      lang,
-      persona
-    );
+    result = await generateDivinationReading(type as DivinationType, cards, question || "", lang, persona);
 
     if (!result) {
       return NextResponse.json({ success: false, error: "AI yorumu başarısız oldu." }, { status: 500 });
+    }
+
+    // New: Logical logging to interaction_logs
+    if (userId) {
+      try {
+        const { supabaseAdmin } = await import("@/lib/supabase");
+        // Normalize types to match logging.ts and ProfilePage icons
+        const typeMap: Record<string, string> = {
+          "rune": "runler",
+          "crystal": "sphere",
+          "sphere": "sphere",
+          "iching": "iching",
+          "coffee": "kahve"
+        };
+        const actionType = typeMap[type] || type;
+
+        console.log(`[DivinationLog] Attempting to log: user=${userId}, type=${actionType}`);
+
+        const { error: logErr } = await supabaseAdmin.from("interaction_logs").insert({
+          user_id: userId,
+          action_type: actionType,
+          description: `Kullanıcı ${type} aracı ile yeni bir analiz gerçekleştirdi.`,
+          metadata: {
+            question: question || (type === "coffee" ? "Kahve Falı" : "Genel Rehberlik"),
+            answer: result.synthesis || result.content || "Analiz tamamlandı.",
+            full_result: result // Store the entire object for detailed viewing
+          }
+        });
+
+        if (logErr) {
+          console.error("[DivinationLog] Database error:", logErr);
+        } else {
+          console.log(`[DivinationLog] Successfully logged ${actionType} for ${userId}`);
+        }
+      } catch (logErr) {
+        console.error("[DivinationLog] Caught exception:", logErr);
+      }
     }
 
     return NextResponse.json({ success: true, data: result });

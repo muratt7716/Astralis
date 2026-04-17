@@ -112,11 +112,19 @@ export async function updateProfile(profileData: any) {
 
   if (!user) throw new Error("User not authenticated");
 
+  // Fetch existing profile to preserve mandatory fields (like full_name) during upsert
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const { data, error } = await supabase
     .from("profiles")
     .upsert({
       id: user.id,
-      ...profileData,
+      ...(existingProfile || {}), // Spread existing data
+      ...profileData,            // Apply new updates
       updated_at: new Date().toISOString(),
     })
     .select()

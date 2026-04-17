@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { dream, language = "tr" } = body;
+    const { dream, language = "tr", userId } = body;
 
     const lang: SupportedLanguage = ["tr", "en", "ar", "de", "fr"].includes(language)
       ? (language as SupportedLanguage)
@@ -79,6 +79,23 @@ CRITICAL RULES:
       }
     } catch {
       analysis = { synthesis: text, symbols: [], reflection_questions: [] };
+    }
+
+    if (userId) {
+      try {
+        const { supabaseAdmin } = await import("@/lib/supabase");
+        await supabaseAdmin.from("interaction_logs").insert({
+          user_id: userId,
+          action_type: "dream",
+          description: "Rüya analizi gerçekleştirildi.",
+          metadata: {
+            question: dream,
+            answer: analysis.synthesis || "Analiz tamamlandı."
+          }
+        });
+      } catch (logErr) {
+        console.error("Post-dream logging failed:", logErr);
+      }
     }
 
     return NextResponse.json({

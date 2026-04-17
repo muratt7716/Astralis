@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { elderFutharkRunes, runeSpreads } from "@/data/runes";
+import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { Sparkles, Lightbulb, Info } from "lucide-react";
@@ -13,6 +14,7 @@ export default function RunlerPage() {
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const selectedSpread = runeSpreads.find(s => s.id === spread)!;
 
@@ -29,10 +31,14 @@ export default function RunlerPage() {
   const positions = spread === "norns" ? [t("horoscope.past"), t("horoscope.present"), t("horoscope.future")] : [t("fortune.runler.position.odin")];
 
   const getReading = async () => {
+    if (!user) {
+      console.warn("[Runes] User not found, logging might fail");
+    }
     setLoading(true);
     try {
+      console.log("[Runes] Calling divination API for user:", user?.id);
       const res = await fetch("/api/divination", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "rune", cards: drawnRunes.map((r, i) => ({ name: `${r.symbol} ${r.name}`, meaning: r.isReversed ? r.reversed : r.meaning, reversed: r.isReversed })), question, language }) });
+        body: JSON.stringify({ type: "rune", cards: drawnRunes.map((r, i) => ({ name: `${r.symbol} ${r.name}`, meaning: r.isReversed ? r.reversed : r.meaning, reversed: r.isReversed })), question, language, userId: user?.id }) });
       const data = await res.json();
       if (data.success) setResult(data.data);
     } catch (e) { console.error(e); }

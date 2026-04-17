@@ -9,6 +9,7 @@ import { getLocalizedName } from "@/lib/fortune-utils";
 import FortuneTellerSelector from "@/components/Fortune/FortuneTellerSelector";
 import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
+import { useAuth } from "@/lib/auth-helpers";
 
 interface DrawnCard {
   id: number;
@@ -31,6 +32,7 @@ const suitColors: Record<string, string> = {
 
 export default function TarotPage() {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const [spread, setSpread] = useState("single");
   const [question, setQuestion] = useState("");
   const [allCards, setAllCards] = useState<typeof tarotCards>([]);
@@ -102,6 +104,7 @@ export default function TarotPage() {
           })),
           question,
           language,
+          userId: user?.id,
           persona: selectedTeller ? { name: selectedTeller.name, style: selectedTeller.style } : undefined,
         }),
       });

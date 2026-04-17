@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth-helpers";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { Sparkles, Orbit, Info } from "lucide-react";
 
@@ -9,13 +10,23 @@ export default function KristalPage() {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const getReading = async () => {
     if (!question.trim()) return;
     setResult(null); setLoading(true);
     try {
-      const res = await fetch("/api/divination", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "crystal", cards: [{ name: "Kristal Küre Sezgisi", meaning: question }], question, language }) });
+      const res = await fetch("/api/divination", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          type: "sphere", 
+          cards: [{ name: "Kristal Küre Sezgisi", meaning: question }], 
+          question, 
+          language,
+          userId: user?.id 
+        }) 
+      });
       const data = await res.json();
       if (data.success) setResult(data.data);
     } catch (e) { console.error(e); }

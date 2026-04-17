@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
-import { getCurrentProfile } from "@/lib/auth-helpers";
+import { useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { 
@@ -21,6 +21,7 @@ import {
 
 export default function DreamAnalysisPage() {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -37,20 +38,15 @@ export default function DreamAnalysisPage() {
       const res = await fetch("/api/dream-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dream, language }),
+        body: JSON.stringify({ dream, language, userId: user?.id }),
       });
       const data = await res.json();
       if (data.success) {
         setResult(data.analysis);
         
-        // Log Interaction
-        try {
-          const profile = await getCurrentProfile();
-          if (profile) {
-            logInteraction(profile.id, "dream", "Rüya analizi yapıldı");
-          }
-        } catch (err) {
-          console.error("Log failed", err);
+        // Log Interaction (Optional local track, already handled by API)
+        if (user) {
+          logInteraction(user.id, "dream", "Rüya analizi yapıldı");
         }
       } else {
         setError(data.error || "Bir hata oluştu.");

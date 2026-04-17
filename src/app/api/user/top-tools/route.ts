@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   try {
     // 1. Fetch interaction logs for the user, grouped by action_type
-    const { data: logs, error } = await supabase
+    const { data: logs, error } = await supabaseAdmin
       .from("interaction_logs")
       .select("action_type")
       .eq("user_id", userId)

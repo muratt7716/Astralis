@@ -38,6 +38,9 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "selected_guide_id" TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "language" TEXT DEFAULT 'tr';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "daily_horoscope" JSONB DEFAULT '{}'::jsonb;
 
+-- Interaction Logs Geliştirmeleri
+ALTER TABLE public.interaction_logs ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+
 -- 2. CONVERSATIONS (Sohbet Oturumları)
 CREATE TABLE IF NOT EXISTS public.conversations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -76,6 +79,7 @@ CREATE TABLE IF NOT EXISTS public.interaction_logs (
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   action_type TEXT NOT NULL,
   description TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -110,7 +114,9 @@ DROP POLICY IF EXISTS "Memories: users can view own" ON public.memories;
 CREATE POLICY "Memories: users can view own" ON public.memories FOR ALL USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Logs: users can view own" ON public.interaction_logs;
-CREATE POLICY "Logs: users can view own" ON public.interaction_logs FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Logs: users can view own" ON public.interaction_logs 
+FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Logs: users can insert own" ON public.interaction_logs;
-CREATE POLICY "Logs: users can insert own" ON public.interaction_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Logs: users can insert own" ON public.interaction_logs 
+FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);

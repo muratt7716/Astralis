@@ -13,6 +13,7 @@ import { GlassButton } from "@/components/ui/glass-button";
 import Logo from "@/components/Cosmic/Logo";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
+import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -57,21 +58,24 @@ export default function HomePage() {
             <p className="text-sm md:text-base text-amber-100/40 mb-10 tracking-[0.4em] uppercase font-light max-w-2xl mx-auto leading-relaxed">
               {t("home.hero.subtitle")}
             </p>
-            <div className="inline-flex gap-4 pointer-events-auto">
-              {!authLoading && (
-                user ? (
-                  <Link href="/profil">
-                    <GlassButton size="lg" className="hover:border-purple-500/30">
-                      Profilime Git
-                    </GlassButton>
-                  </Link>
-                ) : (
-                  <Link href="/onboarding">
-                    <GlassButton size="lg" className="hover:border-amber-500/30">
-                      {t("home.hero.cta")}
-                    </GlassButton>
-                  </Link>
-                )
+            <div className="inline-flex gap-4 pointer-events-auto min-h-[60px] items-center">
+              {authLoading ? (
+                <div className="flex items-center gap-2 text-white/20 text-[10px] uppercase tracking-widest animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Kozmik Veriler Senkronize Ediliyor...
+                </div>
+              ) : user ? (
+                <Link href="/profil">
+                  <GlassButton size="lg" className="hover:border-purple-500/30">
+                    Profilime Git
+                  </GlassButton>
+                </Link>
+              ) : (
+                <Link href="/onboarding">
+                  <GlassButton size="lg" className="hover:border-amber-500/30">
+                    {t("home.hero.cta")}
+                  </GlassButton>
+                </Link>
               )}
             </div>
           </div>

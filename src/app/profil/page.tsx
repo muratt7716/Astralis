@@ -27,8 +27,6 @@ import {
   Globe,
   ChevronRight,
   Hash,
-  Waves,
-  Eye,
   CheckCircle2,
   X,
   LogOut,
@@ -39,7 +37,12 @@ import {
   Heart,
   Shield,
   Zap,
-  Flame
+  Flame,
+  Waves,
+  Target,
+  Anchor,
+  RefreshCw,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -177,17 +180,43 @@ export default function ProfilePage() {
   const { user, profile: authProfile, loading: authLoading } = useAuth();
 
   const [saving, setSaving] = useState(false);
+  
+  // Initial Identity State (Must be null at start to match Server SSR)
   const [profile, setProfile] = useState<any>(null);
   const [activeGuideId, setActiveGuideId] = useState<string>("melisa");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [horoscopeData, setHoroscopeData] = useState<any>(null);
-  const [fetchingHoroscope, setFetchingHoroscope] = useState(false);
   const [topToolIds, setTopToolIds] = useState<string[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
+
+  // Synchronous Hydration from Cache (Client-Only)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Load Profile
+    const cachedProfile = localStorage.getItem("last-cosmic-profile");
+    if (cachedProfile) {
+      const parsed = JSON.parse(cachedProfile);
+      setProfile(parsed);
+      setActiveGuideId(parsed.selected_guide_id || "melisa");
+      
+      // Load Dependent Strings
+      const cachedTools = localStorage.getItem(`top-tools-${parsed.id}`);
+      const cachedActs = localStorage.getItem(`activities-${parsed.id}`);
+      const cachedHoro = localStorage.getItem(`horoscope-${parsed.id}`);
+      
+      if (cachedTools) setTopToolIds(JSON.parse(cachedTools));
+      if (cachedActs) setActivities(JSON.parse(cachedActs));
+      if (cachedHoro) setHoroscopeData(JSON.parse(cachedHoro));
+    }
+  }, []);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const [fetchingHoroscope, setFetchingHoroscope] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -216,6 +245,16 @@ export default function ProfilePage() {
     };
   }, [user?.id]);
 
+  // Handle Navbar visibility toggling for settings
+  useEffect(() => {
+    if (settingsOpen) {
+      document.documentElement.classList.add('hide-nav');
+    } else {
+      document.documentElement.classList.remove('hide-nav');
+    }
+    return () => document.documentElement.classList.remove('hide-nav');
+  }, [settingsOpen]);
+
   const fetchDynamicData = useCallback(async (userId: string, currentProfile?: any) => {
     const today = new Date().toISOString().split("T")[0];
     const cachedHoroscope = currentProfile?.daily_horoscope;
@@ -227,96 +266,114 @@ export default function ProfilePage() {
     }
 
     try {
-      const [hRes, tRes, aRes] = await Promise.all([
-        fetch(`/api/ai/daily-horoscope?userId=${userId}`),
-        fetch(`/api/user/top-tools?userId=${userId}`),
-        fetch(`/api/user/activity?userId=${userId}`),
-      ]);
-      const [hData, tData, aData] = await Promise.all([hRes.json(), tRes.json(), aRes.json()]);
+      // 1. Fetch Horoscope (Potentially slow, don't let it block others if it's already in cache)
+      const fetchHoroscope = async () => {
+        try {
+          const hRes = await fetch(`/api/ai/daily-horoscope?userId=${userId}`);
+          const hData = await hRes.json();
+          if (hData.horoscope) {
+            setHoroscopeData(hData.horoscope);
+            localStorage.setItem(`horoscope-${userId}`, JSON.stringify(hData.horoscope));
+          }
+        } catch (e) { console.error("Horoscope fetch failed", e); }
+        finally { setFetchingHoroscope(false); }
+      };
 
-      if (hData.horoscope) {
-        setHoroscopeData(hData.horoscope);
-        localStorage.setItem(`horoscope-${userId}`, JSON.stringify(hData.horoscope));
-      }
+      // 2. Fetch Tools & Activities (Fast, update UI immediately)
+      const fetchGenericData = async () => {
+        try {
+          // Add cache-busting timestamp
+          const ts = Date.now();
+          const [tRes, aRes] = await Promise.all([
+            fetch(`/api/user/top-tools?userId=${userId}&_=${ts}`),
+            fetch(`/api/user/activity?userId=${userId}&_=${ts}`),
+          ]);
+          const [tData, aData] = await Promise.all([tRes.json(), aRes.json()]);
 
-      if (tData.topTools) {
-        setTopToolIds(tData.topTools);
-        localStorage.setItem(`top-tools-${userId}`, JSON.stringify(tData.topTools));
-      }
+          if (tData.topTools) {
+            setTopToolIds(tData.topTools);
+            localStorage.setItem(`top-tools-${userId}`, JSON.stringify(tData.topTools));
+          }
 
-      if (aData.activities) {
-        setActivities(aData.activities);
-        localStorage.setItem(`activities-${userId}`, JSON.stringify(aData.activities));
-      }
+          if (aData.activities) {
+            console.log("[Profile] Fetched Activities for user:", userId, aData.activities);
+            setActivities(aData.activities);
+            localStorage.setItem(`activities-${userId}`, JSON.stringify(aData.activities));
+          }
+        } catch (e) { console.error("Generic data fetch failed", e); }
+      };
+
+      // Kick both off, but hHoroscope won't block the UI for tools/activities
+      fetchHoroscope();
+      fetchGenericData();
+
     } catch (err) {
       console.error("Dynamic data fetch failed", err);
-    } finally {
       setFetchingHoroscope(false);
     }
   }, []); // Fixed: Removed horoscopeData to prevent loops
 
+  // 1. Unified Identity Trace
+  const displayProfile = profile || authProfile;
+
+  // 2. Identity Synchronization & Redirects
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) { router.push("/onboarding"); return; }
-    if (!authProfile) return;
-
-    setProfile(authProfile);
-    setActiveGuideId(authProfile.selected_guide_id || "melisa");
-
-    // Immediate usage of cached data
-    const today = new Intl.DateTimeFormat('tr-TR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      timeZone: 'Europe/Istanbul'
-    }).format(new Date()).split('.').reverse().join('-');
-
-    if (authProfile.daily_horoscope?.date === today && authProfile.daily_horoscope?.language === (authProfile.language || 'tr')) {
-      setHoroscopeData(authProfile.daily_horoscope);
+    // Definitive log-out check
+    if (!authLoading && !user) {
+      router.push("/onboarding");
+      return;
     }
 
-    const { activities: cachedActs, topTools: cachedTools, horoscope: cachedHoro } = getCachedData();
-    if (cachedActs.length > 0) setActivities(cachedActs);
-    if (cachedTools.length > 0) setTopToolIds(cachedTools);
-    if (cachedHoro && !horoscopeData) setHoroscopeData(cachedHoro);
+    // Sync from Auth Provider to Local State + Cache
+    if (authProfile) {
+      setProfile(authProfile);
+      localStorage.setItem("last-cosmic-profile", JSON.stringify(authProfile));
+      
+      setFormData(prev => ({
+        ...prev,
+        full_name: authProfile.full_name || "",
+        birth_date: authProfile.birth_date || "",
+        birth_time: authProfile.birth_time || "",
+        birth_city: authProfile.birth_city || "",
+        relationship_status: authProfile.relationship_status || "single",
+        life_focus: authProfile.life_focus || "general",
+        language: authProfile.language || "tr",
+      }));
 
-    setFormData({
-      full_name: authProfile.full_name || "",
-      birth_date: authProfile.birth_date || "",
-      birth_time: authProfile.birth_time || "",
-      birth_city: authProfile.birth_city || "",
-      relationship_status: authProfile.relationship_status || "single",
-      life_focus: authProfile.life_focus || "general",
-      language: authProfile.language || "tr",
-    });
-    fetchDynamicData(authProfile.id, authProfile);
-  }, [authLoading, user, authProfile, router, fetchDynamicData, getCachedData]);
+      fetchDynamicData(user.id, authProfile);
+    } 
+    // Handle authenticated user with NO profile record (prevent hang)
+    else if (!authLoading && user && !profile) {
+      console.warn("User logged in but profile missing. Escaping to onboarding.");
+      router.push("/onboarding");
+    }
+  }, [user, authProfile, authLoading, router, fetchDynamicData]);
 
+  // 5. Derived Data Memos
   const zodiacSign = useMemo(() => {
-    if (!profile?.birth_date) return null;
-    const d = new Date(profile.birth_date);
+    const dDate = displayProfile?.birth_date;
+    if (!dDate) return null;
+    const d = new Date(dDate);
     return getZodiacByDate(d.getMonth() + 1, d.getDate());
-  }, [profile?.birth_date]);
+  }, [displayProfile?.birth_date]);
 
-  // Calculate birth chart for rising/moon sign when birth_time is available
   const birthChart = useMemo(() => {
-    if (!profile?.birth_date || !profile?.birth_time) return null;
+    if (!displayProfile?.birth_date || !displayProfile?.birth_time) return null;
     try {
-      const d = new Date(profile.birth_date);
-      const [h, m] = profile.birth_time.split(":").map(Number);
+      const d = new Date(displayProfile.birth_date);
+      const [h, m] = displayProfile.birth_time.split(":").map(Number);
       return calculateBirthChart(
         d.getFullYear(), d.getMonth() + 1, d.getDate(),
         h, m,
-        profile.latitude || 39.9, profile.longitude || 32.8
+        displayProfile.latitude || 39.9, displayProfile.longitude || 32.8
       );
     } catch { return null; }
-  }, [profile?.birth_date, profile?.birth_time, profile?.latitude, profile?.longitude]);
+  }, [displayProfile]);
 
-  // Derived sign info — prefer calculated, fallback to DB
-  const risingSignName = birthChart?.risingSign?.name || profile?.rising_sign || null;
-  const risingSignId = birthChart?.risingSign?.id || zodiacSigns.find(z => z.name === profile?.rising_sign)?.id || null;
-  const moonSignName = birthChart?.moonSign?.name || profile?.moon_sign || null;
-  const moonSignId = birthChart?.moonSign?.id || zodiacSigns.find(z => z.name === profile?.moon_sign)?.id || null;
+  const risingSignName = birthChart?.risingSign?.name || displayProfile?.rising_sign || null;
+  const risingSignId = birthChart?.risingSign?.id || zodiacSigns.find(z => z.name === displayProfile?.rising_sign)?.id || null;
+  const moonSignName = birthChart?.moonSign?.name || displayProfile?.moon_sign || null;
+  const moonSignId = birthChart?.moonSign?.id || zodiacSigns.find(z => z.name === displayProfile?.moon_sign)?.id || null;
 
   const topTools = useMemo(() => {
     if (topToolIds.length === 0) return [];
@@ -325,6 +382,21 @@ export default function ProfilePage() {
 
   const activeGuide = useMemo(() => GUIDES.find(g => g.id === activeGuideId) || GUIDES[0], [activeGuideId]);
 
+  // 6. Resilient Loading & Safety Returns
+  if (!displayProfile && authLoading) {
+    return (
+      <div className="min-h-screen bg-[#050508] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-white/20 animate-spin" />
+          <p className="text-white/20 text-xs tracking-[0.3em] uppercase">{t("profile.loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!displayProfile && !authLoading) return null;
+
+  // 7. Handlers
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -337,16 +409,16 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      let avatarUrl = profile.avatar_url;
+      let avatarUrl = displayProfile.avatar_url;
       if (selectedAvatar) {
         const optimizedFile = await compressImage(selectedAvatar);
         avatarUrl = await uploadAvatar(optimizedFile);
       }
-      const isLangChanged = formData.language !== profile.language;
+      const isLangChanged = formData.language !== displayProfile.language;
       await updateProfile({ ...formData, avatar_url: avatarUrl });
       const updated = await getCurrentProfile();
       setProfile(updated);
-      if (isLangChanged) fetchDynamicData(profile.id);
+      if (isLangChanged) fetchDynamicData(displayProfile.id);
       showToast(t("profile.saved"));
       setSettingsOpen(false);
     } catch (err: any) {
@@ -360,7 +432,7 @@ export default function ProfilePage() {
     setActiveGuideId(id);
     try {
       await updateProfile({ selected_guide_id: id });
-      logInteraction(profile.id, "select_guide", `Guide selected: ${id}`);
+      logInteraction(displayProfile.id, "select_guide", `Guide selected: ${id}`);
       showToast(`${GUIDES.find(g => g.id === id)?.name} ${t("profile.guide_selected")}`);
     } catch (err) {
       console.error("Failed to save guide selection", err);
@@ -371,18 +443,6 @@ export default function ProfilePage() {
     await signOut();
     router.push("/");
   };
-
-  // --- Loading ---
-  if (authLoading || !profile) {
-    return (
-      <div className="min-h-screen bg-[#050508] flex items-center justify-center">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 text-white/20 animate-spin" />
-          <p className="text-white/20 text-xs tracking-[0.3em] uppercase">{t("profile.loading")}</p>
-        </motion.div>
-      </div>
-    );
-  }
 
   // ============================
   // RENDER
@@ -407,8 +467,8 @@ export default function ProfilePage() {
             <div className="relative group/avatar shrink-0">
               <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full scale-110 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-700" />
               <Avatar className="w-24 h-24 md:w-28 md:h-28 ring-2 ring-white/[0.06] group-hover/avatar:ring-white/20 transition-all duration-500">
-                <AvatarImage src={previewUrl || profile.avatar_url} className="object-cover" />
-                <AvatarFallback className="text-3xl bg-white/5 text-white/40 font-serif">{profile.full_name?.[0]}</AvatarFallback>
+                <AvatarImage src={previewUrl || displayProfile.avatar_url} className="object-cover" />
+                <AvatarFallback className="text-3xl bg-white/5 text-white/40 font-serif">{displayProfile.full_name?.[0]}</AvatarFallback>
               </Avatar>
               <label className="absolute bottom-0 right-0 p-2 bg-white/10 backdrop-blur-md rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-90 border border-white/10 opacity-0 group-hover/avatar:opacity-100 translate-y-1 group-hover/avatar:translate-y-0 duration-300">
                 <Upload className="w-3.5 h-3.5 text-white/70" />
@@ -419,7 +479,7 @@ export default function ProfilePage() {
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-white mb-2">
-                {profile.full_name}
+                {displayProfile.full_name}
               </h1>
 
               {/* Zodiac triple */}
@@ -532,7 +592,7 @@ export default function ProfilePage() {
                       <AvatarFallback className="bg-white/5">{activeGuide.name[0]}</AvatarFallback>
                     </Avatar>
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h3 className="text-2xl font-serif font-bold text-white leading-tight">{activeGuide.name}</h3>
                     <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mt-1", activeGuide.accent)}>{activeGuide.role}</p>
                   </div>
@@ -711,9 +771,9 @@ export default function ProfilePage() {
                 {/* Stats Card */}
                 <div className="rounded-[2.5rem] border border-white/[0.08] bg-white/[0.03] p-10 overflow-hidden relative group/stats isolate text-left">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none group-hover/stats:bg-white/10 transition-all duration-1000" />
-                  
+
                   <SectionLabel>{t("astrology.label.cosmic_stats")}</SectionLabel>
-                  
+
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-8 relative z-10">
                     {/* Planet Visual - Large & Clean */}
                     <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-[2rem] bg-white/[0.02] border border-white/[0.05] group/planet">
@@ -722,15 +782,22 @@ export default function ProfilePage() {
                         const planetData = getPlanetById(planetId);
                         return (
                           <>
-                            <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border border-white/10 p-1.5 bg-black/40 ring-1 ring-white/5 overflow-hidden">
-                              {planetData?.imageUrl && (
+                            <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border border-white/10 p-1.5 bg-black/40 ring-1 ring-white/5 overflow-hidden flex items-center justify-center">
+                              {planetData?.imageUrl ? (
                                 <img
                                   src={planetData.imageUrl}
                                   alt={zodiacSign.rulingPlanet}
-                                  className="w-full h-full object-cover opacity-80 group-hover/planet:opacity-100 transition-all duration-1000 scale-125 group-hover/planet:scale-110 filter brightness-110"
+                                  className="w-full h-full object-cover opacity-90 group-hover/planet:opacity-100 transition-all duration-1000 scale-125 group-hover/planet:scale-110 filter brightness-110"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                  }}
                                 />
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                              ) : null}
+                              <div className={cn("flex flex-col items-center gap-2", planetData?.imageUrl ? "hidden" : "")}>
+                                <CosmicIcon name="planet" size={64} className="text-white/20" />
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                             </div>
                             <div className="mt-6 text-center">
                               <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] block mb-2">{t("astrology.label.planet")}</span>
@@ -743,31 +810,49 @@ export default function ProfilePage() {
 
                     {/* Stats Grid - 2x2 Balanced */}
                     <div className="lg:col-span-7 flex flex-col gap-4 justify-between">
-                      <div className="grid grid-cols-2 gap-4 h-full">
-                        <div className="p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
-                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-3 font-black">{t("astrology.label.element")}</p>
-                          <p className="text-xl font-serif font-black text-white flex items-center gap-3">
-                            <Waves className="w-5 h-5 text-blue-400 group-hover/stat:scale-110 transition-transform" /> {t(zodiacSign.elementKey)}
-                          </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full">
+                        <div className="p-3 md:p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
+                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-2 font-black">{t("astrology.label.element")}</p>
+                          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-2.5">
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover/stat:scale-110 transition-transform flex-shrink-0">
+                              <CosmicIcon
+                                name={zodiacSign.elementKey.split('.').pop() as any || "earth"}
+                                size={20}
+                                className="group-hover/stat:rotate-12 transition-transform duration-500"
+                              />
+                            </div>
+                            <span className="text-xs sm:text-base md:text-lg font-serif font-black text-white text-center sm:text-left leading-tight">{t(zodiacSign.elementKey)}</span>
+                          </div>
                         </div>
-                        <div className="p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
-                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-3 font-black">{t("astrology.label.quality")}</p>
-                          <p className="text-xl font-serif font-black text-white flex items-center gap-3">
-                            <Zap className="w-5 h-5 text-purple-400 group-hover/stat:scale-110 transition-transform" /> {t(zodiacSign.qualityKey)}
-                          </p>
+                        <div className="p-3 md:p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
+                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-2 font-black">{t("astrology.label.quality")}</p>
+                          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-2.5">
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 group-hover/stat:scale-110 transition-transform flex-shrink-0">
+                              {(() => {
+                                const q = zodiacSign.qualityKey.split('.').pop();
+                                if (q === 'cardinal') return <Target className="w-5 h-5 text-purple-400" />;
+                                if (q === 'fixed') return <Anchor className="w-5 h-5 text-purple-400" />;
+                                return <RefreshCw className="w-5 h-5 text-purple-400" />;
+                              })()}
+                            </div>
+                            <span className="text-xs sm:text-base md:text-lg font-serif font-black text-white text-center sm:text-left leading-tight">{t(zodiacSign.qualityKey)}</span>
+                          </div>
                         </div>
-                        <div className="p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
-                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-3 font-black">{t("astrology.label.lucky_number")}</p>
-                          <p className="text-xl font-serif font-black text-white flex items-center gap-3">
-                            <Hash className="w-5 h-5 text-emerald-400 group-hover/stat:scale-110 transition-transform" /> {zodiacSign.luckyNumbers[0]}
-                          </p>
+                        <div className="p-3 md:p-6 rounded-[2rem] bg-white/[0.03] border border-white/[0.06] transition-all hover:bg-white/[0.05] hover:border-white/10 group/stat">
+                          <p className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-2 font-black">{t("astrology.label.lucky_number")}</p>
+                          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-2.5">
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover/stat:scale-110 transition-transform flex-shrink-0">
+                              <Hash className="w-5 h-5 text-emerald-400" />
+                            </div>
+                            <span className="text-xs sm:text-base md:text-lg font-serif font-black text-white text-center sm:text-left leading-tight">{zodiacSign.luckyNumbers[0]}</span>
+                          </div>
                         </div>
                         <div className="p-6 rounded-[2rem] bg-indigo-500/5 border border-indigo-500/10 transition-all hover:bg-indigo-500/10 hover:border-indigo-500/20 group/stat relative overflow-hidden">
                           <p className="text-[9px] text-indigo-400/50 uppercase tracking-[0.2em] mb-4 font-black">{t("nav.compatibility")}</p>
                           <div className="grid grid-cols-2 gap-2 mt-2">
                             {zodiacSign.compatibility.slice(0, 4).map(id => (
-                              <button 
-                                key={id} 
+                              <button
+                                key={id}
                                 onClick={() => router.push(`/uyumluluk?sign1=${zodiacSign.id}&sign2=${id}`)}
                                 className="px-2 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all hover:scale-105 group/zi"
                                 title={t(`zodiac.${id}`)}
@@ -780,7 +865,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-10 pt-8 border-t border-white/[0.06] relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex-1">
                       <p className="text-[9px] text-white/20 uppercase tracking-[0.4em] font-black mb-3 flex items-center gap-2">
@@ -810,25 +895,63 @@ export default function ProfilePage() {
               </>
             )}
 
-            {/* Recent Activity */}
             <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-8">
-              <SectionLabel>{t("profile.recent_activity")}</SectionLabel>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+              <div className="flex items-center justify-between mb-6">
+                <SectionLabel>{t("profile.recent_activity")}</SectionLabel>
+                <button 
+                  onClick={() => displayProfile?.id && fetchDynamicData(displayProfile.id)}
+                  className="p-2 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white/80 active:rotate-180 duration-500"
+                  title="Yenile"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {activities.length > 0 ? (
                   activities.slice(0, 4).map(act => {
-                    const tool = ALL_TOOLS.find(t => t.id === act.tool_id);
                     return (
-                      <div key={act.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.03] hover:bg-white/[0.05] transition-all group">
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-white/5", tool?.color)}>
-                          {tool?.icon || act.tool_id[0].toUpperCase()}
-                        </div>
+                      <div 
+                        key={act.id} 
+                        onClick={() => setSelectedActivity(act)}
+                        className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group/activity cursor-pointer"
+                      >
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-bold text-white/60 truncate uppercase tracking-widest">{tool?.name || "Aktivite"}</p>
-                          <p className="text-[10px] text-white/20 truncate mt-0.5">{act.action_details}</p>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-white font-black text-sm group-hover/activity:text-blue-400 transition-colors uppercase tracking-wider">
+                              {act.action_type === 'sphere' ? 'Kristal Küre' :
+                                act.action_type === 'dream' ? 'Rüya Analizi' :
+                                  act.action_type === 'bio' ? 'Biyoritim' :
+                                    act.action_type === 'numerology' ? 'Numeroloji' :
+                                      act.action_type === 'iching' ? 'I-Ching' :
+                                        act.action_type === 'runler' ? 'Rünler' :
+                                          act.action_type === 'compatibility' ? 'Burç Uyumluluğu' :
+                                            act.action_type === 'birth_chart' ? 'Doğum Haritası' :
+                                              act.action_type}
+                            </p>
+                            <span className="text-[9px] text-white/10 font-mono">
+                              {new Date(act.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
+                            </span>
+                          </div>
+
+                          {act.description && !act.metadata?.question && (
+                            <p className="text-white/40 text-[10px] leading-relaxed line-clamp-2">{act.description}</p>
+                          )}
+
+                          {act.metadata?.question && (
+                            <div className="mt-2 space-y-2">
+                              <div className="bg-white/[0.03] p-2 rounded-lg border border-white/5">
+                                <p className="text-[8px] text-white/30 uppercase font-black mb-1">Soru</p>
+                                <p className="text-white/70 text-[10px] italic">"{act.metadata.question}"</p>
+                              </div>
+                              {act.metadata?.answer && (
+                                <div className="bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
+                                  <p className="text-[8px] text-indigo-400/50 uppercase font-black mb-1">Cevap</p>
+                                  <p className="text-white/80 text-[10px] leading-relaxed line-clamp-3">{act.metadata.answer}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <span className="text-[9px] text-white/10 font-bold shrink-0 uppercase tracking-tighter">
-                          {new Date(act.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
-                        </span>
                       </div>
                     );
                   })
@@ -996,6 +1119,132 @@ export default function ProfilePage() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+      
+      {/* Activity Detail Modal */}
+      <AnimatePresence>
+        {selectedActivity && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedActivity(null)}
+              className="absolute inset-0 bg-[#050508]/90 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-2xl overflow-hidden isolate"
+            >
+              {/* Background Glow */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
+              
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <SectionLabel>
+                    {selectedActivity.action_type === 'sphere' ? 'Kristal Küre Analizi' :
+                     selectedActivity.action_type === 'iching' ? 'I-Ching Bilgeliği' :
+                     selectedActivity.action_type === 'runler' ? 'Rünlerin Fısıltısı' :
+                     'Aktivite Detayı'}
+                  </SectionLabel>
+                  <p className="text-[10px] text-white/30 font-mono mt-2 uppercase tracking-widest">
+                    {new Date(selectedActivity.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setSelectedActivity(null)}
+                  className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/50 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                {selectedActivity.metadata?.question && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest flex items-center gap-2">
+                      <MessageSquare className="w-3 h-3" />
+                      Soru / Niyet
+                    </p>
+                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl italic text-white/60 leading-relaxed">
+                      "{selectedActivity.metadata.question}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Dynamic Result Rendering */}
+                {selectedActivity.metadata?.full_result ? (
+                  <div className="space-y-6">
+                    {/* Part 1: Initial Insight / Card interpretation */}
+                    {selectedActivity.metadata.full_result.cards?.map((c: any, i: number) => (
+                      <div key={i} className="space-y-3">
+                        <p className="text-[10px] text-indigo-400/40 uppercase font-black tracking-widest flex items-center gap-2">
+                          <Eye className="w-3 h-3" />
+                          {c.position ? c.position : (c.name || 'Mistik Sezgi')}
+                        </p>
+                        <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-5 rounded-2xl text-white/80 leading-relaxed italic">
+                          {c.interpretation}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Part 2: Synthesis / Overview */}
+                    <div className="space-y-3">
+                      <p className="text-[10px] text-purple-400/40 uppercase font-black tracking-widest flex items-center gap-2">
+                        <Sparkles className="w-3 h-3" />
+                        {selectedActivity.action_type === 'sphere' ? 'Genel Bakış' : 'Sentez'}
+                      </p>
+                      <div className="bg-purple-500/[0.04] border border-purple-500/10 p-6 rounded-[2rem] text-white/90 leading-relaxed text-sm md:text-base font-serif whitespace-pre-wrap">
+                        {selectedActivity.metadata.full_result.synthesis || selectedActivity.metadata.full_result.content}
+                      </div>
+                    </div>
+
+                    {/* Part 3: Advice */}
+                    {selectedActivity.metadata.full_result.advice && (
+                      <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl flex items-center gap-3">
+                        <Sparkles className="w-4 h-4 text-purple-400/40" />
+                        <p className="text-white/50 text-[11px] italic leading-relaxed">
+                          {selectedActivity.metadata.full_result.advice}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Legacy Fallback for older logs */
+                  selectedActivity.metadata?.answer && (
+                    <div className="space-y-3">
+                      <p className="text-[10px] text-purple-400/40 uppercase font-black tracking-widest flex items-center gap-2">
+                        <Sparkles className="w-3 h-3" />
+                        Mistik Yanıt
+                      </p>
+                      <div className="bg-purple-500/[0.02] border border-purple-500/10 p-6 rounded-[2rem] text-white/90 leading-relaxed text-sm md:text-base font-serif whitespace-pre-wrap">
+                        {selectedActivity.metadata.answer}
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {selectedActivity.description && !selectedActivity.metadata?.answer && !selectedActivity.metadata?.full_result && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Açıklama</p>
+                    <p className="text-white/60 leading-relaxed">{selectedActivity.description}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-10 flex justify-end">
+                <button 
+                  onClick={() => setSelectedActivity(null)}
+                  className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-white/50"
+                >
+                  Kapat
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

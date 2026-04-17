@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, updateProfile } from "@/lib/auth-helpers";
+import { useAuth, updateProfile, getCurrentProfile } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -126,12 +126,35 @@ export default function MistikRehberPage() {
   }, []);
 
   const handleSelect = async () => {
-    if (!profile) return;
+    console.log("handleSelect clicked! Current profile:", profile);
+    let currentProfile = profile;
+    if (!currentProfile) {
+      console.log("Profile missing, attempting to fetch...");
+      setSelecting(true);
+      try {
+        currentProfile = await getCurrentProfile();
+        console.log("Fetched profile:", currentProfile);
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      }
+    }
+
+    if (!currentProfile) {
+      setSelecting(false);
+      alert(t("onboarding.error.auth"));
+      return;
+    }
+
+    console.log("Proceeding with profile:", currentProfile.id, "Guide:", guide.id);
     setSelecting(true);
     try {
+      console.log("Calling updateProfile...");
       await updateProfile({ selected_guide_id: guide.id });
+      console.log("updateProfile success! Redirecting...");
       router.push("/profil");
-    } catch {
+    } catch (err: any) {
+      console.error("Selection error:", err);
+      alert(t("onboarding.error.generic") + ": " + err.message);
       setSelecting(false);
     }
   };
@@ -146,8 +169,10 @@ export default function MistikRehberPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [navigate]);
 
-  // Bypass loader if profile is already available (from previous page)
-  if (authLoading && !profile && !hasInitialized) {
+  // Simplified loading: only block if we are absolutely sure we need auth and it's still determining
+  const showLoader = authLoading && !user && !hasInitialized;
+
+  if (showLoader) {
     return (
       <div className="min-h-screen bg-[#030303] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -324,12 +349,14 @@ export default function MistikRehberPage() {
                   )}
                 >
                   <span className="relative z-10 flex items-center gap-3">
-                    {selecting ? (
+                    {!profile && !selecting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : selecting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <MessageCircle className="w-4 h-4" />
                     )}
-                    {profile?.selected_guide_id === guide.id ? t("mistik.current_guide") : t("mistik.select_guide")}
+                    {!profile && !selecting ? "Yükleniyor..." : profile?.selected_guide_id === guide.id ? t("mistik.current_guide") : t("mistik.select_guide")}
                   </span>
                 </button>
               </div>
@@ -339,8 +366,8 @@ export default function MistikRehberPage() {
       </div>
 
       {/* Bottom: Guide Thumbnails */}
-      <div className="fixed bottom-0 inset-x-0 z-30">
-        <div className="flex items-end justify-center gap-3 pb-8 px-6">
+      <div className="fixed bottom-0 inset-x-0 z-30 pointer-events-none">
+        <div className="flex items-end justify-center gap-3 pb-8 px-6 pointer-events-auto">
           {GUIDES.map((g, i) => {
             const isActive = i === activeIndex;
             return (
@@ -373,16 +400,16 @@ export default function MistikRehberPage() {
       </div>
 
       {/* Mobile swipe navigation */}
-      <div className="lg:hidden fixed bottom-28 inset-x-0 z-20 flex items-center justify-center gap-6">
+      <div className="lg:hidden fixed bottom-28 inset-x-0 z-20 flex items-center justify-center gap-6 pointer-events-none">
         <button
           onClick={() => navigate(-1)}
-          className="w-12 h-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white active:scale-90 transition-all"
+          className="w-12 h-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white active:scale-90 transition-all pointer-events-auto"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <button
           onClick={() => navigate(1)}
-          className="w-12 h-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white active:scale-90 transition-all"
+          className="w-12 h-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white active:scale-90 transition-all pointer-events-auto"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
