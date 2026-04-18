@@ -118,6 +118,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Initial session check
     const init = async () => {
+      // 0. SELF-HEALING: If we are at root but have a code, redirect to callback
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        if (code && !window.location.pathname.includes('/auth/callback')) {
+          console.log("[AuthProvider] Code detected at root, redirecting to callback...");
+          window.location.href = `/auth/callback${window.location.search}`;
+          return;
+        }
+      }
+
+      // Create a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        setLoading(false);
+      }, 5000);
+
       try {
         // Try to load profile from cache FIRST for instant UI
         if (typeof window !== 'undefined') {
@@ -135,6 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (err) {
         console.error("Auth init error:", err);
       } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
