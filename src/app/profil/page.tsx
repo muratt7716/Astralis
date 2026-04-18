@@ -206,7 +206,7 @@ export default function ProfilePage() {
           <ActiveGuideCard
             activeGuide={activeGuide}
             activeGuideId={profile.selected_guide_id || "melisa"}
-            onStartChat={() => router.push(`/mistik-rehber/${activeGuide.id}`)}
+            onStartChat={() => router.push(`/mistik-rehber/chat/${activeGuide.id}`)}
             onChangeGuide={() => router.push("/mistik-rehber")}
           />
 

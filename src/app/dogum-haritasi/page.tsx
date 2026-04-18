@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { turkishCities } from "@/data/cities";
 import { countries } from "@/data/countries";
 import type { BirthChart } from "@/lib/astrology";
@@ -11,30 +11,47 @@ import CosmicSelect from "@/components/Cosmic/CosmicSelect";
 import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 import NextImage from "next/image";
-import { planets } from "@/data/planets";
+import { planets, getPlanetById } from "@/data/planets";
 import PlanetIcon from "@/components/PlanetIcon";
 import Logo from "@/components/Cosmic/Logo";
 import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { useEffect } from "react";
-import { getCurrentProfile } from "@/lib/auth-helpers";
+import { getCurrentProfile, useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
 import { 
-  Sparkles, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Globe, 
-  ChevronUp, 
-  BarChart3, 
-  Orbit, 
-  Home, 
+  Sparkles,
+  Calendar,
+  Clock,
+  MapPin,
+  Globe,
+  ChevronUp,
+  BarChart3,
+  Orbit,
+  Home,
   Link2,
   CheckCircle2,
   AlertTriangle,
   Zap,
   Info,
-  Lightbulb
+  Lightbulb,
+  Star,
+  Flame,
+  RefreshCcw,
+  Brain
 } from "lucide-react";
+
+const PLANET_ID_MAP: Record<string, string> = {
+  sun: "gunes", moon: "ay", mercury: "merkur", venus: "venus",
+  mars: "mars", jupiter: "jupiter", saturn: "saturn",
+  uranus: "uranus", neptune: "neptun", pluto: "pluton",
+};
+
+const ELEMENT_OF_SIGN: Record<string, "fire" | "earth" | "air" | "water"> = {
+  koc: "fire", aslan: "fire", yay: "fire",
+  boga: "earth", basak: "earth", oglak: "earth",
+  ikizler: "air", terazi: "air", kova: "air",
+  yengec: "water", akrep: "water", balik: "water",
+};
 
 const useIsClient = () => {
   const [isClient, setIsClient] = useState(false);
@@ -63,14 +80,27 @@ export default function DogumHaritasiPage() {
   const [result, setResult] = useState<BirthChart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "planets" | "houses" | "aspects" | "transits">("overview");
+  type AspectFilter = "all" | "positive" | "negative" | "neutral";
+  const [activeTab, setActiveTab] = useState<"overview" | "planets" | "houses" | "aspects" | "ai-yorumu">("overview");
   const [transitInterpretation, setTransitInterpretation] = useState<any>(null);
   const [transitLoading, setTransitLoading] = useState(false);
+  const [aspectFilter, setAspectFilter] = useState<AspectFilter>("all");
+  const [chartInterpretation, setChartInterpretation] = useState<any>(null);
+  const [interpretLoading, setInterpretLoading] = useState(false);
+  const [interpretError, setInterpretError] = useState("");
+
+  const { user } = useAuth();
 
   const isTurkey = country === "TR";
   const selectedCountry = useMemo(() => countries.find(c => c.code === country), [country]);
   const selectedCity = useMemo(() => turkishCities.find(c => c.name === city), [city]);
   const districts = useMemo(() => selectedCity?.districts || [], [selectedCity]);
+
+  const filteredAspects = useMemo(() => {
+    if (!result) return [];
+    if (aspectFilter === "all") return result.aspects;
+    return result.aspects.filter(a => a.harmony === aspectFilter);
+  }, [result, aspectFilter]);
 
   const handleCalculate = async () => {
     if (!day || !month || !year) { setError(t("error.date")); return; }
@@ -93,10 +123,15 @@ export default function DogumHaritasiPage() {
         }),
       });
       const data = await response.json();
-      if (data.success) { 
-        setResult(data.data); 
-        setActiveTab("overview"); 
-        
+      if (data.success) {
+        setResult(data.data);
+        setActiveTab("overview");
+        setChartInterpretation(null);
+        setInterpretError("");
+        if (user?.id) {
+          syncBirthChart(data.data, user.id);
+        }
+
         // Log Interaction
         try {
           const profile = await getCurrentProfile();
@@ -110,6 +145,41 @@ export default function DogumHaritasiPage() {
       else { setError(data.error || t("error.generic")); }
     } catch { setError(t("error.connection")); }
     finally { setLoading(false); }
+  };
+
+  const syncBirthChart = useCallback(async (chart: BirthChart, userId: string) => {
+    try {
+      await fetch("/api/birth-chart/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chart, userId }),
+      });
+    } catch (err) {
+      console.error("Birth chart sync failed:", err);
+    }
+  }, []);
+
+  const handleInterpret = async () => {
+    if (!result) return;
+    setInterpretLoading(true);
+    setInterpretError("");
+    try {
+      const response = await fetch("/api/birth-chart/interpret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chart: result, language }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setChartInterpretation(data.data);
+      } else {
+        setInterpretError(data.error || "Yorum oluşturulamadı.");
+      }
+    } catch {
+      setInterpretError("Bağlantı hatası.");
+    } finally {
+      setInterpretLoading(false);
+    }
   };
 
   const findSunSign = () => {
@@ -417,7 +487,7 @@ export default function DogumHaritasiPage() {
                 { key: "planets", label: t("chart.planets"), icon: Orbit },
                 { key: "houses", label: t("chart.houses"), icon: Home },
                 { key: "aspects", label: t("chart.aspects"), icon: Link2 },
-                { key: "transits", label: t("chart.transits"), icon: Zap },
+                { key: "ai-yorumu", label: "Harita Yorumu", icon: Brain },
               ] as const).map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -434,7 +504,178 @@ export default function DogumHaritasiPage() {
             {/* Overview Tab */}
             {activeTab === "overview" && (
               <div className="space-y-6 fade-in-up">
-                
+
+                {/* Element Balance */}
+                <div className="glass-card p-5 rounded-2xl">
+                  <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+                    <Flame size={16} className="text-orange-400" />
+                    {t("chart.element_balance")}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-4">{t("chart.element_balance.desc")}</p>
+                  {([
+                    { key: "fire" as const,  text: "text-orange-400",  bar: "bg-orange-500",  bgActive: "bg-orange-500/10",  border: "border-orange-500/20" },
+                    { key: "earth" as const, text: "text-emerald-400", bar: "bg-emerald-500", bgActive: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                    { key: "air" as const,   text: "text-sky-400",     bar: "bg-sky-400",     bgActive: "bg-sky-400/10",     border: "border-sky-400/20" },
+                    { key: "water" as const, text: "text-blue-400",    bar: "bg-blue-500",    bgActive: "bg-blue-500/10",    border: "border-blue-500/20" },
+                  ]).map((el) => {
+                    const pct = result.elementBalance[el.key];
+                    const isDominant = result.elementBalance.dominant === el.key;
+                    const contributing = result.planetPositions.filter(
+                      (p) => ELEMENT_OF_SIGN[p.signId] === el.key
+                    );
+                    return (
+                      <div key={el.key} className={`mb-3 p-3 rounded-xl border ${isDominant ? `${el.bgActive} ${el.border}` : "bg-white/[0.02] border-white/5"}`}>
+                        <div className="flex justify-between text-xs mb-1.5">
+                          <span className={el.text}>{t(`astrology.element.${el.key}`)}</span>
+                          <span className={`font-mono font-bold ${isDominant ? el.text : "text-gray-400"}`}>
+                            %{pct}{isDominant ? " ★" : ""}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-2">
+                          <div className={`h-full rounded-full ${el.bar}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className="text-[10px] text-gray-500 mb-1">{t(`chart.element.${el.key}.desc`)}</p>
+                        {contributing.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {contributing.map((p) => {
+                              const pd = getPlanetById(PLANET_ID_MAP[p.planetId] || p.planetId);
+                              return (
+                                <span key={p.planetId} className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400">
+                                  {pd?.imageUrl && (
+                                    <img src={pd.imageUrl} alt={p.planet} className="w-3 h-3 rounded-full object-cover" />
+                                  )}
+                                  {p.planet}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Modal Balance */}
+                <div className="glass-card p-5 rounded-2xl">
+                  <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+                    <BarChart3 size={16} className="text-purple-400" />
+                    {t("chart.modality_balance")}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-4">{t("chart.modality_balance.desc")}</p>
+                  {([
+                    { key: "cardinal" as const, color: "bg-red-500",    text: "text-red-400" },
+                    { key: "fixed" as const,    color: "bg-purple-500", text: "text-purple-400" },
+                    { key: "mutable" as const,  color: "bg-teal-500",   text: "text-teal-400" },
+                  ]).map((m) => {
+                    const pct = result.modalBalance[m.key];
+                    const isDominant = result.modalBalance.dominant === m.key;
+                    return (
+                      <div key={m.key} className="mb-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className={`${m.text}${isDominant ? " font-bold" : ""}`}>
+                            {t(`astrology.modality.${m.key}`)}
+                            {isDominant ? " ★" : ""}
+                          </span>
+                          <span className="text-gray-400 font-mono">%{pct}</span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-1">
+                          <div className={`h-full rounded-full ${m.color}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className="text-[10px] text-gray-500">{t(`chart.modality.${m.key}.desc`)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Dominant Planet */}
+                {(() => {
+                  const dp = result.planetPositions.find(p => p.planetId === result.dominantPlanet);
+                  if (!dp) return null;
+                  const dpHouse = Object.entries(result.planetsByHouse).find(([, ps]) => ps.includes(dp.planetId));
+                  const dpData = getPlanetById(PLANET_ID_MAP[dp.planetId] || dp.planetId);
+                  return (
+                    <div className="glass-card p-5 rounded-2xl border border-yellow-500/20 flex items-center gap-5">
+                      <div
+                        className="relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-white/10"
+                        style={{ boxShadow: `0 0 24px ${dpData?.glow || "rgba(255,200,0,0.15)"}` }}
+                      >
+                        {dpData?.imageUrl ? (
+                          <img src={dpData.imageUrl} alt={dp.planet} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-3xl">{dp.emoji}</div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-yellow-400/60 mb-0.5">
+                          {t("chart.dominant_planet")}
+                        </p>
+                        <h4 className="text-xl font-bold text-yellow-300">{dp.planet}</h4>
+                        <p className="text-gray-400 text-xs">
+                          {dp.sign} · {dpHouse ? t("chart.planet.in_house", { n: dpHouse[0] }) : ""}
+                          {dp.retrograde ? " · ℞" : ""}
+                        </p>
+                        <p className="text-gray-500 text-[11px] mt-1">{t("chart.dominant_planet.desc")}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Stelliums */}
+                {result.stelliums.length > 0 && (
+                  <div className="glass-card p-5 rounded-2xl border border-purple-500/20">
+                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <Sparkles className="size-4 text-purple-400" />
+                      Stellium
+                    </h3>
+                    {result.stelliums.map((s) => (
+                      <div key={s.signId} className="mb-3">
+                        <div className="text-purple-300 font-medium">
+                          {t("chart.stellium.of_sign", { sign: s.signName })}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {s.planets.map(pid => {
+                            const pp = result.planetPositions.find(p => p.planetId === pid);
+                            const ppd = getPlanetById(PLANET_ID_MAP[pid] || pid);
+                            return pp ? (
+                              <span key={pid} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300">
+                                {ppd?.imageUrl && (
+                                  <img src={ppd.imageUrl} alt={pp.planet} className="w-3.5 h-3.5 rounded-full object-cover" />
+                                )}
+                                {pp.planet}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                        <p className="text-gray-500 text-[10px] mt-1.5">{t("chart.stellium.desc")}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Retrograde Summary */}
+                {result.retrogradeCount > 0 && (
+                  <div className="glass-card p-5 rounded-2xl">
+                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <RefreshCcw size={16} className="text-amber-400" />
+                      {t("chart.retrograde_planets")} ({result.retrogradeCount})
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {result.planetPositions.filter(p => p.retrograde).map(p => {
+                        const pd = getPlanetById(PLANET_ID_MAP[p.planetId] || p.planetId);
+                        return (
+                          <span key={p.planetId} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                            {pd?.imageUrl && (
+                              <img src={pd.imageUrl} alt={p.planet} className="w-3.5 h-3.5 rounded-full object-cover" />
+                            )}
+                            {p.planet} ℞
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-3">{t("chart.retrograde.explanation")}</p>
+                  </div>
+                )}
+
                 {/* Zodiac Wheel Visualization */}
                 <div className="glass-card p-6 border-white/10">
                   <h3 className="text-xl font-bold text-white mb-2 text-center text-gradient">{t("chart.wheel")}</h3>
@@ -597,9 +838,21 @@ export default function DogumHaritasiPage() {
                             )}
                           </div>
                           <div>
-                            <h4 className="text-xl font-bold text-white flex items-center gap-2">
-                               {t(`astrology.planet.${pos.planetId}`)}
-                              {pos.retrograde && <span className="text-amber-400 text-sm" title="Retrograde">℞</span>}
+                            <h4 className="text-xl font-bold text-white flex items-center gap-2 flex-wrap">
+                            {t(`astrology.planet.${pos.planetId}`)}
+                            {pos.retrograde && (
+                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 font-bold">
+                                ℞ {t("chart.planet.retrograde_badge")}
+                              </span>
+                            )}
+                            {(() => {
+                              const houseEntry = Object.entries(result.planetsByHouse).find(([, ps]) => ps.includes(pos.planetId));
+                              return houseEntry ? (
+                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400">
+                                  {t("chart.planet.in_house", { n: houseEntry[0] })}
+                                </span>
+                              ) : null;
+                            })()}
                             </h4>
                             <div className="flex items-center gap-2 text-amber-400 font-medium text-sm">
                                 <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10 shrink-0">
@@ -641,7 +894,7 @@ export default function DogumHaritasiPage() {
 
                       <div className="mt-6 flex items-center justify-between text-[10px] text-gray-500 font-medium tracking-widest uppercase opacity-50">
                         <span>{t("chart.planet.longitude")}</span>
-                        <span>{pos.fullDegree}° {pos.retrograde ? "(RE)" : "(DIR)"}</span>
+                        <span className="font-mono">{pos.fullDegree}° {pos.retrograde ? "(℞)" : "(D)"}</span>
                       </div>
                     </div>
                   );
@@ -678,6 +931,56 @@ export default function DogumHaritasiPage() {
                       <p className="text-gray-400 text-[11px] leading-relaxed italic opacity-80">
                         {t(`astrology.house.${house.house}.desc`)}
                       </p>
+                      <p className="text-amber-300/50 text-[10px] mt-1 leading-relaxed">
+                        {t(`zodiac.${house.signId}`)} — {t(`zodiac.${house.signId}.energy`)}
+                      </p>
+                      {/* Ruler info and planets in house */}
+                      {(() => {
+                        const rulership = result.houseRulerships[house.house - 1];
+                        const rulerPlanet = rulership ? result.planetPositions.find(p => p.planetId === rulership.rulerPlanetId) : null;
+                        const rulerPd = rulerPlanet ? getPlanetById(PLANET_ID_MAP[rulerPlanet.planetId] || rulerPlanet.planetId) : null;
+                        const planetsInHouse = result.planetsByHouse[house.house] || [];
+                        return (
+                          <>
+                            {rulerPlanet && (
+                              <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                                <div
+                                  className="w-6 h-6 rounded-lg overflow-hidden border border-white/10 shrink-0"
+                                  style={{ boxShadow: `0 0 8px ${rulerPd?.glow || "transparent"}` }}
+                                >
+                                  {rulerPd?.imageUrl && (
+                                    <img src={rulerPd.imageUrl} alt={rulerPlanet.planet} className="w-full h-full object-cover" />
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-gray-500">{t("chart.house.ruler")}:</span>
+                                <span className="text-[11px] text-purple-300 font-medium">{rulerPlanet.planet}</span>
+                                <span className="text-[10px] text-gray-500">
+                                  {t("chart.planet.in_house", { n: String(rulership.rulerHouse) })}
+                                  {rulership.rulerRetrograde ? " ℞" : ""}
+                                </span>
+                              </div>
+                            )}
+                            {planetsInHouse.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {planetsInHouse.map(pid => {
+                                  const pp = result.planetPositions.find(p => p.planetId === pid);
+                                  const ppd = getPlanetById(PLANET_ID_MAP[pid] || pid);
+                                  return pp ? (
+                                    <span key={pid} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300">
+                                      {ppd?.imageUrl && (
+                                        <img src={ppd.imageUrl} alt={pp.planet} className="w-3.5 h-3.5 rounded-full object-cover" />
+                                      )}
+                                      {pp.planet}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-white/20 italic mt-2">{t("chart.house.empty")}</p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>
@@ -698,75 +1001,221 @@ export default function DogumHaritasiPage() {
                      <li><strong className="text-blue-400">{t("chart.aspect.conjunction")}</strong></li>
                   </ul>
                 </div>
-                {result.aspects.length === 0 ? (
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <div className="flex gap-2 flex-wrap">
+                    {([
+                      { id: "all" as const,      labelKey: "chart.filter.all" },
+                      { id: "positive" as const, labelKey: "chart.filter.harmonious" },
+                      { id: "negative" as const, labelKey: "chart.filter.challenging" },
+                      { id: "neutral" as const,  labelKey: "chart.filter.neutral" },
+                    ] as const).map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setAspectFilter(f.id)}
+                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${aspectFilter === f.id ? "bg-purple-600 text-white" : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"}`}
+                      >
+                        {t(f.labelKey)}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-500">{filteredAspects.length}</span>
+                </div>
+                {filteredAspects.length === 0 ? (
                    <div className="glass-card p-6 text-center text-gray-500">{t("chart.aspect.none")}</div>
                 ) : (
-                  result.aspects.map((aspect, i) => (
-                    <div key={i} className={`glass-card p-4 border ${harmonyColor(aspect.harmony).split(" ").filter(c => c.startsWith("border-")).join(" ")}`}>
-                      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-lg ${harmonyColor(aspect.harmony).split(" ").filter(c => c.startsWith("text-")).join(" ")}`}>
-                            {aspect.typeEmoji}
-                          </span>
-                          <span className="text-white text-sm font-medium">{t(`astrology.planet.${aspect.planet1Id}`)} — {t(`astrology.planet.${aspect.planet2Id}`)}</span>
+                  filteredAspects.map((aspect, i) => {
+                    const p1d = getPlanetById(PLANET_ID_MAP[aspect.planet1Id] || aspect.planet1Id);
+                    const p2d = getPlanetById(PLANET_ID_MAP[aspect.planet2Id] || aspect.planet2Id);
+                    const harmonyBorderClass =
+                      aspect.harmony === "positive" ? "border-green-500/20" :
+                      aspect.harmony === "negative" ? "border-red-500/20" : "border-blue-500/20";
+                    const harmonyTextClass =
+                      aspect.harmony === "positive" ? "text-green-400" :
+                      aspect.harmony === "negative" ? "text-red-400" : "text-blue-400";
+                    return (
+                      <div key={i} className={`glass-card p-4 border ${harmonyBorderClass}`}>
+                        <div className="flex items-center gap-3">
+                          {/* Planet 1 photo */}
+                          <div
+                            className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-white/10"
+                            style={{ boxShadow: `0 0 12px ${p1d?.glow || "transparent"}` }}
+                          >
+                            {p1d?.imageUrl && <img src={p1d.imageUrl} alt={aspect.planet1Id} className="w-full h-full object-cover" />}
+                          </div>
+                          {/* Aspect symbol */}
+                          <div className="flex flex-col items-center gap-0.5 shrink-0 min-w-[56px]">
+                            <span className={`text-xl ${harmonyTextClass}`}>{aspect.typeEmoji}</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${harmonyTextClass}`}>
+                              {t(`astrology.aspect.${aspect.typeId}`)}
+                            </span>
+                            <span className="text-[8px] font-mono text-gray-500">{aspect.orb}° {t("chart.aspect.orb")}</span>
+                          </div>
+                          {/* Planet 2 photo */}
+                          <div
+                            className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-white/10"
+                            style={{ boxShadow: `0 0 12px ${p2d?.glow || "transparent"}` }}
+                          >
+                            {p2d?.imageUrl && <img src={p2d.imageUrl} alt={aspect.planet2Id} className="w-full h-full object-cover" />}
+                          </div>
+                          {/* Names + applying badge */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate">
+                              {t(`astrology.planet.${aspect.planet1Id}`)} — {t(`astrology.planet.${aspect.planet2Id}`)}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${
+                                aspect.applying
+                                  ? "border-green-500/30 bg-green-500/10 text-green-400"
+                                  : "border-gray-500/30 bg-gray-500/10 text-gray-400"
+                              }`}>
+                                {aspect.applying ? `↗ ${t("chart.aspect.applying")}` : `↘ ${t("chart.aspect.separating")}`}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded text-xs ${harmonyColor(aspect.harmony)}`}>
-                            {t(`astrology.aspect.${aspect.typeId}`)}
-                          </span>
-                         </div>
+                        <div className="mt-3 pl-1 space-y-1.5">
+                          <p className="text-gray-500 text-[11px] leading-relaxed">
+                            {t(`astrology.aspect.${aspect.typeId}.desc`)}
+                          </p>
+                          <p className="text-indigo-300/60 text-[11px] leading-relaxed">
+                            {t(`astrology.planet.${aspect.planet1Id}`)} &nbsp;·&nbsp; {t(`astrology.planet.meaning.${aspect.planet1Id}`)}
+                            &nbsp;&nbsp;×&nbsp;&nbsp;
+                            {t(`astrology.planet.${aspect.planet2Id}`)} &nbsp;·&nbsp; {t(`astrology.planet.meaning.${aspect.planet2Id}`)}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-gray-500 text-xs">
-                        {t(`astrology.planet.${aspect.planet1Id}`)} {aspect.typeEmoji} {t(`astrology.planet.${aspect.planet2Id}`)}: {t(`astrology.aspect.${aspect.typeId}.desc`)}
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
 
-            {/* Transits Tab */}
-            {activeTab === "transits" && (
+            {/* AI Yorumu Tab */}
+            {activeTab === "ai-yorumu" && (
               <div className="space-y-6 fade-in-up">
+
+                {!chartInterpretation ? (
+                  <div className="glass-card p-8 rounded-2xl text-center">
+                    <Brain size={48} className="mx-auto mb-4 text-purple-400 opacity-60" />
+                    <h3 className="text-white font-semibold text-lg mb-2">{t("chart.interpretation.personal_title")}</h3>
+                    <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+                      {t("chart.interpretation.personal_desc")}
+                    </p>
+                    {interpretError && <p className="text-red-400 text-sm mb-4">{interpretError}</p>}
+                    <GlassButton onClick={handleInterpret} disabled={interpretLoading} fullWidth>
+                      {interpretLoading ? t("chart.calculating") : (
+                        <><Sparkles className="size-4 mr-2 inline-block" />{t("chart.interpretation.generate_btn")}</>
+                      )}
+                    </GlassButton>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {([
+                      { key: "general" as const,    titleKey: "chart.interpretation.general_title",    icon: <Star size={16} className="text-yellow-400" /> },
+                      { key: "strengths" as const,  titleKey: "chart.interpretation.strengths_title",  icon: <Zap size={16} className="text-green-400" /> },
+                      { key: "challenges" as const, titleKey: "chart.interpretation.challenges_title", icon: <Info size={16} className="text-amber-400" /> },
+                      { key: "advice" as const,     titleKey: "chart.interpretation.advice_title",     icon: <Lightbulb size={16} className="text-blue-400" /> },
+                    ]).map(section => (
+                      <div key={section.key} className="glass-card p-5 rounded-2xl">
+                        <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                          {section.icon}
+                          {t(section.titleKey)}
+                        </h3>
+                        <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                          {chartInterpretation[section.key]}
+                        </p>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => { setChartInterpretation(null); setInterpretError(""); }}
+                      className="text-xs text-gray-500 hover:text-gray-400 transition-colors block mx-auto"
+                    >
+                      {t("chart.interpretation.regenerate")}
+                    </button>
+                  </div>
+                )}
+
+                {/* Transit section - moved here from old transits tab */}
                 <div className="glass-card p-6 border-l-4 border-amber-500">
                   <h3 className="text-xl font-bold text-white mb-2">{t("chart.transits")}</h3>
                   <p className="text-gray-400 text-sm mb-6 max-w-2xl">
                     {t("chart.transits.desc")}
                   </p>
-                  
-                  {result.transits && result.transits.length > 0 ? (
-                    <div className="space-y-4 mb-8">
-                      {result.transits.map((transit: any, idx: number) => {
-                        const summary = t("astrology.transit.desc_pattern", {
-                          transitPlanet: t(`astrology.planet.${transit.transitPlanetId}`),
-                          natalPlanet: t(`astrology.planet.${transit.natalPlanetId}`),
-                          aspect: t(`astrology.aspect.${transit.typeId}`), // Changed aspectType to aspect to match placeholder bug
-                          effect: t(`astrology.aspect.${transit.typeId}.action`) // Changed action to effect to match placeholder bug
-                        });
 
+                  {result.transits && result.transits.length > 0 ? (
+                    <div className="space-y-3 mb-8">
+                      {result.transits.map((transit: any, idx: number) => {
+                        const tpd = getPlanetById(PLANET_ID_MAP[transit.transitPlanetId] || transit.transitPlanetId);
+                        const npd = getPlanetById(PLANET_ID_MAP[transit.natalPlanetId] || transit.natalPlanetId);
+                        const harmonyColor =
+                          transit.harmony === "positive" ? "#4ade80" :
+                          transit.harmony === "negative" ? "#f87171" : "#60a5fa";
                         return (
-                          <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <span className="text-2xl">{transit.transitEmoji}</span>
-                                <div>
-                                  <p className="text-white font-medium text-sm">Transit {t(`astrology.planet.${transit.transitPlanetId}`)}</p>
-                                  <p className="text-gray-400 text-xs">{t(`astrology.aspect.${transit.typeId}`)} ({transit.typeEmoji})</p>
+                          <div key={idx} className="glass-card p-4">
+                            <div className="flex items-center gap-3 mb-2">
+                              {/* Transit planet */}
+                              <div className="flex flex-col items-center gap-1 shrink-0">
+                                <div
+                                  className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10"
+                                  style={{ boxShadow: `0 0 16px ${tpd?.glow || "transparent"}` }}
+                                >
+                                  {tpd?.imageUrl && (
+                                    <img src={tpd.imageUrl} alt={transit.transitPlanetId} className="w-full h-full object-cover" />
+                                  )}
                                 </div>
+                                <span className="text-[8px] text-gray-500 uppercase tracking-wider">
+                                  {t("chart.transit.transit_planet")}
+                                </span>
+                                <span className="text-[10px] text-white font-medium">
+                                  {t(`astrology.planet.${transit.transitPlanetId}`)}
+                                </span>
                               </div>
-                              <div className="text-right flex items-center gap-3">
-                                <div className="text-right">
-                                  <p className="text-white font-medium text-sm">Natal {t(`astrology.planet.${transit.natalPlanetId}`)}</p>
-                                  <p className="text-gray-400 text-xs">{t("chart.yours")}</p>
+                              {/* Aspect center */}
+                              <div className="flex flex-col items-center gap-1 flex-1">
+                                <span className="text-2xl">{transit.typeEmoji}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: harmonyColor }}>
+                                  {t(`astrology.aspect.${transit.typeId}`)}
+                                </span>
+                                {transit.applying !== undefined && (
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${
+                                    transit.applying
+                                      ? "border-green-500/30 bg-green-500/10 text-green-400"
+                                      : "border-gray-500/30 bg-gray-500/10 text-gray-400"
+                                  }`}>
+                                    {transit.applying
+                                      ? `↗ ${t("chart.transit.applying")}`
+                                      : `↘ ${t("chart.transit.separating")}`}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Natal planet */}
+                              <div className="flex flex-col items-center gap-1 shrink-0">
+                                <div
+                                  className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10"
+                                  style={{ boxShadow: `0 0 16px ${npd?.glow || "transparent"}` }}
+                                >
+                                  {npd?.imageUrl && (
+                                    <img src={npd.imageUrl} alt={transit.natalPlanetId} className="w-full h-full object-cover" />
+                                  )}
                                 </div>
-                                <span className="text-2xl text-purple-400">{transit.natalEmoji}</span>
+                                <span className="text-[8px] text-gray-500 uppercase tracking-wider">
+                                  {t("chart.transit.natal_planet")}
+                                </span>
+                                <span className="text-[10px] text-white font-medium">
+                                  {t(`astrology.planet.${transit.natalPlanetId}`)}
+                                </span>
                               </div>
                             </div>
-                            <div className="pt-2 border-t border-white/5">
-                              <p className="text-gray-400 text-xs leading-relaxed">
-                                <span className="text-purple-300 font-medium">{t("chart.short_effect")}:</span> {summary}
-                              </p>
-                            </div>
+                            {/* Transit description */}
+                            <p className="text-gray-500 text-[11px] leading-relaxed px-1 border-t border-white/5 pt-2">
+                              {t(`astrology.planet.meaning.${transit.transitPlanetId}`)}
+                              {" "}→{" "}
+                              <span style={{ color: harmonyColor }} className="font-medium">
+                                {t(`astrology.aspect.${transit.typeId}.action`)}
+                              </span>
+                              {" "}→{" "}
+                              {t(`astrology.planet.meaning.${transit.natalPlanetId}`)}
+                            </p>
                           </div>
                         );
                       })}
@@ -778,12 +1227,12 @@ export default function DogumHaritasiPage() {
                   )}
 
                   {!transitInterpretation ? (
-                    <div className="mt-8">
-                       {transitLoading ? (
-                         <CosmicLoader label={t("chart.transits.loading")} />
-                       ) : (
-                        <GlassButton 
-                          fullWidth 
+                    <div>
+                      {transitLoading ? (
+                        <CosmicLoader label={t("chart.transits.loading")} />
+                      ) : (
+                        <GlassButton
+                          fullWidth
                           onClick={async () => {
                             setTransitLoading(true);
                             try {
@@ -801,20 +1250,16 @@ export default function DogumHaritasiPage() {
                         >
                           {t("chart.transits.btn")}
                         </GlassButton>
-                       )}
+                      )}
                     </div>
                   ) : (
-                    <div className="p-6 rounded-xl bg-purple-900/20 border border-purple-500/20 relative overflow-hidden group glow mt-6">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                    <div className="p-6 rounded-xl bg-purple-900/20 border border-purple-500/20 relative overflow-hidden mt-6">
                       <h4 className="text-xl font-bold text-white mb-2">{transitInterpretation.title}</h4>
                       <p className="text-gray-300 text-sm leading-relaxed mb-4">{transitInterpretation.content}</p>
-                      
-                        <div className="p-3 rounded-lg bg-pink-500/5 border border-pink-500/10 flex items-start gap-2">
-                          <Lightbulb className="size-4 text-pink-400 shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-300">
-                            {transitInterpretation.advice}
-                          </span>
-                        </div>
+                      <div className="p-3 rounded-lg bg-pink-500/5 border border-pink-500/10 flex items-start gap-2">
+                        <Lightbulb className="size-4 text-pink-400 shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-300">{transitInterpretation.advice}</span>
+                      </div>
                     </div>
                   )}
                 </div>

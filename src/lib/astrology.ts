@@ -8,6 +8,13 @@ export interface BirthChart {
   houses: HousePosition[];
   aspects: Aspect[];
   transits: TransitAspect[];
+  planetsByHouse: Record<number, string[]>;
+  houseRulerships: HouseRulership[];
+  elementBalance: ElementBalance;
+  modalBalance: ModalBalance;
+  dominantPlanet: string;
+  stelliums: Stellium[];
+  retrogradeCount: number;
 }
 
 export interface PlanetPosition {
@@ -42,6 +49,37 @@ export interface Aspect {
   orb: number;
   description: string;
   harmony: "positive" | "negative" | "neutral";
+  applying: boolean;
+}
+
+export interface HouseRulership {
+  house: number;
+  signId: string;
+  rulerPlanetId: string;
+  rulerHouse: number;
+  rulerSign: string;
+  rulerRetrograde: boolean;
+}
+
+export interface ElementBalance {
+  fire: number;
+  earth: number;
+  air: number;
+  water: number;
+  dominant: "fire" | "earth" | "air" | "water";
+}
+
+export interface ModalBalance {
+  cardinal: number;
+  fixed: number;
+  mutable: number;
+  dominant: "cardinal" | "fixed" | "mutable";
+}
+
+export interface Stellium {
+  signId: string;
+  signName: string;
+  planets: string[];
 }
 
 // Safe modulo that always returns a positive value
@@ -63,6 +101,25 @@ const signList = [
   { id: "kova", name: "Kova" },
   { id: "balik", name: "Balık" }
 ];
+
+const SIGN_RULERS: Record<string, string> = {
+  koc: "mars", boga: "venus", ikizler: "mercury", yengec: "moon",
+  aslan: "sun", basak: "mercury", terazi: "venus", akrep: "pluto",
+  yay: "jupiter", oglak: "saturn", kova: "uranus", balik: "neptune",
+};
+
+const ELEMENT_MAP: Record<string, "fire" | "earth" | "air" | "water"> = {
+  koc: "fire", aslan: "fire", yay: "fire",
+  boga: "earth", basak: "earth", oglak: "earth",
+  ikizler: "air", terazi: "air", kova: "air",
+  yengec: "water", akrep: "water", balik: "water",
+};
+
+const MODAL_MAP: Record<string, "cardinal" | "fixed" | "mutable"> = {
+  koc: "cardinal", yengec: "cardinal", terazi: "cardinal", oglak: "cardinal",
+  boga: "fixed", aslan: "fixed", akrep: "fixed", kova: "fixed",
+  ikizler: "mutable", basak: "mutable", yay: "mutable", balik: "mutable",
+};
 
 function toRad(deg: number): number { return deg * Math.PI / 180; }
 function toDeg(rad: number): number { return rad * 180 / Math.PI; }
@@ -119,6 +176,127 @@ function longitudeToSign(longitude: number): { id: string; name: string; degree:
   const norm = safeMod(longitude, 360);
   const signIndex = Math.floor(norm / 30);
   return { ...signList[safeMod(signIndex, 12)], degree: Math.round((norm % 30) * 100) / 100 };
+}
+
+/**
+ * Returns which house number (1-12) a planet at fullDegree longitude falls into
+ * Uses the equal house system where each house cusp is reconstructed from signId + within-sign degree
+ */
+function getPlanetHouse(fullDegree: number, houses: HousePosition[]): number {
+  const signIds = ["koc","boga","ikizler","yengec","aslan","basak","terazi","akrep","yay","oglak","kova","balik"];
+  const cusps = houses.map((h) => {
+    const signIdx = signIds.indexOf(h.signId);
+    return safeMod(signIdx * 30 + h.degree, 360);
+  });
+  const norm = safeMod(fullDegree, 360);
+  for (let i = 0; i < 12; i++) {
+    const curr = cusps[i];
+    const next = cusps[(i + 1) % 12];
+    if (curr <= next) {
+      if (norm >= curr && norm < next) return i + 1;
+    } else {
+      // Wraps around 0°
+      if (norm >= curr || norm < next) return i + 1;
+    }
+  }
+  return 1;
+}
+
+function buildPlanetsByHouse(planetPositions: PlanetPosition[], houses: HousePosition[]): Record<number, string[]> {
+  const result: Record<number, string[]> = {};
+  for (let i = 1; i <= 12; i++) result[i] = [];
+  for (const p of planetPositions) {
+    const h = getPlanetHouse(p.fullDegree, houses);
+    result[h].push(p.planetId);
+  }
+  return result;
+}
+
+function calculateHouseRulerships(houses: HousePosition[], planetPositions: PlanetPosition[]): HouseRulership[] {
+  return houses.map((h) => {
+    const rulerPlanetId = SIGN_RULERS[h.signId] || "sun";
+    const rulerPlanet = planetPositions.find((p) => p.planetId === rulerPlanetId);
+    const rulerHouse = rulerPlanet ? getPlanetHouse(rulerPlanet.fullDegree, houses) : 1;
+    return {
+      house: h.house,
+      signId: h.signId,
+      rulerPlanetId,
+      rulerHouse,
+      rulerSign: rulerPlanet?.signId || "koc",
+      rulerRetrograde: rulerPlanet?.retrograde || false,
+    };
+  });
+}
+
+function calculateElementBalance(planetPositions: PlanetPosition[]): ElementBalance {
+  const counts = { fire: 0, earth: 0, air: 0, water: 0 };
+  for (const p of planetPositions) {
+    const el = ELEMENT_MAP[p.signId];
+    if (el) counts[el]++;
+  }
+  const total = planetPositions.length || 1;
+  const pct = {
+    fire:  Math.round((counts.fire  / total) * 100),
+    earth: Math.round((counts.earth / total) * 100),
+    air:   Math.round((counts.air   / total) * 100),
+    water: Math.round((counts.water / total) * 100),
+  };
+  const dominant = (Object.keys(counts) as Array<keyof typeof counts>).reduce(
+    (a, b) => (counts[a] >= counts[b] ? a : b)
+  );
+  return { ...pct, dominant };
+}
+
+function calculateModalBalance(planetPositions: PlanetPosition[]): ModalBalance {
+  const counts = { cardinal: 0, fixed: 0, mutable: 0 };
+  for (const p of planetPositions) {
+    const m = MODAL_MAP[p.signId];
+    if (m) counts[m]++;
+  }
+  const total = planetPositions.length || 1;
+  const pct = {
+    cardinal: Math.round((counts.cardinal / total) * 100),
+    fixed:    Math.round((counts.fixed    / total) * 100),
+    mutable:  Math.round((counts.mutable  / total) * 100),
+  };
+  const dominant = (Object.keys(counts) as Array<keyof typeof counts>).reduce(
+    (a, b) => (counts[a] >= counts[b] ? a : b)
+  );
+  return { ...pct, dominant };
+}
+
+function calculateDominantPlanet(
+  planetPositions: PlanetPosition[],
+  aspects: Aspect[],
+  houses: HousePosition[],
+  risingSignId: string
+): string {
+  const scores: Record<string, number> = {};
+  for (const p of planetPositions) scores[p.planetId] = 0;
+  for (const a of aspects) {
+    scores[a.planet1Id] = (scores[a.planet1Id] || 0) + 1;
+    scores[a.planet2Id] = (scores[a.planet2Id] || 0) + 1;
+  }
+  for (const p of planetPositions) {
+    const h = getPlanetHouse(p.fullDegree, houses);
+    if ([1, 4, 7, 10].includes(h)) scores[p.planetId] += 2;
+  }
+  const chartRuler = SIGN_RULERS[risingSignId];
+  if (chartRuler && scores[chartRuler] !== undefined) scores[chartRuler] += 3;
+  return Object.keys(scores).reduce((a, b) => (scores[a] >= scores[b] ? a : b), "sun");
+}
+
+function detectStelliums(planetPositions: PlanetPosition[]): Stellium[] {
+  const bySign: Record<string, string[]> = {};
+  const signNameMap: Record<string, string> = {};
+  for (const p of planetPositions) {
+    if (!bySign[p.signId]) bySign[p.signId] = [];
+    bySign[p.signId].push(p.planetId);
+    signNameMap[p.signId] = p.sign;
+  }
+  return Object.entries(bySign)
+    .filter(([, planets]) => planets.length >= 3)
+    .map(([signId, planets]) => ({ signId, signName: signNameMap[signId], planets }));
 }
 
 /**
@@ -275,7 +453,9 @@ function calculateHouses(ascendant: number): HousePosition[] {
 /**
  * Calculate aspects between planets
  */
-function calculateAspects(positions: Record<string, number>): Aspect[] {
+function calculateAspects(positions: Record<string, number>, jd: number): Aspect[] {
+  const futurePositions = calculateAllPlanetLongitudes(jd + 1);
+
   const aspectTypes = [
     { id: "conjunction", name: "Kavuşum", emoji: "☌", angle: 0, orb: 8, harmony: "neutral" as const, desc: "Enerjilerin birleşmesidir; güçlü ve yoğundur" },
     { id: "opposition", name: "Karşıtlık", emoji: "☍", angle: 180, orb: 8, harmony: "negative" as const, desc: "Gerilim ve denge arayışı yaratır" },
@@ -297,6 +477,10 @@ function calculateAspects(positions: Record<string, number>): Aspect[] {
       for (const type of aspectTypes) {
         const orb = Math.abs(angle - type.angle);
         if (orb <= type.orb) {
+          const futureDiff = Math.abs(futurePositions[p1] - futurePositions[p2]);
+          const futureAngle = futureDiff > 180 ? 360 - futureDiff : futureDiff;
+          const futureOrb = Math.abs(futureAngle - type.angle);
+          const applying = futureOrb < orb;
           aspects.push({
             planet1: planetInfo[p1].name,
             planet1Id: planetInfo[p1].id,
@@ -309,6 +493,7 @@ function calculateAspects(positions: Record<string, number>): Aspect[] {
             orb: Math.round(orb * 10) / 10,
             description: `${planetInfo[p1].name} ${type.emoji} ${planetInfo[p2].name}: ${type.desc}`,
             harmony: type.harmony,
+            applying,
           });
           break;
         }
@@ -368,7 +553,15 @@ export function calculateBirthChart(
   const houses = calculateHouses(ascendant);
 
   // Aspects
-  const aspects = calculateAspects(allPositions);
+  const aspects = calculateAspects(allPositions, jd);
+
+  const planetsByHouse  = buildPlanetsByHouse(planetPositions, houses);
+  const houseRulerships = calculateHouseRulerships(houses, planetPositions);
+  const elementBalance  = calculateElementBalance(planetPositions);
+  const modalBalance    = calculateModalBalance(planetPositions);
+  const dominantPlanet  = calculateDominantPlanet(planetPositions, aspects, houses, risingData.id);
+  const stelliums       = detectStelliums(planetPositions);
+  const retrogradeCount = planetPositions.filter((p) => p.retrograde).length;
 
   return {
     sunSign: sunSignResult,
@@ -388,6 +581,13 @@ export function calculateBirthChart(
     houses,
     aspects,
     transits: calculateTransits(planetPositions),
+    planetsByHouse,
+    houseRulerships,
+    elementBalance,
+    modalBalance,
+    dominantPlanet,
+    stelliums,
+    retrogradeCount,
   };
 }
 

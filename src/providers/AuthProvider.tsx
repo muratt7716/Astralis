@@ -78,10 +78,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // 2. BACKGROUND SYNC: Update Supabase
+      // 2. BACKGROUND SYNC: Mevcut profili merge ederek güncelle
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
       const { data, error } = await supabase
         .from("profiles")
         .upsert({
+          ...(existing || {}),
           id: user.id,
           ...profileData,
           updated_at: new Date().toISOString(),
@@ -138,8 +145,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`[AuthProvider] Auth event: ${event}`);
       if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
+        // Preserve same object reference on token refresh to avoid triggering
+        // dependent useEffect hooks in consumer components unnecessarily
+        setUser((prev: any) => (prev?.id === session.user.id ? prev : session.user));
+        // Only re-fetch profile on meaningful auth events, not periodic token refreshes
+        if (event !== 'TOKEN_REFRESHED') {
+          await fetchProfile(session.user.id);
+        }
       } else {
         setUser(null);
         setProfile(null);

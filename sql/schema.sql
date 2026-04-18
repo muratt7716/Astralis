@@ -38,6 +38,7 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "selected_guide_id" TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "language" TEXT DEFAULT 'tr';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "daily_horoscope" JSONB DEFAULT '{}'::jsonb;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "is_premium" BOOLEAN DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS birth_chart_summary JSONB DEFAULT NULL;
 
 -- Interaction Logs Geliştirmeleri
 ALTER TABLE public.interaction_logs ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
@@ -52,9 +53,6 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   last_message_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Eğer tablo zaten varsa context_summary tipini güncelle (TEXT → JSONB)
--- Not: Supabase mevcut TEXT kolonu varsa bunu elle JSONB'ye çevirmeniz gerekebilir
--- ALTER TABLE public.conversations ALTER COLUMN context_summary TYPE JSONB USING context_summary::jsonb;
 
 -- 3. MESSAGES (Sohbet Geçmişi)
 CREATE TABLE IF NOT EXISTS public.messages (
