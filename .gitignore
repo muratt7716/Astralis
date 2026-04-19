@@ -58,3 +58,6 @@ next-env.d.ts
 
 gcp-key.json
 /src/cache
+
+# Worktrees
+.worktrees/
