@@ -1,6 +1,7 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Clock, MapPin, Flame, Settings, LogOut, ArrowUpCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Settings, LogOut, ArrowUpCircle } from "lucide-react";
+import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/lib/i18n";
@@ -45,7 +46,7 @@ export function ProfileHero({
           <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full scale-110 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-700" />
           <Avatar className="w-24 h-24 md:w-28 md:h-28 ring-2 ring-white/[0.06] group-hover/avatar:ring-white/20 transition-all duration-500">
             <AvatarImage src={previewUrl || profile?.avatar_url} className="object-cover" />
-            <AvatarFallback className="text-3xl bg-white/5 text-white/40 font-serif">{profile?.full_name?.[0]}</AvatarFallback>
+            <AvatarFallback className="text-3xl bg-white/5 text-white/40 font-sans">{profile?.full_name?.[0]}</AvatarFallback>
           </Avatar>
           <label className="absolute bottom-0 right-0 p-2 bg-white/10 backdrop-blur-md rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-90 border border-white/10 opacity-0 group-hover/avatar:opacity-100 translate-y-1 group-hover/avatar:translate-y-0 duration-300">
             <input type="file" className="hidden" accept="image/*" onChange={onAvatarChange} />
@@ -55,7 +56,7 @@ export function ProfileHero({
 
         {/* Info */}
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-sans font-bold tracking-tight text-white mb-2">
             {profile?.full_name}
           </h1>
 
@@ -117,7 +118,7 @@ export function ProfileHero({
             {zodiacSign && (
               <>
                 <span className="w-px h-3 bg-white/10" />
-                <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {zodiacSign.element}</span>
+                <span className="flex items-center gap-1"><CosmicIcon name={(zodiacSign.elementKey?.split(".").pop() || "earth") as any} size={14} /> {zodiacSign.element}</span>
                 <span className="text-white/15">·</span>
                 <span>{zodiacSign.rulingPlanet}</span>
               </>

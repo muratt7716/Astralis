@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "@/lib/i18n";
 import Logo from "./Cosmic/Logo";
@@ -12,6 +13,43 @@ import { GlassButton } from "./ui/glass-button";
 
 export default function Footer() {
   const { t } = useTranslation();
+  
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setStatus('loading');
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Abonelik işlemi başarısız oldu");
+      }
+
+      setStatus('success');
+      setEmail("");
+      
+      // 3 saniye sonra resetle
+      setTimeout(() => {
+        setStatus('idle');
+      }, 3000);
+      
+    } catch (err: any) {
+      console.error(err);
+      setStatus('error');
+      setErrorMessage(err.message || "Bir hata oluştu");
+    }
+  };
 
   const zodiacSigns = [
     "koc", "boga", "ikizler", "yengec", "aslan", "basak",
@@ -78,16 +116,42 @@ export default function Footer() {
                 {t("footer.newsletter_desc")}
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:bg-black/40 sm:p-1.5 sm:rounded-full sm:border sm:border-white/5 sm:shadow-2xl transition-all duration-300 focus-within:sm:border-cyan-500/30">
-              <input
-                type="email"
-                placeholder={t("footer.newsletter_placeholder")}
-                className="w-full sm:flex-1 bg-black/40 sm:bg-transparent border border-white/10 sm:border-none rounded-2xl sm:rounded-full text-white placeholder-gray-500 px-6 py-4 focus:ring-0 focus:outline-none text-base"
-              />
-              <GlassButton size="lg" className="hover:border-cyan-500/50 w-full sm:w-auto">
-                {t("footer.newsletter_button")}
-              </GlassButton>
-            </div>
+            
+            <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:bg-black/40 sm:p-1.5 sm:rounded-full sm:border sm:border-white/5 sm:shadow-2xl transition-all duration-300 focus-within:sm:border-cyan-500/30">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  disabled={status === 'loading' || status === 'success'}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t("footer.newsletter_placeholder")}
+                  className="w-full sm:flex-1 bg-black/40 sm:bg-transparent border border-white/10 sm:border-none rounded-2xl sm:rounded-full text-white placeholder-gray-500 px-6 py-4 focus:ring-0 focus:outline-none text-base disabled:opacity-50"
+                />
+                <GlassButton 
+                  type="submit" 
+                  size="lg" 
+                  disabled={status === 'loading' || status === 'success'}
+                  className="hover:border-cyan-500/50 w-full sm:w-auto relative"
+                >
+                  {status === 'loading' ? (
+                    <span className="flex items-center gap-2">
+                       <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                       Bekleniyor...
+                    </span>
+                  ) : status === 'success' ? (
+                    <span className="text-green-400 flex items-center gap-2">
+                       Abonelik Başarılı!
+                    </span>
+                  ) : (
+                    t("footer.newsletter_button")
+                  )}
+                </GlassButton>
+              </div>
+              {status === 'error' && (
+                <p className="text-red-400 text-sm ml-4 mt-1">{errorMessage}</p>
+              )}
+            </form>
           </div>
         </div>
 

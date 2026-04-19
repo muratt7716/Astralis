@@ -1,6 +1,6 @@
-import React from "react";
-import { SectionLabel } from "./ProfileUI";
-import { MessageSquare, Eye, Sparkles, ChevronRight, Calendar } from "lucide-react";
+import React, { useState } from "react";
+import { ChevronRight, Calendar, ChevronLeft, Clock } from "lucide-react";
+import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { useTranslation } from "@/lib/i18n";
 
 interface ActivityFeedProps {
@@ -8,56 +8,164 @@ interface ActivityFeedProps {
   onSelectActivity: (activity: any) => void;
 }
 
+const ITEMS_PER_PAGE = 5;
+
+const ACTION_META: Record<string, { label: string; iconName: string; accent: string; bg: string }> = {
+  sphere: {
+    label: "Kristal Küre Analizi",
+    iconName: "kristal",
+    accent: "text-indigo-400",
+    bg: "bg-indigo-500/10 border-indigo-500/20",
+  },
+  iching: {
+    label: "I-Ching Bilgeliği",
+    iconName: "iching",
+    accent: "text-amber-400",
+    bg: "bg-amber-500/10 border-amber-500/20",
+  },
+  runler: {
+    label: "Rünlerin Fısıltısı",
+    iconName: "runler",
+    accent: "text-emerald-400",
+    bg: "bg-emerald-500/10 border-emerald-500/20",
+  },
+  numerology: {
+    label: "Numeroloji Raporu",
+    iconName: "numerology",
+    accent: "text-cyan-400",
+    bg: "bg-cyan-500/10 border-cyan-500/20",
+  },
+  astrology: {
+    label: "Doğum Haritası Analizi",
+    iconName: "birthchart",
+    accent: "text-violet-400",
+    bg: "bg-violet-500/10 border-violet-500/20",
+  },
+  dream: {
+    label: "Rüya Analizi",
+    iconName: "dream",
+    accent: "text-blue-400",
+    bg: "bg-blue-500/10 border-blue-500/20",
+  },
+  bio: {
+    label: "Biyoritim Hesaplama",
+    iconName: "biorhythm",
+    accent: "text-rose-400",
+    bg: "bg-rose-500/10 border-rose-500/20",
+  },
+};
+
+const DEFAULT_META = {
+  label: "Kozmik Analiz",
+  iconName: "stars",
+  accent: "text-purple-400",
+  bg: "bg-purple-500/10 border-purple-500/20",
+};
+
 export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps) {
   const { t } = useTranslation();
+  const [page, setPage] = useState(0);
+
+  const totalPages = Math.max(1, Math.ceil(activities.length / ITEMS_PER_PAGE));
+  const pagedActivities = activities.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
   return (
-    <div className="rounded-[2.5rem] border border-white/[0.08] bg-white/[0.03] p-10 relative group/activity">
-      <SectionLabel>{t("profile.recent_activity")}</SectionLabel>
+    <div className="space-y-4">
+      {/* Section Header */}
+      <div className="flex items-center gap-3 px-1">
+        <Clock className="w-4 h-4 text-purple-400/60" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/25">{t("profile.recent_activity")}</span>
+        <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+      </div>
 
-      <div className="space-y-4 mt-8">
-        {activities.length > 0 ? (
-          activities.map((act) => (
-            <button
-              key={act.id}
-              onClick={() => onSelectActivity(act)}
-              className="w-full flex items-center gap-6 p-5 rounded-3xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.06] hover:border-white/10 transition-all group/item text-left relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-3xl rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity" />
-              
-              <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover/item:scale-110 transition-transform duration-500">
-                {act.action_type === 'sphere' ? <Eye className="w-5 h-5 text-indigo-400" /> :
-                 act.action_type === 'iching' ? <Sparkles className="w-5 h-5 text-amber-400" /> :
-                 act.action_type === 'runler' ? <MessageSquare className="w-5 h-5 text-emerald-400" /> :
-                 <Sparkles className="w-5 h-5 text-purple-400" />}
-              </div>
+      {/* Activity List */}
+      <div className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent overflow-hidden">
+        {pagedActivities.length > 0 ? (
+          <div className="divide-y divide-white/[0.04]">
+            {pagedActivities.map((act) => {
+              const meta = ACTION_META[act.action_type] || DEFAULT_META;
+              return (
+                <button
+                  key={act.id}
+                  onClick={() => onSelectActivity(act)}
+                  className="w-full flex items-center gap-4 p-4 md:p-5 hover:bg-white/[0.04] transition-all duration-300 group/item text-left relative"
+                >
+                  {/* Hover glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/[0.02] to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <h4 className="text-[13px] font-bold text-white tracking-wide truncate">
-                    {act.action_type === 'sphere' ? 'Kristal Küre Analizi' :
-                     act.action_type === 'iching' ? 'I-Ching Bilgeliği' :
-                     act.action_type === 'runler' ? 'Rünlerin Fısıltısı' :
-                     'Mistik Etkileşim'}
-                  </h4>
-                  <span className="shrink-0 text-[10px] text-white/20 font-mono tracking-widest uppercase">
-                    {new Date(act.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
-                <p className="text-[11px] text-white/40 truncate italic font-light">
-                  {act.metadata?.question || act.description || "Detayları görüntülemek için tıklayın."}
-                </p>
-              </div>
+                  {/* Custom SVG icon */}
+                  <div className="relative z-10 shrink-0 group-hover/item:scale-110 transition-transform duration-300">
+                    <CosmicIcon name={meta.iconName as any} size={36} />
+                  </div>
 
-              <ChevronRight className="w-4 h-4 text-white/10 group-hover/item:text-white/30 transition-all group-hover/item:translate-x-1" />
-            </button>
-          ))
+                  {/* Content */}
+                  <div className="relative z-10 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h4 className="text-[13px] font-semibold text-white/90 tracking-wide truncate group-hover/item:text-white transition-colors">
+                        {meta.label}
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-white/30 truncate font-light">
+                      {act.metadata?.question || act.description || t("profile.activity_click_detail")}
+                    </p>
+                  </div>
+
+                  {/* Date + arrow */}
+                  <div className="relative z-10 flex items-center gap-3 shrink-0">
+                    <span className="hidden md:block text-[10px] text-white/15 font-mono tracking-wider">
+                      {new Date(act.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-white/10 group-hover/item:text-white/40 group-hover/item:translate-x-0.5 transition-all duration-300" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 px-6 text-center rounded-[2rem] bg-white/[0.01] border border-dashed border-white/10">
-            <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-6">
-              <Calendar className="w-6 h-6 text-white/10" />
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5">
+              <Calendar className="w-5 h-5 text-white/10" />
             </div>
-            <p className="text-white/20 text-sm font-light leading-relaxed max-w-xs transition-opacity">{t("profile.no_activity")}</p>
+            <p className="text-white/20 text-sm font-light leading-relaxed max-w-xs">{t("profile.no_activity")}</p>
+          </div>
+        )}
+
+        {/* Pagination footer */}
+        {activities.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.04] bg-white/[0.01]">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white/30 hover:text-white hover:bg-white/[0.06] transition-all disabled:opacity-15 disabled:pointer-events-none"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Önceki</span>
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i)}
+                  className={`w-7 h-7 rounded-lg text-[11px] font-bold transition-all duration-200 ${
+                    i === page
+                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                      : "text-white/20 hover:text-white/50 hover:bg-white/[0.04]"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white/30 hover:text-white hover:bg-white/[0.06] transition-all disabled:opacity-15 disabled:pointer-events-none"
+            >
+              <span className="hidden md:inline">Sonraki</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
       </div>
@@ -65,122 +173,115 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
   );
 }
 
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { motion } from "framer-motion";
+import { X, MessageSquare, Sparkles, Eye } from "lucide-react";
 
 export function ActivityDetailModal({ activity, onClose }: { activity: any; onClose: () => void }) {
   if (!activity) return null;
+  const meta = ACTION_META[activity.action_type] || DEFAULT_META;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
         className="absolute inset-0 bg-[#050508]/90 backdrop-blur-xl"
       />
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-2xl bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-2xl overflow-hidden isolate"
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/10 rounded-[2rem] p-7 md:p-9 shadow-2xl overflow-hidden isolate"
       >
-        {/* Background Glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
-        
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <SectionLabel>
-              {activity.action_type === 'sphere' ? 'Kristal Küre Analizi' :
-               activity.action_type === 'iching' ? 'I-Ching Bilgeliği' :
-               activity.action_type === 'runler' ? 'Rünlerin Fısıltısı' :
-               'Aktivite Detayı'}
-            </SectionLabel>
-            <p className="text-[10px] text-white/30 font-mono mt-2 uppercase tracking-widest">
-              {new Date(activity.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-            </p>
+        <div className="absolute -top-20 -right-20 w-48 h-48 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-7 relative z-10">
+          <div className="flex items-center gap-4">
+            <CosmicIcon name={meta.iconName as any} size={40} />
+            <div>
+              <h3 className="text-base font-bold text-white tracking-tight">{meta.label}</h3>
+              <p className="text-[10px] text-white/25 font-mono mt-0.5 uppercase tracking-widest">
+                {new Date(activity.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/50 hover:text-white"
+            className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/40 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+        {/* Body */}
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar relative z-10">
           {activity.metadata?.question && (
-            <div className="space-y-3">
-              <p className="text-[10px] text-white/20 uppercase font-black tracking-widest flex items-center gap-2">
-                <MessageSquare className="w-3 h-3" />
-                Soru / Niyet
+            <div className="space-y-2">
+              <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest flex items-center gap-2">
+                <MessageSquare className="w-3 h-3" /> Soru / Niyet
               </p>
-              <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl italic text-white/60 leading-relaxed">
-                "{activity.metadata.question}"
+              <div className="bg-white/[0.02] border border-white/[0.06] p-4 rounded-xl italic text-white/50 text-sm leading-relaxed">
+                &ldquo;{activity.metadata.question}&rdquo;
               </div>
             </div>
           )}
 
           {activity.metadata?.full_result ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {activity.metadata.full_result.cards?.map((c: any, i: number) => (
-                <div key={i} className="space-y-3">
-                  <p className="text-[10px] text-indigo-400/40 uppercase font-black tracking-widest flex items-center gap-2">
+                <div key={i} className="space-y-2">
+                  <p className="text-[9px] text-indigo-400/40 uppercase font-bold tracking-widest flex items-center gap-2">
                     <Eye className="w-3 h-3" />
-                    {c.position ? c.position : (c.name || 'Mistik Sezgi')}
+                    {c.position || c.name || "Mistik Sezgi"}
                   </p>
-                  <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-5 rounded-2xl text-white/80 leading-relaxed italic">
+                  <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-4 rounded-xl text-white/75 text-sm leading-relaxed italic">
                     {c.interpretation}
                   </div>
                 </div>
               ))}
 
-              <div className="space-y-3">
-                <p className="text-[10px] text-purple-400/40 uppercase font-black tracking-widest flex items-center gap-2">
+              <div className="space-y-2">
+                <p className="text-[9px] text-purple-400/40 uppercase font-bold tracking-widest flex items-center gap-2">
                   <Sparkles className="w-3 h-3" />
-                  {activity.action_type === 'sphere' ? 'Genel Bakış' : 'Sentez'}
+                  {activity.action_type === "sphere" ? "Genel Bakış" : "Sentez"}
                 </p>
-                <div className="bg-purple-500/[0.04] border border-purple-500/10 p-6 rounded-[2rem] text-white/90 leading-relaxed text-sm md:text-base font-serif whitespace-pre-wrap">
+                <div className="bg-purple-500/[0.04] border border-purple-500/10 p-5 rounded-2xl text-white/85 text-sm leading-relaxed whitespace-pre-wrap">
                   {activity.metadata.full_result.synthesis || activity.metadata.full_result.content}
                 </div>
               </div>
 
               {activity.metadata.full_result.advice && (
-                <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl flex items-center gap-3">
-                  <Sparkles className="w-4 h-4 text-purple-400/40" />
-                  <p className="text-white/50 text-[11px] italic leading-relaxed">
-                    {activity.metadata.full_result.advice}
-                  </p>
+                <div className="bg-white/[0.02] border border-white/[0.05] p-3.5 rounded-xl flex items-start gap-3">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400/40 mt-0.5" />
+                  <p className="text-white/40 text-[11px] italic leading-relaxed">{activity.metadata.full_result.advice}</p>
                 </div>
               )}
             </div>
-          ) : (
-            activity.metadata?.answer && (
-              <div className="space-y-3">
-                <p className="text-[10px] text-purple-400/40 uppercase font-black tracking-widest flex items-center gap-2">
-                  <Sparkles className="w-3 h-3" />
-                  Mistik Yanıt
-                </p>
-                <div className="bg-purple-500/[0.02] border border-purple-500/10 p-6 rounded-[2rem] text-white/90 leading-relaxed text-sm md:text-base font-serif whitespace-pre-wrap">
-                  {activity.metadata.answer}
-                </div>
+          ) : activity.metadata?.answer ? (
+            <div className="space-y-2">
+              <p className="text-[9px] text-purple-400/40 uppercase font-bold tracking-widest flex items-center gap-2">
+                <Sparkles className="w-3 h-3" /> Mistik Yanıt
+              </p>
+              <div className="bg-purple-500/[0.02] border border-purple-500/10 p-5 rounded-2xl text-white/85 text-sm leading-relaxed whitespace-pre-wrap">
+                {activity.metadata.answer}
               </div>
-            )
-          )}
-
-          {activity.description && !activity.metadata?.answer && !activity.metadata?.full_result && (
-            <div className="space-y-3">
-              <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Açıklama</p>
-              <p className="text-white/60 leading-relaxed">{activity.description}</p>
             </div>
-          )}
+          ) : activity.description ? (
+            <div className="space-y-2">
+              <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest">Açıklama</p>
+              <p className="text-white/50 text-sm leading-relaxed">{activity.description}</p>
+            </div>
+          ) : null}
         </div>
 
-        <div className="mt-10 flex justify-end">
-          <button 
+        {/* Footer */}
+        <div className="mt-8 flex justify-end relative z-10">
+          <button
             onClick={onClose}
-            className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-white/50"
+            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/[0.08] text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-white/40 hover:text-white/70"
           >
             Kapat
           </button>

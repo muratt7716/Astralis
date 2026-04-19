@@ -4,7 +4,7 @@ import React, { useId } from "react";
 interface IconProps {
   name: "horoscope" | "birthchart" | "compatibility" | "planets" |
   "tarot" | "katina" | "lenormand" | "kahve" | "runler" | "iching" | "kristal" | "numerology" | "biorhythm" | "dream" |
-  "stars" | "fire" | "water" | "air" | "earth" | "planet";
+  "stars" | "fire" | "water" | "air" | "earth" | "planet" | "cardinal" | "fixed" | "mutable";
   className?: string;
   size?: number;
 }
@@ -180,23 +180,115 @@ export default function CosmicIcon({ name, className = "", size = 32 }: IconProp
     ),
     fire: (
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50 10C50 10 20 40 20 65C20 85 35 95 50 95C65 95 80 85 80 65C80 40 50 10Z" fill="#F43F5E" fillOpacity="0.4" />
-        <path d="M50 30C50 30 30 50 30 70C30 85 40 90 50 90C60 90 70 85 70 70C70 50 50 30Z" fill="#F43F5E" />
+        <defs>
+          <linearGradient id={getSubId("fireGrad")} x1="50%" y1="100%" x2="50%" y2="0%">
+            <stop offset="0%" stopColor="#F59E0B" />
+            <stop offset="50%" stopColor="#F43F5E" />
+            <stop offset="100%" stopColor="#EF4444" />
+          </linearGradient>
+        </defs>
+        <path d="M50 8C50 8 18 38 18 62C18 84 32 96 50 96C68 96 82 84 82 62C82 38 50 8 50 8Z" fill={`url(#${getSubId("fireGrad")})`} opacity="0.3" />
+        <path d="M50 25C50 25 28 48 28 68C28 82 38 92 50 92C62 92 72 82 72 68C72 48 50 25 50 25Z" fill={`url(#${getSubId("fireGrad")})`} opacity="0.7" />
+        <path d="M50 45C50 45 38 58 38 72C38 82 44 88 50 88C56 88 62 82 62 72C62 58 50 45 50 45Z" fill="#FBBF24" />
+        <circle cx="50" cy="72" r="4" fill="white" opacity="0.6">
+          <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
+        </circle>
       </svg>
     ),
     water: (
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10 50Q30 30 50 50T90 50M10 70Q30 50 50 70T90 70" stroke="#3B82F6" strokeWidth="6" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={getSubId("waterGrad")} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3B82F6" />
+            <stop offset="100%" stopColor="#6366F1" />
+          </linearGradient>
+        </defs>
+        <path d="M50 10C50 10 20 40 20 62C20 80 33 92 50 92C67 92 80 80 80 62C80 40 50 10 50 10Z" fill={`url(#${getSubId("waterGrad")})`} opacity="0.25" />
+        <path d="M50 22C50 22 28 46 28 64C28 78 38 88 50 88C62 88 72 78 72 64C72 46 50 22 50 22Z" fill={`url(#${getSubId("waterGrad")})`} opacity="0.6" />
+        <path d="M50 38C50 38 36 54 36 66C36 76 42 82 50 82C58 82 64 76 64 66C64 54 50 38 50 38Z" fill="#93C5FD" opacity="0.8" />
+        <ellipse cx="44" cy="62" rx="4" ry="2" fill="white" opacity="0.4" transform="rotate(-20 44 62)" />
       </svg>
     ),
     air: (
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 30H70C80 30 80 45 70 45M30 55H80C90 55 90 70 80 70M10 42H40" stroke="#94A3B8" strokeWidth="5" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={getSubId("airGrad")} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#06B6D4" />
+            <stop offset="100%" stopColor="#94A3B8" />
+          </linearGradient>
+        </defs>
+        <path d="M12 35C12 35 35 18 60 35C75 45 88 30 88 30" stroke={`url(#${getSubId("airGrad")})`} strokeWidth="4" strokeLinecap="round" opacity="0.8" />
+        <path d="M8 52C8 52 28 38 50 52C68 62 85 48 85 48" stroke={`url(#${getSubId("airGrad")})`} strokeWidth="4" strokeLinecap="round" opacity="0.5" />
+        <path d="M15 68C15 68 38 55 58 68C72 77 82 65 82 65" stroke={`url(#${getSubId("airGrad")})`} strokeWidth="4" strokeLinecap="round" opacity="0.3" />
+        <circle cx="72" cy="25" r="3" fill="#06B6D4" opacity="0.6">
+          <animate attributeName="cx" values="72;78;72" dur="3s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="25" cy="45" r="2" fill="#94A3B8" opacity="0.4">
+          <animate attributeName="cx" values="25;18;25" dur="4s" repeatCount="indefinite" />
+        </circle>
       </svg>
     ),
     earth: (
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 85H85M25 65H75M35 45H65M45 25H55" stroke="#10B981" strokeWidth="6" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={getSubId("earthGrad")} x1="50%" y1="100%" x2="50%" y2="0%">
+            <stop offset="0%" stopColor="#10B981" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+        </defs>
+        <path d="M50 15L80 85H20L50 15Z" fill={`url(#${getSubId("earthGrad")})`} opacity="0.2" />
+        <path d="M50 30L72 80H28L50 30Z" fill={`url(#${getSubId("earthGrad")})`} opacity="0.5" />
+        <path d="M50 48L62 75H38L50 48Z" fill="#34D399" opacity="0.8" />
+        <path d="M15 85H85" stroke="#10B981" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+        <circle cx="50" cy="60" r="3" fill="white" opacity="0.5" />
+        <path d="M35 75L42 68M58 75L65 68" stroke="white" strokeWidth="1" opacity="0.2" />
+      </svg>
+    ),
+    cardinal: (
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id={getSubId("cardGrad")} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#A855F7" />
+            <stop offset="100%" stopColor="#EC4899" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="38" stroke={`url(#${getSubId("cardGrad")})`} strokeWidth="1.5" strokeDasharray="4 6" opacity="0.4" />
+        <path d="M50 12L56 44H50L50 12Z" fill="#A855F7" />
+        <path d="M50 88L44 56H50L50 88Z" fill="#A855F7" opacity="0.6" />
+        <path d="M12 50L44 44V50L12 50Z" fill="#EC4899" />
+        <path d="M88 50L56 56V50L88 50Z" fill="#EC4899" opacity="0.6" />
+        <circle cx="50" cy="50" r="6" fill={`url(#${getSubId("cardGrad")})`} />
+        <circle cx="50" cy="50" r="3" fill="white" opacity="0.8" />
+      </svg>
+    ),
+    fixed: (
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id={getSubId("fixGrad")} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6366F1" />
+            <stop offset="100%" stopColor="#8B5CF6" />
+          </linearGradient>
+        </defs>
+        <path d="M50 15L75 50L50 85L25 50Z" fill={`url(#${getSubId("fixGrad")})`} opacity="0.3" />
+        <path d="M50 15L75 50L50 85L25 50Z" stroke={`url(#${getSubId("fixGrad")})`} strokeWidth="2.5" />
+        <path d="M50 30L65 50L50 70L35 50Z" fill={`url(#${getSubId("fixGrad")})`} opacity="0.6" />
+        <circle cx="50" cy="50" r="5" fill="white" opacity="0.9" />
+        <path d="M50 15V30M50 70V85M25 50H35M65 50H75" stroke="white" strokeWidth="1" opacity="0.3" />
+      </svg>
+    ),
+    mutable: (
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id={getSubId("mutGrad")} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#06B6D4" />
+            <stop offset="100%" stopColor="#8B5CF6" />
+          </linearGradient>
+        </defs>
+        <path d="M15 50C15 35 30 25 45 35C55 42 60 42 70 35C85 25 95 45 75 55C65 60 60 65 65 75C70 90 50 95 45 80C40 70 30 65 20 70C5 78 5 60 15 50Z" fill={`url(#${getSubId("mutGrad")})`} opacity="0.25" />
+        <path d="M15 50C15 35 30 25 45 35C55 42 60 42 70 35C85 25 95 45 75 55C65 60 60 65 65 75C70 90 50 95 45 80C40 70 30 65 20 70C5 78 5 60 15 50Z" stroke={`url(#${getSubId("mutGrad")})`} strokeWidth="2" />
+        <circle cx="45" cy="40" r="3" fill="#06B6D4" opacity="0.8" />
+        <circle cx="65" cy="55" r="3" fill="#8B5CF6" opacity="0.8" />
+        <circle cx="40" cy="70" r="3" fill="#06B6D4" opacity="0.8" />
       </svg>
     ),
     planet: (

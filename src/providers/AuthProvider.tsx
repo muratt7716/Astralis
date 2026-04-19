@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 interface AuthContextType {
@@ -26,8 +26,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Prevent fetchProfile from running concurrently or redundantly
+  const fetchingProfileFor = useRef<string | null>(null);
+
   const setProfileCookie = (value: boolean) => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     if (value) {
       document.cookie = `has-profile=true; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
     } else {
@@ -36,6 +39,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const fetchProfile = async (userId: string) => {
+    // Skip if we're already fetching for this user
+    if (fetchingProfileFor.current === userId) return;
+    fetchingProfileFor.current = userId;
+
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -43,23 +50,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq("id", userId)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching profile in AuthProvider:", error.message);
-      } else if (data) {
+      if (!error && data) {
         setProfile(data);
         setProfileCookie(true);
-        // Sync to cache
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.setItem("last-cosmic-profile", JSON.stringify(data));
         }
       }
     } catch (err) {
-      console.error("Unexpected error fetching profile in AuthProvider:", err);
+      console.error("[AuthProvider] fetchProfile error:", err);
+    } finally {
+      fetchingProfileFor.current = null;
     }
   };
 
   const refreshProfile = async () => {
     if (user?.id) {
+      fetchingProfileFor.current = null; // allow re-fetch
       await fetchProfile(user.id);
     }
   };
@@ -67,18 +74,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateProfile = async (profileData: any) => {
     if (!user) return;
 
-    // 1. OPTIMISTIC UPDATE: Update local state immediately
-    const previousProfile = profile;
+    // Optimistic update
     const newProfile = { ...profile, ...profileData, id: user.id };
     setProfile(newProfile);
-    
-    // Update cache immediately too
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem("last-cosmic-profile", JSON.stringify(newProfile));
     }
 
     try {
-      // 2. BACKGROUND SYNC: Mevcut profili merge ederek güncelle
       const { data: existing } = await supabase
         .from("profiles")
         .select("*")
@@ -97,122 +100,89 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
 
       if (error) throw error;
-      
-      // Update with confirmed data from server
+
       if (data) {
         setProfile(data);
         setProfileCookie(true);
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.setItem("last-cosmic-profile", JSON.stringify(data));
         }
       }
     } catch (err) {
-      console.error("Error updating profile in AuthProvider:", err);
-      // Rollback on failure? 
-      // For UX speed, we might not want to rollback immediately unless it's a critical error,
-      // but let's keep the optimistic state and just log.
-      // setProfile(previousProfile); 
+      console.error("[AuthProvider] updateProfile error:", err);
     }
   };
 
   useEffect(() => {
-    // Initial session check
-    const init = async () => {
-      // 0. SELF-HEALING: If we are at root but have a code, redirect to callback
-      if (typeof window !== 'undefined') {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        if (code && !window.location.pathname.includes('/auth/callback')) {
-          console.log("[AuthProvider] Code detected at root, redirecting to callback...");
-          window.location.href = `/auth/callback${window.location.search}`;
+    // Load cached profile immediately for instant UI
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("last-cosmic-profile");
+      if (cached) {
+        try { setProfile(JSON.parse(cached)); } catch {}
+      }
+    }
+
+    // Safety net: never stay loading > 8 seconds
+    const safetyTimer = setTimeout(() => setLoading(false), 8000);
+
+    // Single source of truth: onAuthStateChange handles everything
+    // getSession() is NOT called separately to avoid double-auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "TOKEN_REFRESHED") {
+          // Token silently refreshed — no state changes needed
+          clearTimeout(safetyTimer);
+          setLoading(false);
           return;
         }
-      }
 
-      // Create a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        setLoading(false);
-      }, 5000);
-
-      try {
-        // Try to load profile from cache FIRST for instant UI
-        if (typeof window !== 'undefined') {
-          const cached = localStorage.getItem("last-cosmic-profile");
-          if (cached) {
-            setProfile(JSON.parse(cached));
-          }
-        }
-
-        const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
+          setUser((prev: any) =>
+            prev?.id === session.user.id ? prev : session.user
+          );
+          // Only fetch profile on meaningful events
+          if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+            await fetchProfile(session.user.id);
+          }
+        } else {
+          setUser(null);
+          setProfile(null);
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("last-cosmic-profile");
+          }
+          setProfileCookie(false);
         }
-      } catch (err) {
-        console.error("Auth init error:", err);
-      } finally {
-        clearTimeout(timeoutId);
+
+        clearTimeout(safetyTimer);
         setLoading(false);
       }
-    };
-
-    init();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`[AuthProvider] Auth event: ${event}`);
-      if (session?.user) {
-        // Preserve same object reference on token refresh to avoid triggering
-        // dependent useEffect hooks in consumer components unnecessarily
-        setUser((prev: any) => (prev?.id === session.user.id ? prev : session.user));
-        // Only re-fetch profile on meaningful auth events, not periodic token refreshes
-        if (event !== 'TOKEN_REFRESHED') {
-          await fetchProfile(session.user.id);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem("last-cosmic-profile");
-        }
-      }
-      setLoading(false);
-    });
+    );
 
     return () => {
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
-    console.log("[AuthProvider] signOut initiated");
     try {
       setUser(null);
       setProfile(null);
-      if (typeof window !== 'undefined') {
+      setProfileCookie(false);
+      if (typeof window !== "undefined") {
         localStorage.removeItem("last-cosmic-profile");
       }
       await supabase.auth.signOut();
     } catch (err) {
       console.error("[AuthProvider] signOut error:", err);
-    } finally {
-      setUser(null);
-      setProfile(null);
-      setProfileCookie(false);
-      setLoading(false);
     }
   };
 
-  const value = {
-    user,
-    profile,
-    loading,
-    signOut,
-    updateProfile,
-    refreshProfile
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, profile, loading, signOut, updateProfile, refreshProfile }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuthContext = () => {

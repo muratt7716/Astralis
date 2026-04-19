@@ -14,8 +14,9 @@ export async function GET(request: Request) {
     .select("*")
     .eq("user_id", userId)
     .not("action_type", "in", '("profile_visit","guide_gallery_visit","zodiac_list","horoscope_view","compatibility_view","birth_chart_view")')
+    .not("description", "ilike", '%Visited:%')
     .order("created_at", { ascending: false })
-    .limit(8);
+    .limit(15);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

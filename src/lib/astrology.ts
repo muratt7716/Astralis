@@ -4,6 +4,7 @@ export interface BirthChart {
   sunSign: { id: string; name: string; description: string; degree: number };
   moonSign: { id: string; name: string; description: string; degree: number };
   risingSign: { id: string; name: string; description: string; degree: number };
+  mc: { degree: number; sign: string; signId: string };
   planetPositions: PlanetPosition[];
   houses: HousePosition[];
   aspects: Aspect[];
@@ -431,23 +432,129 @@ const houseDescriptions = [
   "Bilinçaltı, spiritüellik, yalnızlık",
 ];
 
+function eclipticRA(lambda: number, obliquity: number): number {
+  const lambdaRad = toRad(lambda);
+  const epsRad = toRad(obliquity);
+  return safeMod(toDeg(Math.atan2(Math.sin(lambdaRad) * Math.cos(epsRad), Math.cos(lambdaRad))), 360);
+}
+
+function eclipticDec(lambda: number, obliquity: number): number {
+  const lambdaRad = toRad(lambda);
+  const epsRad = toRad(obliquity);
+  return toDeg(Math.asin(Math.sin(epsRad) * Math.sin(lambdaRad)));
+}
+
+function diurnalSemiArc(lambda: number, obliquity: number, latitude: number): number {
+  const decRad = toRad(eclipticDec(lambda, obliquity));
+  const latRad = toRad(latitude);
+  const cosH = -Math.tan(latRad) * Math.tan(decRad);
+  if (cosH >= 1) return 0;
+  if (cosH <= -1) return 180;
+  return toDeg(Math.acos(cosH));
+}
+
+function findLambdaForRA(targetRA: number, obliquity: number, initialGuess: number): number {
+  let lambda = initialGuess;
+  for (let i = 0; i < 40; i++) {
+    const ra = eclipticRA(lambda, obliquity);
+    let diff = targetRA - ra;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    lambda = safeMod(lambda + diff, 360);
+    if (Math.abs(diff) < 0.0001) break;
+  }
+  return lambda;
+}
+
+function placidusIntermediate(
+  ramc: number, obliquity: number, latitude: number,
+  houseType: "h11" | "h12" | "h2" | "h3",
+  mcLong: number, ascLong: number
+): number {
+  const guesses: Record<string, number> = {
+    h11: safeMod(mcLong + 30, 360),
+    h12: safeMod(mcLong + 60, 360),
+    h2: safeMod(ascLong + 30, 360),
+    h3: safeMod(ascLong + 60, 360),
+  };
+
+  let lambda = guesses[houseType];
+
+  for (let iter = 0; iter < 40; iter++) {
+    const dsa = diurnalSemiArc(lambda, obliquity, latitude);
+    const nsa = 180 - dsa;
+
+    let targetRA: number;
+    switch (houseType) {
+      case "h11": targetRA = safeMod(ramc + dsa / 3, 360); break;
+      case "h12": targetRA = safeMod(ramc + (2 * dsa) / 3, 360); break;
+      case "h2":  targetRA = safeMod(ramc + dsa + nsa / 3, 360); break;
+      case "h3":  targetRA = safeMod(ramc + dsa + (2 * nsa) / 3, 360); break;
+      default: targetRA = ramc;
+    }
+
+    const newLambda = findLambdaForRA(targetRA, obliquity, lambda);
+    let change = Math.abs(newLambda - lambda);
+    if (change > 180) change = 360 - change;
+    lambda = newLambda;
+    if (change < 0.0001) break;
+  }
+
+  return lambda;
+}
+
+function calculateMCFromRAMC(ramc: number, obliquity: number): number {
+  const ramcRad = toRad(ramc);
+  const epsRad = toRad(obliquity);
+  return safeMod(toDeg(Math.atan2(Math.sin(ramcRad), Math.cos(ramcRad) * Math.cos(epsRad))), 360);
+}
+
 /**
- * Calculate houses using Placidus-like equal house system
+ * Calculate houses using the Placidus house system.
+ * Returns 12 house cusps. Also returns MC longitude.
  */
-function calculateHouses(ascendant: number): HousePosition[] {
-  const houses: HousePosition[] = [];
-  for (let i = 0; i < 12; i++) {
-    const cusp = safeMod(ascendant + i * 30, 360);
+function calculateHouses(
+  ascendant: number,
+  jd: number,
+  latitude: number,
+  longitude: number
+): { houses: HousePosition[]; mcLongitude: number } {
+  const obliquity = calculateObliquity(jd);
+  const ramc = calculateLST(jd, longitude); // RAMC = LST
+  const mcLong = calculateMCFromRAMC(ramc, obliquity);
+  const icLong = safeMod(mcLong + 180, 360);
+  const dscLong = safeMod(ascendant + 180, 360);
+
+  // Intermediate house cusps via Placidus
+  const h11 = placidusIntermediate(ramc, obliquity, latitude, "h11", mcLong, ascendant);
+  const h12 = placidusIntermediate(ramc, obliquity, latitude, "h12", mcLong, ascendant);
+  const h2  = placidusIntermediate(ramc, obliquity, latitude, "h2",  mcLong, ascendant);
+  const h3  = placidusIntermediate(ramc, obliquity, latitude, "h3",  mcLong, ascendant);
+
+  // Opposite cusps (mirrored)
+  const h5 = safeMod(h11 + 180, 360);
+  const h6 = safeMod(h12 + 180, 360);
+  const h8 = safeMod(h2  + 180, 360);
+  const h9 = safeMod(h3  + 180, 360);
+
+  const cusps = [
+    ascendant, h2, h3, icLong,
+    h5, h6, dscLong, h8,
+    h9, mcLong, h11, h12,
+  ];
+
+  const houses: HousePosition[] = cusps.map((cusp, i) => {
     const sign = longitudeToSign(cusp);
-    houses.push({
+    return {
       house: i + 1,
       sign: sign.name,
       signId: sign.id,
       degree: sign.degree,
       meaning: houseDescriptions[i],
-    });
-  }
-  return houses;
+    };
+  });
+
+  return { houses, mcLongitude: mcLong };
 }
 
 /**
@@ -549,8 +656,8 @@ export function calculateBirthChart(
     };
   });
 
-  // Houses
-  const houses = calculateHouses(ascendant);
+  // Houses (Placidus)
+  const { houses, mcLongitude } = calculateHouses(ascendant, jd, latitude, longitude);
 
   // Aspects
   const aspects = calculateAspects(allPositions, jd);
@@ -562,6 +669,8 @@ export function calculateBirthChart(
   const dominantPlanet  = calculateDominantPlanet(planetPositions, aspects, houses, risingData.id);
   const stelliums       = detectStelliums(planetPositions);
   const retrogradeCount = planetPositions.filter((p) => p.retrograde).length;
+
+  const mcData = longitudeToSign(mcLongitude);
 
   return {
     sunSign: sunSignResult,
@@ -577,6 +686,7 @@ export function calculateBirthChart(
       description: "",
       degree: risingData.degree,
     },
+    mc: { degree: mcData.degree, sign: mcData.name, signId: mcData.id },
     planetPositions,
     houses,
     aspects,

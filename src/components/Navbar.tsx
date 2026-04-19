@@ -80,16 +80,8 @@ export default function Navbar() {
 
   // Handle automatic interaction logging and Navbar visibility logic
   useEffect(() => {
-    // 1. Interaction Logging
-    if (user && pathname) {
-      const actionType = getActionByPath(pathname);
-      // Skip auto-logging for tools that have dedicated, results-based logging
-      const isToolPath = pathname.includes('/fallar/') || pathname.includes('/ruya-analizi');
-      
-      if (actionType && !isToolPath) {
-        logInteraction(user.id, actionType, `Visited: ${pathname}`);
-      }
-    }
+    // Automatic visit logging disabled — tools log their own results
+    // when the user actually performs an action (e.g. birth chart calculation).
 
     // 2. Navbar Visibility (Check for hide-nav class on root)
     const observer = new MutationObserver(() => {

@@ -37,11 +37,11 @@ export default function ChatPage() {
   const [warmthLevel, setWarmthLevel] = useState("stranger");
   const [distinctDays, setDistinctDays] = useState(0);
   const [premiumBlocked, setPremiumBlocked] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auth + history yükleme — loading tamamlanana kadar bekle
+  // Auth + history yükleme
   const userId = user?.id;
   useEffect(() => {
     if (authLoading) return;
@@ -50,40 +50,43 @@ export default function ChatPage() {
       return;
     }
 
+    let cancelled = false;
+
     (async () => {
       setLoadingHistory(true);
       try {
-        const { data: conv } = await supabase
-          .from("conversations")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("guide_id", guideId)
-          .order("last_message_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || "";
 
-        if (conv) {
-          setConversationId(conv.id);
-          const { data: msgs } = await supabase
-            .from("messages")
-            .select("id, role, content, created_at")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: true })
-            .limit(50);
+        const res = await fetch(`/api/mistik-rehber/history?guideId=${guideId}`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
 
-          setMessages((msgs || []).map(m => ({
-            id: m.id,
-            role: m.role as "user" | "assistant",
-            content: m.content,
-            createdAt: m.created_at,
-          })));
+        if (cancelled) return;
+
+        if (!res.ok) {
+          console.error("[ChatPage] History API error:", res.status);
+          setLoadingHistory(false);
+          return;
+        }
+
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.conversationId) setConversationId(data.conversationId);
+        if (data.warmthLevel) setWarmthLevel(data.warmthLevel);
+        if (data.distinctDays !== undefined) setDistinctDays(data.distinctDays);
+        if (data.messages?.length > 0) {
+          setMessages(data.messages);
         }
       } catch (err) {
         console.error("[ChatPage] History load error:", err);
       } finally {
-        setLoadingHistory(false);
+        if (!cancelled) setLoadingHistory(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [authLoading, userId, guideId, router]);
 
   useEffect(() => {
@@ -153,8 +156,8 @@ export default function ChatPage() {
     }
   };
 
-  // Auth yüklenirken — tam ekran loading
-  if (authLoading || (loadingHistory && messages.length === 0)) {
+  // Only block on auth loading — history loads in background
+  if (authLoading) {
     return (
       <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center gap-6">
         <div

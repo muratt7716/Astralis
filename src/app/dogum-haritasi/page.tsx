@@ -18,7 +18,7 @@ import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { useEffect } from "react";
 import { getCurrentProfile, useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
-import { 
+import {
   Sparkles,
   Calendar,
   Clock,
@@ -62,7 +62,7 @@ const useIsClient = () => {
 export default function DogumHaritasiPage() {
   const isClient = useIsClient();
   const { t, language } = useTranslation();
-  
+
   const [showFinder, setShowFinder] = useState(false);
   const [fDay, setFDay] = useState("");
   const [fMonth, setFMonth] = useState("");
@@ -86,10 +86,54 @@ export default function DogumHaritasiPage() {
   const [transitLoading, setTransitLoading] = useState(false);
   const [aspectFilter, setAspectFilter] = useState<AspectFilter>("all");
   const [chartInterpretation, setChartInterpretation] = useState<any>(null);
-  const [interpretLoading, setInterpretLoading] = useState(false);
   const [interpretError, setInterpretError] = useState("");
+  const [aspectInterpretations, setAspectInterpretations] = useState<Record<string, string> | null>(null);
+  const [aspectInterpretLoading, setAspectInterpretLoading] = useState(false);
+  const [houseInterpretations, setHouseInterpretations] = useState<Record<string, string> | null>(null);
+  const [houseInterpretLoading, setHouseInterpretLoading] = useState(false);
+  const [planetInterpretations, setPlanetInterpretations] = useState<Record<string, string> | null>(null);
 
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+
+  // Auto-fill form from profile data when logged in
+  useEffect(() => {
+    if (!profile) return;
+    // Only fill if form is empty (don't overwrite user edits)
+    if (day || month || year) return;
+
+    if (profile.birth_date) {
+      try {
+        const d = new Date(profile.birth_date);
+        setDay(d.getDate().toString());
+        setMonth((d.getMonth() + 1).toString());
+        setYear(d.getFullYear().toString());
+      } catch {}
+    }
+
+    if (profile.birth_time) {
+      try {
+        const [h, m] = profile.birth_time.split(":");
+        setHour(parseInt(h, 10).toString());
+        setMinute(parseInt(m, 10).toString());
+      } catch {}
+    }
+
+    if (profile.birth_country) {
+      setCountry(profile.birth_country);
+    }
+
+    if (profile.birth_city) {
+      // Check if it's a known Turkish city
+      const found = turkishCities.find(c => c.name === profile.birth_city);
+      if (found) {
+        setCity(profile.birth_city);
+      } else {
+        setManualCity(profile.birth_city);
+      }
+    }
+  }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tab-switching auto-load removed; interpretations are prefetched on calculate.
 
   const isTurkey = country === "TR";
   const selectedCountry = useMemo(() => countries.find(c => c.code === country), [country]);
@@ -109,6 +153,11 @@ export default function DogumHaritasiPage() {
     if (!isTurkey && !manualCity) { setError(t("error.city")); return; }
 
     setLoading(true); setError(""); setResult(null);
+    setAspectInterpretations(null);
+    setHouseInterpretations(null);
+    setPlanetInterpretations(null);
+    setChartInterpretation(null);
+    setInterpretError("");
     try {
       const cityData = isTurkey ? turkishCities.find(c => c.name === city) : null;
       const response = await fetch("/api/calculate", {
@@ -124,12 +173,45 @@ export default function DogumHaritasiPage() {
       });
       const data = await response.json();
       if (data.success) {
-        setResult(data.data);
+        const chartData = data.data;
+        const lang = language;
+
+        // Helper: fetch with 60s timeout
+        const fetchWithTimeout = (url: string, body: object) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 60000);
+          return fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          })
+            .then(r => r.json())
+            .catch(() => ({ success: false }))
+            .finally(() => clearTimeout(timer));
+        };
+
+        // Wait for all AI interpretations before showing results (hard 55s ceiling)
+        const hardTimeout = new Promise<void>(resolve => setTimeout(resolve, 55000));
+        await Promise.race([
+          Promise.all([
+            fetchWithTimeout("/api/birth-chart/aspects-interpret", { chart: chartData, language: lang })
+              .then(d => { if (d.success) setAspectInterpretations(d.data); }),
+            fetchWithTimeout("/api/birth-chart/houses-interpret", { chart: chartData, language: lang })
+              .then(d => { if (d.success) setHouseInterpretations(d.data); }),
+            fetchWithTimeout("/api/birth-chart/interpret", { chart: chartData, language: lang })
+              .then(d => { if (d.success) setChartInterpretation(d.data); }),
+            fetchWithTimeout("/api/birth-chart/planets-interpret", { chart: chartData, language: lang })
+              .then(d => { if (d.success) setPlanetInterpretations(d.data); }),
+          ]),
+          hardTimeout,
+        ]);
+
+        setResult(chartData);
         setActiveTab("overview");
-        setChartInterpretation(null);
-        setInterpretError("");
+
         if (user?.id) {
-          syncBirthChart(data.data, user.id);
+          syncBirthChart(chartData, user.id);
         }
 
         // Log Interaction
@@ -159,29 +241,6 @@ export default function DogumHaritasiPage() {
     }
   }, []);
 
-  const handleInterpret = async () => {
-    if (!result) return;
-    setInterpretLoading(true);
-    setInterpretError("");
-    try {
-      const response = await fetch("/api/birth-chart/interpret", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chart: result, language }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setChartInterpretation(data.data);
-      } else {
-        setInterpretError(data.error || "Yorum oluşturulamadı.");
-      }
-    } catch {
-      setInterpretError("Bağlantı hatası.");
-    } finally {
-      setInterpretLoading(false);
-    }
-  };
-
   const findSunSign = () => {
     if (!fDay || !fMonth) return;
     const { getZodiacByDate } = require("@/data/zodiac");
@@ -191,8 +250,8 @@ export default function DogumHaritasiPage() {
 
   const harmonyColor = (h: string) =>
     h === "positive" ? "text-green-400 bg-green-500/10 border-green-500/20" :
-    h === "negative" ? "text-red-400 bg-red-500/10 border-red-500/20" :
-    "text-blue-400 bg-blue-500/10 border-blue-500/20";
+      h === "negative" ? "text-red-400 bg-red-500/10 border-red-500/20" :
+        "text-blue-400 bg-blue-500/10 border-blue-500/20";
 
   return (
     <div className="cosmic-gradient min-h-screen">
@@ -214,7 +273,7 @@ export default function DogumHaritasiPage() {
         <div className="max-w-3xl mx-auto">
           {/* Quick Finder Toggle */}
           <div className="mb-6 text-center">
-            <button 
+            <button
               onClick={() => setShowFinder(!showFinder)}
               className="text-xs font-black uppercase tracking-[0.2em] text-purple-400 hover:text-purple-300 transition-all duration-300 flex items-center gap-2 mx-auto bg-purple-500/5 px-4 py-2 rounded-full border border-purple-500/10 group"
             >
@@ -248,7 +307,7 @@ export default function DogumHaritasiPage() {
                     ]}
                   />
                 </div>
-                <button 
+                <button
                   onClick={findSunSign}
                   className="bg-purple-600 hover:bg-purple-500 text-white px-8 h-[50px] rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/40 whitespace-nowrap active:scale-95"
                 >
@@ -265,7 +324,7 @@ export default function DogumHaritasiPage() {
                     <p className="text-white font-bold">{t(`zodiac.${fResult.id}`)}</p>
                     <p className="text-gray-500 text-[10px] uppercase tracking-widest">{fResult.dateRange}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       setDay(fDay);
                       setMonth(fMonth);
@@ -409,9 +468,9 @@ export default function DogumHaritasiPage() {
 
             {error && <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
 
-            <GlassButton 
-              fullWidth 
-              onClick={handleCalculate} 
+            <GlassButton
+              fullWidth
+              onClick={handleCalculate}
               disabled={loading}
             >
               {loading ? t("chart.calculating") : t("chart.calculate")}
@@ -420,7 +479,70 @@ export default function DogumHaritasiPage() {
 
           {loading && (
             <div className="mt-12 fade-in">
-              <CosmicLoader label={t("chart.calculating")} />
+              <div className="flex flex-col items-center gap-6 py-8">
+                {/* Animated wheel rings */}
+                <div className="relative w-32 h-32">
+                  {/* Outer ring */}
+                  <svg className="absolute inset-0 w-full h-full animate-spin" style={{ animationDuration: "8s" }} viewBox="0 0 128 128">
+                    <circle cx="64" cy="64" r="60" fill="none" stroke="rgba(139,92,246,0.15)" strokeWidth="2" />
+                    <circle cx="64" cy="64" r="60" fill="none" stroke="url(#loadGrad1)" strokeWidth="2"
+                      strokeDasharray="80 300" strokeLinecap="round" />
+                    <defs>
+                      <linearGradient id="loadGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#7c3aed" />
+                        <stop offset="100%" stopColor="#ec4899" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Middle ring */}
+                  <svg className="absolute inset-0 w-full h-full animate-spin" style={{ animationDuration: "5s", animationDirection: "reverse" }} viewBox="0 0 128 128">
+                    <circle cx="64" cy="64" r="44" fill="none" stroke="rgba(236,72,153,0.15)" strokeWidth="2" />
+                    <circle cx="64" cy="64" r="44" fill="none" stroke="url(#loadGrad2)" strokeWidth="2"
+                      strokeDasharray="50 226" strokeLinecap="round" />
+                    <defs>
+                      <linearGradient id="loadGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#ec4899" />
+                        <stop offset="100%" stopColor="#38bdf8" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Inner ring */}
+                  <svg className="absolute inset-0 w-full h-full animate-spin" style={{ animationDuration: "3s" }} viewBox="0 0 128 128">
+                    <circle cx="64" cy="64" r="28" fill="none" stroke="rgba(56,189,248,0.15)" strokeWidth="2" />
+                    <circle cx="64" cy="64" r="28" fill="none" stroke="url(#loadGrad3)" strokeWidth="2"
+                      strokeDasharray="30 145" strokeLinecap="round" />
+                    <defs>
+                      <linearGradient id="loadGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#38bdf8" />
+                        <stop offset="100%" stopColor="#7c3aed" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Center star */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-500/30 flex items-center justify-center">
+                      <Sparkles className="size-4 text-purple-400 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Steps */}
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-white font-medium text-sm">{t("chart.calculating")}</p>
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    {[
+                      t("chart.loading.step1"),
+                      t("chart.loading.step2"),
+                      t("chart.loading.step3"),
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500/60 animate-pulse" style={{ animationDelay: `${i * 0.4}s` }} />
+                        {step}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -458,17 +580,17 @@ export default function DogumHaritasiPage() {
                     <div className="flex flex-col items-center text-center">
                       <div className={`w-16 h-16 rounded-full bg-${item.color}-500/5 border border-${item.color}-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-500 overflow-hidden relative shadow-lg`}>
                         {planetData?.imageUrl ? (
-                          <NextImage 
-                            src={planetData.imageUrl} 
-                            alt={item.label} 
-                            fill 
+                          <NextImage
+                            src={planetData.imageUrl}
+                            alt={item.label}
+                            fill
                             sizes="(max-width: 768px) 64px, 64px"
-                            className="object-cover opacity-90 group-hover:scale-110 transition-transform" 
+                            className="object-cover opacity-90 group-hover:scale-110 transition-transform"
                           />
                         ) : (
-                           <div className="w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-600/10 flex items-center justify-center">
-                             {item.type === "ascendant" ? <ChevronUp className="size-8 text-purple-400 animate-bounce" /> : <Sparkles className="size-8 text-white animate-pulse" />}
-                           </div>
+                          <div className="w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-600/10 flex items-center justify-center">
+                            {item.type === "ascendant" ? <ChevronUp className="size-8 text-purple-400 animate-bounce" /> : <Sparkles className="size-8 text-white animate-pulse" />}
+                          </div>
                         )}
                       </div>
                       <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1">{item.label}</p>
@@ -490,11 +612,10 @@ export default function DogumHaritasiPage() {
                 { key: "ai-yorumu", label: "Harita Yorumu", icon: Brain },
               ] as const).map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    activeTab === tab.key
+                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === tab.key
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/5"
-                  }`}>
+                    }`}>
                   <tab.icon className="size-4 mr-2 inline-block" />
                   {tab.label}
                 </button>
@@ -505,6 +626,15 @@ export default function DogumHaritasiPage() {
             {activeTab === "overview" && (
               <div className="space-y-6 fade-in-up">
 
+                {/* Zodiac Wheel Visualization — TOP */}
+                <div className="glass-card p-6 border-white/10">
+                  <h3 className="text-xl font-bold text-white mb-2 text-center text-gradient">{t("chart.wheel")}</h3>
+                  <p className="text-gray-400 text-sm text-center mb-6 max-w-2xl mx-auto">
+                    {t("chart.wheel.desc")}
+                  </p>
+                  <BirthChartWheel chart={result} />
+                </div>
+
                 {/* Element Balance */}
                 <div className="glass-card p-5 rounded-2xl">
                   <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
@@ -513,10 +643,10 @@ export default function DogumHaritasiPage() {
                   </h3>
                   <p className="text-xs text-gray-500 mb-4">{t("chart.element_balance.desc")}</p>
                   {([
-                    { key: "fire" as const,  text: "text-orange-400",  bar: "bg-orange-500",  bgActive: "bg-orange-500/10",  border: "border-orange-500/20" },
+                    { key: "fire" as const, text: "text-orange-400", bar: "bg-orange-500", bgActive: "bg-orange-500/10", border: "border-orange-500/20" },
                     { key: "earth" as const, text: "text-emerald-400", bar: "bg-emerald-500", bgActive: "bg-emerald-500/10", border: "border-emerald-500/20" },
-                    { key: "air" as const,   text: "text-sky-400",     bar: "bg-sky-400",     bgActive: "bg-sky-400/10",     border: "border-sky-400/20" },
-                    { key: "water" as const, text: "text-blue-400",    bar: "bg-blue-500",    bgActive: "bg-blue-500/10",    border: "border-blue-500/20" },
+                    { key: "air" as const, text: "text-sky-400", bar: "bg-sky-400", bgActive: "bg-sky-400/10", border: "border-sky-400/20" },
+                    { key: "water" as const, text: "text-blue-400", bar: "bg-blue-500", bgActive: "bg-blue-500/10", border: "border-blue-500/20" },
                   ]).map((el) => {
                     const pct = result.elementBalance[el.key];
                     const isDominant = result.elementBalance.dominant === el.key;
@@ -563,9 +693,9 @@ export default function DogumHaritasiPage() {
                   </h3>
                   <p className="text-xs text-gray-500 mb-4">{t("chart.modality_balance.desc")}</p>
                   {([
-                    { key: "cardinal" as const, color: "bg-red-500",    text: "text-red-400" },
-                    { key: "fixed" as const,    color: "bg-purple-500", text: "text-purple-400" },
-                    { key: "mutable" as const,  color: "bg-teal-500",   text: "text-teal-400" },
+                    { key: "cardinal" as const, color: "bg-red-500", text: "text-red-400" },
+                    { key: "fixed" as const, color: "bg-purple-500", text: "text-purple-400" },
+                    { key: "mutable" as const, color: "bg-teal-500", text: "text-teal-400" },
                   ]).map((m) => {
                     const pct = result.modalBalance[m.key];
                     const isDominant = result.modalBalance.dominant === m.key;
@@ -676,126 +806,78 @@ export default function DogumHaritasiPage() {
                   </div>
                 )}
 
-                {/* Zodiac Wheel Visualization */}
-                <div className="glass-card p-6 border-white/10">
-                  <h3 className="text-xl font-bold text-white mb-2 text-center text-gradient">{t("chart.wheel")}</h3>
-                  <p className="text-gray-400 text-sm text-center mb-6 max-w-2xl mx-auto">
-                    {t("chart.wheel.desc")}
-                  </p>
-                  <BirthChartWheel chart={result} />
-                </div>
-
-                {/* Planet Summary Table */}
-                <div className="glass-card p-6 overflow-x-auto">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
-                    <div className="p-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                      <Orbit className="size-4 text-orange-400" />
-                    </div>
-                    {t("chart.planets")}
+                {/* Top Aspects */}
+                <div className="glass-card p-5 rounded-2xl">
+                  <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <Link2 size={16} className="text-pink-400" />
+                    En Güçlü Açılar
                   </h3>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-white/10 text-left">
-                        <th className="pb-3 text-gray-500 font-medium">{t("astrology.planet.sun").replace("Güneş", "Gezegen")}</th>
-                        <th className="pb-3 text-gray-500 font-medium">{t("astrology.month.1").replace("Ocak", "Burç")}</th>
-                        <th className="pb-3 text-gray-500 font-medium">°</th>
-                        <th className="pb-3 text-gray-500 font-medium hidden md:table-cell">{t("planet.influence")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {result.planetPositions.map((pos) => {
-                        const planetIdMap: Record<string, string> = {
-                          sun: "gunes",
-                          moon: "ay",
-                          mercury: "merkur",
-                          neptune: "neptun",
-                          pluto: "pluton"
-                        };
-                        const mappedId = planetIdMap[pos.planetId] || pos.planetId.toLowerCase();
-                        const planetData = planets.find(p => p.id === mappedId);
+                  {aspectInterpretLoading ? (
+                    <div className="flex items-center gap-2 text-purple-400 text-xs">
+                      <span className="inline-block w-3 h-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
+                      Açı yorumları hazırlanıyor...
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {result.aspects.filter(a => a.orb <= 4).sort((a, b) => a.orb - b.orb).slice(0, 4).map((aspect, i) => {
+                        const p1d = getPlanetById(PLANET_ID_MAP[aspect.planet1Id] || aspect.planet1Id);
+                        const p2d = getPlanetById(PLANET_ID_MAP[aspect.planet2Id] || aspect.planet2Id);
+                        const aspectKey = `${aspect.planet1Id}_${aspect.planet2Id}_${aspect.typeId}`;
+                        const aiText = aspectInterpretations?.[aspectKey];
+                        const harmCol = aspect.harmony === "positive" ? "text-green-400" : aspect.harmony === "negative" ? "text-red-400" : "text-blue-400";
                         return (
-                          <tr key={pos.planetId} className="border-b border-white/5 group hover:bg-white/5 transition-colors">
-                            <td className="py-4 text-white">
-                              <div className="flex items-center gap-3">
-                                {planetData?.imageUrl ? (
-                                  <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 group-hover:scale-110 transition-transform">
-                                    <NextImage 
-                                      src={planetData.imageUrl} 
-                                      alt={pos.planetId} 
-                                      width={32} 
-                                      height={32} 
-                                      sizes="32px"
-                                      className="object-cover" 
-                                    />
-                                  </div>
-                                ) : (
-                                  <PlanetIcon name={pos.planetId} size={24} className="group-hover:scale-110 transition-transform" />
-                                )}
-                                <span className="font-medium">{t(`astrology.planet.${pos.planetId}`)}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 text-amber-400 font-medium px-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0">
-                                  <ZodiacIcon signId={pos.signId} size={32} className="w-full h-full object-cover" />
-                                </div>
-                                <span>{t(`zodiac.${pos.signId}`)}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 text-gray-400">
-                              {pos.degree}° {pos.retrograde && <span className="text-red-400 font-bold ml-1 text-[10px]">℞</span>}
-                            </td>
-                            <td className="py-4 text-gray-500 hidden md:table-cell text-xs leading-relaxed">{t(`astrology.planet.meaning.${pos.planetId}`)}</td>
-                          </tr>
+                          <div key={i} className="flex items-start gap-3">
+                            <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                              {p1d?.imageUrl && <img src={p1d.imageUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10" />}
+                              <span className={`text-lg ${harmCol}`}>{aspect.typeEmoji}</span>
+                              {p2d?.imageUrl && <img src={p2d.imageUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-xs font-medium">{t(`astrology.planet.${aspect.planet1Id}`)} {aspect.type} {t(`astrology.planet.${aspect.planet2Id}`)} <span className="text-gray-600 font-mono text-[10px]">{aspect.orb}°</span></p>
+                              {aiText && <p className="text-gray-400 text-[11px] leading-relaxed mt-0.5">{aiText}</p>}
+                            </div>
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </div>
+                  )}
                 </div>
 
-                {/* Aspect Summary */}
-                <div className="glass-card p-8 border-l-4 border-amber-500/50">
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                       <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                         <Link2 className="size-4 text-amber-400" />
-                       </div>
-                       {t("chart.aspects")} ({result.aspects.length})
-                    </h3>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">{t("chart.energy_balance")}</div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="relative p-4 rounded-2xl bg-green-500/5 border border-green-500/10 group hover:bg-green-500/10 transition-colors">
-                      <div className="absolute top-2 right-2 text-green-500/20 text-xl font-black">POS</div>
-                      <p className="text-3xl font-black text-green-400 mb-1">{result.aspects.filter(a => a.harmony === "positive").length}</p>
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">{t("chart.harmony.positive")}</p>
-                      <div className="h-1 w-full bg-green-500/20 rounded-full mt-2 overflow-hidden">
-                        <div className="h-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" style={{ width: `${(result.aspects.filter(a => a.harmony === "positive").length / result.aspects.length) * 100}%` }}></div>
-                      </div>
-                    </div>
-                    
-                    <div className="relative p-4 rounded-2xl bg-red-500/5 border border-red-500/10 group hover:bg-red-500/10 transition-colors">
-                      <div className="absolute top-2 right-2 text-red-500/20 text-xl font-black">NEG</div>
-                      <p className="text-3xl font-black text-red-400 mb-1">{result.aspects.filter(a => a.harmony === "negative").length}</p>
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">{t("chart.harmony.negative")}</p>
-                      <div className="h-1 w-full bg-red-500/20 rounded-full mt-2 overflow-hidden">
-                        <div className="h-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]" style={{ width: `${(result.aspects.filter(a => a.harmony === "negative").length / result.aspects.length) * 100}%` }}></div>
-                      </div>
-                    </div>
-                    
-                    <div className="relative p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 group hover:bg-blue-500/10 transition-colors">
-                      <div className="absolute top-2 right-2 text-blue-500/20 text-xl font-black">NEU</div>
-                      <p className="text-3xl font-black text-blue-400 mb-1">{result.aspects.filter(a => a.harmony === "neutral").length}</p>
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-tighter">{t("chart.harmony.neutral")}</p>
-                      <div className="h-1 w-full bg-blue-500/20 rounded-full mt-2 overflow-hidden">
-                        <div className="h-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]" style={{ width: `${(result.aspects.filter(a => a.harmony === "neutral").length / result.aspects.length) * 100}%` }}></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-400 italic leading-relaxed flex items-start gap-3">
-                    <Info className="size-4 text-blue-400 shrink-0 mt-0.5" />
-                    <span>{t("chart.aspects.desc.natal")} Bu açılar, karakterinizdeki farklı güçlerin birbiriyle nasıl yardımlaştığını veya nerede sürtünme yarattığını gösterir.</span>
+                {/* Planet Distribution in Houses */}
+                <div className="glass-card p-5 rounded-2xl">
+                  <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <Home size={16} className="text-indigo-400" />
+                    Hayat Alanlarınızdaki Gezegenler
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {result.houses.slice(0, 10).map((house) => {
+                      const planetsInHouse = result.planetsByHouse[house.house] || [];
+                      return (
+                        <div key={house.house} className={`p-2.5 rounded-xl border ${planetsInHouse.length > 0 ? "border-purple-500/20 bg-purple-500/5" : "border-white/5 bg-white/[0.02]"}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">{house.house}. Ev</span>
+                            <span className="text-[9px] text-amber-400/60">{t(`zodiac.${house.signId}`)}</span>
+                          </div>
+                          <p className="text-[9px] text-gray-600 mb-1.5">{t(`astrology.house.${house.house}`)}</p>
+                          {planetsInHouse.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {planetsInHouse.map(pid => {
+                                const pd = getPlanetById(PLANET_ID_MAP[pid] || pid);
+                                const pp = result.planetPositions.find(p => p.planetId === pid);
+                                return (
+                                  <span key={pid} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300">
+                                    {pd?.imageUrl && <img src={pd.imageUrl} alt="" className="w-3 h-3 rounded-full object-cover" />}
+                                    {pp?.planet}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span className="text-[9px] text-white/15 italic">Boş</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -826,39 +908,39 @@ export default function DogumHaritasiPage() {
                         <div className="flex items-center gap-4">
                           <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500 overflow-hidden relative shadow-2xl">
                             {planetData?.imageUrl ? (
-                              <NextImage 
-                                src={planetData.imageUrl} 
-                                alt={pos.planetId} 
-                                fill 
+                              <NextImage
+                                src={planetData.imageUrl}
+                                alt={pos.planetId}
+                                fill
                                 sizes="56px"
-                                className="object-cover opacity-90 group-hover:scale-110 transition-transform duration-500" 
+                                className="object-cover opacity-90 group-hover:scale-110 transition-transform duration-500"
                               />
                             ) : (
-                                <PlanetIcon name={pos.planetId} size={32} />
+                              <PlanetIcon name={pos.planetId} size={32} />
                             )}
                           </div>
                           <div>
                             <h4 className="text-xl font-bold text-white flex items-center gap-2 flex-wrap">
-                            {t(`astrology.planet.${pos.planetId}`)}
-                            {pos.retrograde && (
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 font-bold">
-                                ℞ {t("chart.planet.retrograde_badge")}
-                              </span>
-                            )}
-                            {(() => {
-                              const houseEntry = Object.entries(result.planetsByHouse).find(([, ps]) => ps.includes(pos.planetId));
-                              return houseEntry ? (
-                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400">
-                                  {t("chart.planet.in_house", { n: houseEntry[0] })}
+                              {t(`astrology.planet.${pos.planetId}`)}
+                              {pos.retrograde && (
+                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 font-bold">
+                                  ℞ {t("chart.planet.retrograde_badge")}
                                 </span>
-                              ) : null;
-                            })()}
+                              )}
+                              {(() => {
+                                const houseEntry = Object.entries(result.planetsByHouse).find(([, ps]) => ps.includes(pos.planetId));
+                                return houseEntry ? (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400">
+                                    {t("chart.planet.in_house", { n: houseEntry[0] })}
+                                  </span>
+                                ) : null;
+                              })()}
                             </h4>
                             <div className="flex items-center gap-2 text-amber-400 font-medium text-sm">
-                                <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10 shrink-0">
-                                  <ZodiacIcon signId={pos.signId} size={24} className="w-full h-full object-cover" />
-                                </div>
-                                {t(`zodiac.${pos.signId}`)} {pos.degree}°
+                              <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10 shrink-0">
+                                <ZodiacIcon signId={pos.signId} size={24} className="w-full h-full object-cover" />
+                              </div>
+                              {t(`zodiac.${pos.signId}`)} {pos.degree}°
                             </div>
                           </div>
                         </div>
@@ -870,23 +952,36 @@ export default function DogumHaritasiPage() {
 
                       {/* Deep Interpretation */}
                       <div className="space-y-4 mt-6 pt-6 border-t border-white/5">
-                        <p className="text-sm text-gray-300 leading-relaxed italic border-l-2 border-amber-500/30 pl-4 py-1">
-                          "{t(`astrology.planet.${pos.planetId}.desc`)}"
-                        </p>
-                        
+                        {planetInterpretations?.[pos.planetId] ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-purple-400 font-bold">
+                              <Sparkles size={10} />
+                              {t("chart.ai_interpretation")}
+
+                            </div>
+                            <p className="text-sm text-gray-200 leading-relaxed">
+                              {planetInterpretations[pos.planetId]}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-300 leading-relaxed italic border-l-2 border-amber-500/30 pl-4 py-1">
+                            "{t(`astrology.planet.${pos.planetId}.desc`)}"
+                          </p>
+                        )}
+
                         <div className="grid grid-cols-2 gap-4">
                           <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/10 hover:bg-green-500/10 transition-colors">
-                             <p className="text-[10px] uppercase font-bold text-green-400 mb-2 tracking-widest flex items-center gap-1">
-                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
-                                 {t("chart.planet.flow_pos")}
-                             </p>
+                            <p className="text-[10px] uppercase font-bold text-green-400 mb-2 tracking-widest flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(74,222,128,0.5)]"></span>
+                              {t("chart.planet.flow_pos")}
+                            </p>
                             <p className="text-xs text-gray-400 leading-tight">{t(`astrology.planet.${pos.planetId}.traits.pos`)}</p>
                           </div>
                           <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition-colors">
-                             <p className="text-[10px] uppercase font-bold text-red-400 mb-2 tracking-widest flex items-center gap-1">
-                                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_rgba(248,113,113,0.5)]"></span>
-                                 {t("chart.planet.flow_neg")}
-                             </p>
+                            <p className="text-[10px] uppercase font-bold text-red-400 mb-2 tracking-widest flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_rgba(248,113,113,0.5)]"></span>
+                              {t("chart.planet.flow_neg")}
+                            </p>
                             <p className="text-xs text-gray-400 leading-tight">{t(`astrology.planet.${pos.planetId}.traits.neg`)}</p>
                           </div>
                         </div>
@@ -911,6 +1006,12 @@ export default function DogumHaritasiPage() {
                     {t("chart.houses.desc")}
                   </p>
                 </div>
+                {houseInterpretLoading && (
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-500/5 border border-blue-500/10 text-blue-400 text-xs mb-2">
+                    <span className="inline-block w-3 h-3 rounded-full border-2 border-blue-400 border-t-transparent animate-spin shrink-0" />
+                    Ev yorumları hazırlanıyor...
+                  </div>
+                )}
                 <div className="grid md:grid-cols-2 gap-3">
                   {result.houses.map((house) => (
                     <div key={house.house} className="glass-card p-4 hover:border-purple-500/30 transition-all duration-300">
@@ -928,12 +1029,20 @@ export default function DogumHaritasiPage() {
                           {t(`zodiac.${house.signId}`)} {house.degree}°
                         </div>
                       </div>
-                      <p className="text-gray-400 text-[11px] leading-relaxed italic opacity-80">
-                        {t(`astrology.house.${house.house}.desc`)}
-                      </p>
-                      <p className="text-amber-300/50 text-[10px] mt-1 leading-relaxed">
-                        {t(`zodiac.${house.signId}`)} — {t(`zodiac.${house.signId}.energy`)}
-                      </p>
+                      {houseInterpretations?.[`house_${house.house}`] ? (
+                        <p className="text-gray-300 text-[12px] leading-relaxed mt-1">
+                          {houseInterpretations[`house_${house.house}`]}
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-gray-400 text-[11px] leading-relaxed italic opacity-80">
+                            {t(`astrology.house.${house.house}.desc`)}
+                          </p>
+                          <p className="text-amber-300/40 text-[10px] mt-1 leading-relaxed">
+                            {t(`zodiac.${house.signId}`)} — {t(`zodiac.${house.signId}.energy`)}
+                          </p>
+                        </>
+                      )}
                       {/* Ruler info and planets in house */}
                       {(() => {
                         const rulership = result.houseRulerships[house.house - 1];
@@ -996,18 +1105,18 @@ export default function DogumHaritasiPage() {
                     {t("chart.aspects.desc.natal")}
                   </p>
                   <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
-                     <li><strong className="text-green-400">{t("chart.aspect.harmonious")}</strong></li>
-                     <li><strong className="text-red-400">{t("chart.aspect.challenging")}</strong></li>
-                     <li><strong className="text-blue-400">{t("chart.aspect.conjunction")}</strong></li>
+                    <li><strong className="text-green-400">{t("chart.aspect.harmonious")}</strong></li>
+                    <li><strong className="text-red-400">{t("chart.aspect.challenging")}</strong></li>
+                    <li><strong className="text-blue-400">{t("chart.aspect.conjunction")}</strong></li>
                   </ul>
                 </div>
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div className="flex gap-2 flex-wrap">
                     {([
-                      { id: "all" as const,      labelKey: "chart.filter.all" },
+                      { id: "all" as const, labelKey: "chart.filter.all" },
                       { id: "positive" as const, labelKey: "chart.filter.harmonious" },
                       { id: "negative" as const, labelKey: "chart.filter.challenging" },
-                      { id: "neutral" as const,  labelKey: "chart.filter.neutral" },
+                      { id: "neutral" as const, labelKey: "chart.filter.neutral" },
                     ] as const).map(f => (
                       <button
                         key={f.id}
@@ -1020,18 +1129,27 @@ export default function DogumHaritasiPage() {
                   </div>
                   <span className="text-xs text-gray-500">{filteredAspects.length}</span>
                 </div>
+                {/* AI loading indicator */}
+                {aspectInterpretLoading && (
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-purple-500/5 border border-purple-500/10 text-purple-400 text-xs mb-2">
+                    <span className="inline-block w-3 h-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin shrink-0" />
+                    Açılar kişiselleştiriliyor...
+                  </div>
+                )}
                 {filteredAspects.length === 0 ? (
-                   <div className="glass-card p-6 text-center text-gray-500">{t("chart.aspect.none")}</div>
+                  <div className="glass-card p-6 text-center text-gray-500">{t("chart.aspect.none")}</div>
                 ) : (
                   filteredAspects.map((aspect, i) => {
                     const p1d = getPlanetById(PLANET_ID_MAP[aspect.planet1Id] || aspect.planet1Id);
                     const p2d = getPlanetById(PLANET_ID_MAP[aspect.planet2Id] || aspect.planet2Id);
                     const harmonyBorderClass =
                       aspect.harmony === "positive" ? "border-green-500/20" :
-                      aspect.harmony === "negative" ? "border-red-500/20" : "border-blue-500/20";
+                        aspect.harmony === "negative" ? "border-red-500/20" : "border-blue-500/20";
                     const harmonyTextClass =
                       aspect.harmony === "positive" ? "text-green-400" :
-                      aspect.harmony === "negative" ? "text-red-400" : "text-blue-400";
+                        aspect.harmony === "negative" ? "text-red-400" : "text-blue-400";
+                    const aspectKey = `${aspect.planet1Id}_${aspect.planet2Id}_${aspect.typeId}`;
+                    const aiText = aspectInterpretations?.[aspectKey];
                     return (
                       <div key={i} className={`glass-card p-4 border ${harmonyBorderClass}`}>
                         <div className="flex items-center gap-3">
@@ -1063,25 +1181,24 @@ export default function DogumHaritasiPage() {
                               {t(`astrology.planet.${aspect.planet1Id}`)} — {t(`astrology.planet.${aspect.planet2Id}`)}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${
-                                aspect.applying
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${aspect.applying
                                   ? "border-green-500/30 bg-green-500/10 text-green-400"
                                   : "border-gray-500/30 bg-gray-500/10 text-gray-400"
-                              }`}>
+                                }`}>
                                 {aspect.applying ? `↗ ${t("chart.aspect.applying")}` : `↘ ${t("chart.aspect.separating")}`}
                               </span>
                             </div>
                           </div>
                         </div>
-                        <div className="mt-3 pl-1 space-y-1.5">
-                          <p className="text-gray-500 text-[11px] leading-relaxed">
-                            {t(`astrology.aspect.${aspect.typeId}.desc`)}
-                          </p>
-                          <p className="text-indigo-300/60 text-[11px] leading-relaxed">
-                            {t(`astrology.planet.${aspect.planet1Id}`)} &nbsp;·&nbsp; {t(`astrology.planet.meaning.${aspect.planet1Id}`)}
-                            &nbsp;&nbsp;×&nbsp;&nbsp;
-                            {t(`astrology.planet.${aspect.planet2Id}`)} &nbsp;·&nbsp; {t(`astrology.planet.meaning.${aspect.planet2Id}`)}
-                          </p>
+                        {/* Interpretation */}
+                        <div className="mt-3 pt-3 border-t border-white/5">
+                          {aiText ? (
+                            <p className="text-gray-300 text-[12px] leading-relaxed">{aiText}</p>
+                          ) : (
+                            <p className="text-gray-600 text-[11px] leading-relaxed italic">
+                              {t(`astrology.aspect.${aspect.typeId}.desc`)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     );
@@ -1094,27 +1211,13 @@ export default function DogumHaritasiPage() {
             {activeTab === "ai-yorumu" && (
               <div className="space-y-6 fade-in-up">
 
-                {!chartInterpretation ? (
-                  <div className="glass-card p-8 rounded-2xl text-center">
-                    <Brain size={48} className="mx-auto mb-4 text-purple-400 opacity-60" />
-                    <h3 className="text-white font-semibold text-lg mb-2">{t("chart.interpretation.personal_title")}</h3>
-                    <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-                      {t("chart.interpretation.personal_desc")}
-                    </p>
-                    {interpretError && <p className="text-red-400 text-sm mb-4">{interpretError}</p>}
-                    <GlassButton onClick={handleInterpret} disabled={interpretLoading} fullWidth>
-                      {interpretLoading ? t("chart.calculating") : (
-                        <><Sparkles className="size-4 mr-2 inline-block" />{t("chart.interpretation.generate_btn")}</>
-                      )}
-                    </GlassButton>
-                  </div>
-                ) : (
+                {chartInterpretation ? (
                   <div className="space-y-4">
                     {([
-                      { key: "general" as const,    titleKey: "chart.interpretation.general_title",    icon: <Star size={16} className="text-yellow-400" /> },
-                      { key: "strengths" as const,  titleKey: "chart.interpretation.strengths_title",  icon: <Zap size={16} className="text-green-400" /> },
+                      { key: "general" as const, titleKey: "chart.interpretation.general_title", icon: <Star size={16} className="text-yellow-400" /> },
+                      { key: "strengths" as const, titleKey: "chart.interpretation.strengths_title", icon: <Zap size={16} className="text-green-400" /> },
                       { key: "challenges" as const, titleKey: "chart.interpretation.challenges_title", icon: <Info size={16} className="text-amber-400" /> },
-                      { key: "advice" as const,     titleKey: "chart.interpretation.advice_title",     icon: <Lightbulb size={16} className="text-blue-400" /> },
+                      { key: "advice" as const, titleKey: "chart.interpretation.advice_title", icon: <Lightbulb size={16} className="text-blue-400" /> },
                     ]).map(section => (
                       <div key={section.key} className="glass-card p-5 rounded-2xl">
                         <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
@@ -1126,12 +1229,11 @@ export default function DogumHaritasiPage() {
                         </p>
                       </div>
                     ))}
-                    <button
-                      onClick={() => { setChartInterpretation(null); setInterpretError(""); }}
-                      className="text-xs text-gray-500 hover:text-gray-400 transition-colors block mx-auto"
-                    >
-                      {t("chart.interpretation.regenerate")}
-                    </button>
+                  </div>
+                ) : (
+                  <div className="glass-card p-8 rounded-2xl text-center text-gray-500">
+                    <Brain size={32} className="mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">{t("chart.interpretation.personal_desc")}</p>
                   </div>
                 )}
 
@@ -1149,7 +1251,7 @@ export default function DogumHaritasiPage() {
                         const npd = getPlanetById(PLANET_ID_MAP[transit.natalPlanetId] || transit.natalPlanetId);
                         const harmonyColor =
                           transit.harmony === "positive" ? "#4ade80" :
-                          transit.harmony === "negative" ? "#f87171" : "#60a5fa";
+                            transit.harmony === "negative" ? "#f87171" : "#60a5fa";
                         return (
                           <div key={idx} className="glass-card p-4">
                             <div className="flex items-center gap-3 mb-2">
@@ -1177,11 +1279,10 @@ export default function DogumHaritasiPage() {
                                   {t(`astrology.aspect.${transit.typeId}`)}
                                 </span>
                                 {transit.applying !== undefined && (
-                                  <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${
-                                    transit.applying
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${transit.applying
                                       ? "border-green-500/30 bg-green-500/10 text-green-400"
                                       : "border-gray-500/30 bg-gray-500/10 text-gray-400"
-                                  }`}>
+                                    }`}>
                                     {transit.applying
                                       ? `↗ ${t("chart.transit.applying")}`
                                       : `↘ ${t("chart.transit.separating")}`}
@@ -1243,7 +1344,7 @@ export default function DogumHaritasiPage() {
                               });
                               const json = await res.json();
                               if (json.success) setTransitInterpretation(json.data);
-                            } catch (e) {}
+                            } catch (e) { }
                             setTransitLoading(false);
                           }}
                           disabled={transitLoading || !result.transits || result.transits.length === 0}

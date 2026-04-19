@@ -36,7 +36,7 @@ export function DailyInsight({ horoscopeData, fetchingHoroscope, dir }: DailyIns
 
         <div className="max-w-2xl">
           <h2 className={cn(
-            "text-3xl md:text-4xl font-serif font-bold tracking-tight leading-tight mb-6 transition-all duration-1000",
+            "text-3xl md:text-4xl font-sans font-bold tracking-tight leading-tight mb-6 transition-all duration-1000",
             fetchingHoroscope ? "opacity-20 blur-md" : "opacity-100"
           )}>
             {horoscopeData?.title || t("profile.daily_preparing")}

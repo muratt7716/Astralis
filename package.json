@@ -26,6 +26,7 @@
     "groq-sdk": "^1.1.2",
     "lucide-react": "^1.8.0",
     "next": "latest",
+    "nodemailer": "^8.0.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "swr": "^2.4.1",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

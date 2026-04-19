@@ -518,6 +518,142 @@ ${houseLines}
   return instructions[language] || instructions.en;
 }
 
+// ─── PER-PLANET INTERPRETATIONS ──────────────────────────────────────────────
+
+export interface PlanetInterpretParams {
+  language: SupportedLanguage;
+  sunSignName: string;
+  moonSignName: string;
+  risingSignName: string;
+  planets: {
+    key: string;       // planetId, e.g. "mars"
+    name: string;      // "Mars"
+    sign: string;      // "Oğlak"
+    house: string;     // "10" or "?"
+    degree: number;
+    retrograde: boolean;
+  }[];
+}
+
+export function getPlanetsInterpretPrompt(params: PlanetInterpretParams): string {
+  const { language, sunSignName, moonSignName, risingSignName, planets } = params;
+
+  const planetLines = planets
+    .map((p) => {
+      const retro = p.retrograde ? " (Retrograde)" : "";
+      return `${p.key}|${p.name} — ${p.sign} ${p.degree.toFixed(1)}°, ${p.house}. Ev${retro}`;
+    })
+    .join("\n");
+
+  const instructions: Record<SupportedLanguage, string> = {
+    tr: `Sen 20 yıllık deneyimli bir natal astrologsun. Aşağıdaki her gezegen için, o gezegenin bulunduğu BURÇ ve EV kombinasyonunu baz alarak kişiselleştirilmiş, somut ve anlaşılır Türkçe yorumlar yaz.
+
+KURALLAR:
+- Her yorum 3-4 cümle — gezegenin o burçta ve evde ne anlama geldiğini, günlük hayata nasıl yansıdığını açıkla
+- Kişiye doğrudan hitap et: "Senin Güneşin...", "Bu konumlama sana..."
+- Statik genel tanımlar değil — Mars Oğlak'ta ile Mars Koç'ta çok farklı yazılmalı
+- Retrograde ise özellikle belirt: içselleştirilmiş, geri dönük, yeniden değerlendirme enerjisi
+- Astroloji bilmeyen biri okuduğunda da anlasın — somut örnekler ver
+- Klişe yok: "bu gezegen sana güç verir" gibi boş cümleler kullanma
+
+Harita sahibinin Büyük Üçlüsü: Güneş ${sunSignName}, Ay ${moonSignName}, Yükselen ${risingSignName}
+
+GEZEGENLER (her satır: anahtar|gezegen bilgisi):
+${planetLines}
+
+SADECE şu JSON formatında döndür:
+{
+  "sun": "3-4 cümle kişiselleştirilmiş yorum",
+  "moon": "...",
+  ...
+}`,
+
+    en: `You are a natal astrologer with 20 years of experience. Write personalized, concrete, and clear English interpretations for each planet below — based on its specific sign AND house placement.
+
+RULES:
+- Each interpretation: 3-4 sentences — what this placement means and how it shows up in daily life
+- Address the person directly: "Your Mars...", "This placement suggests..."
+- NOT generic — Mars in Capricorn must read very differently from Mars in Aries
+- If retrograde, specifically note: internalized energy, reassessment, inward expression
+- Accessible to someone who doesn't know astrology — use concrete examples
+- No clichés
+
+Chart owner's Big Three: Sun ${sunSignName}, Moon ${moonSignName}, Rising ${risingSignName}
+
+PLANETS (each line: key|planet info):
+${planetLines}
+
+Return ONLY this JSON:
+{
+  "sun": "3-4 sentence personalized interpretation",
+  "moon": "...",
+  ...
+}`,
+
+    de: `Sie sind ein Natal-Astrologe mit 20 Jahren Erfahrung. Schreiben Sie personalisierte, konkrete deutsche Interpretationen für jeden Planeten — basierend auf seiner Zeichen- UND Hausposition.
+
+REGELN:
+- Jede Interpretation: 3-4 Sätze
+- Direkte Ansprache: "Ihre Sonne...", "Diese Position zeigt..."
+- Nicht generisch — Mars im Steinbock muss anders klingen als Mars im Widder
+- Bei Rückläufigkeit: verinnerlichte Energie, Neubewertung
+- Alltagssprache, konkrete Beispiele
+
+Großes Dreigestirn: Sonne ${sunSignName}, Mond ${moonSignName}, Aszendent ${risingSignName}
+
+PLANETEN:
+${planetLines}
+
+Nur dieses JSON:
+{
+  "sun": "3-4 Sätze",
+  ...
+}`,
+
+    fr: `Vous êtes un astrologue natal avec 20 ans d'expérience. Rédigez des interprétations françaises personnalisées et concrètes pour chaque planète — en fonction de son signe ET de sa maison.
+
+RÈGLES:
+- Chaque interprétation : 3-4 phrases
+- S'adresser directement : "Votre Soleil...", "Cette position indique..."
+- Pas générique — Mars en Capricorne doit différer de Mars en Bélier
+- Si rétrograde : énergie intériorisée, réévaluation
+- Langage quotidien, exemples concrets
+
+Grand Trio : Soleil ${sunSignName}, Lune ${moonSignName}, Ascendant ${risingSignName}
+
+PLANÈTES :
+${planetLines}
+
+JSON uniquement :
+{
+  "sun": "3-4 phrases",
+  ...
+}`,
+
+    ar: `أنت منجّم ناتال بخبرة 20 عامًا. اكتب تفسيرات عربية شخصية وملموسة لكل كوكب — بناءً على برجه وبيته المحدد.
+
+القواعد:
+- كل تفسير: 3-4 جمل
+- خاطب الشخص مباشرة: "شمسك..."، "هذا الموقع يشير..."
+- ليس عامًا — المريخ في الجدي يجب أن يختلف عن المريخ في الحمل
+- إذا كان رجعيًا: طاقة داخلية، إعادة تقييم
+- لغة يومية، أمثلة ملموسة
+
+الثلاثي الكبير: الشمس ${sunSignName}، القمر ${moonSignName}، الطالع ${risingSignName}
+
+الكواكب:
+${planetLines}
+
+JSON فقط:
+{
+  "sun": "3-4 جمل",
+  ...
+}`
+  };
+
+  return instructions[language] || instructions.en;
+}
+
 // ─── ORIGINAL INTERPRET PROMPT ────────────────────────────────────────────────
 
 export function getBirthChartInterpretPrompt(params: BirthChartInterpretParams): string {
