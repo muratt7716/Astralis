@@ -21,7 +21,7 @@ export default function HomePage() {
   const featuredSigns = zodiacSigns.slice(0, 4);
 
   return (
-    <div className="relative min-h-screen bg-black overflow-x-hidden mt-6">
+    <div className="relative min-h-screen bg-black overflow-x-hidden">
       {/* 3D Cosmic Background Layer - FIXED: DIRECT SIBLING OF UI */}
       <div className="fixed inset-0 z-0 pointer-events-none lg:pointer-events-auto">
         <Canvas camera={{ position: [-12, 1.5, 12], fov: 42 }}>
@@ -46,7 +46,7 @@ export default function HomePage() {
 
       {/* Hero UI Layer - PUSHED HIGHER for Clear Horizon - ADJUSTED TOP */}
       <div className="relative z-10 pointer-events-none">
-        <header className="absolute top-28 left-0 right-0 z-20 px-6">
+        <header className="absolute top-20 lg:top-28 left-0 right-0 z-20 px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-7xl font-normal mb-6 font-serif tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] transition-all duration-700">
               {t("home.hero.title_part1")}{" "}
@@ -148,7 +148,7 @@ export default function HomePage() {
               {[
                 { icon: <CosmicIcon name="biorhythm" size={48} />, titleKey: "analytics.biorhythm.title", descKey: "analytics.biorhythm.desc", href: "/biyoritim", theme: "from-cyan-900/40 to-blue-950/60" },
                 { icon: <CosmicIcon name="dream" size={48} />, titleKey: "analytics.dream.title", descKey: "analytics.dream.desc", href: "/ruya-analizi", theme: "from-violet-900/40 to-purple-950/60" },
-                { icon: <CosmicIcon name="numerology" size={48} />, titleKey: "analytics.name_num.title", descKey: "analytics.name_num.desc", href: "/numeroloji", theme: "from-fuchsia-900/40 to-pink-950/60" },
+                { icon: <CosmicIcon name="horary" size={48} />, titleKey: "nav.horary", descKey: "horary.hero.subtitle", href: "/horary", theme: "from-amber-900/40 to-purple-950/60", trimTitle: true },
               ].map((tool, idx) => (
                 <Link key={tool.titleKey} href={tool.href} className="group">
                   <div className={`

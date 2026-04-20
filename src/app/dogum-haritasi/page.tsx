@@ -956,7 +956,7 @@ export default function DogumHaritasiPage() {
                           <div className="space-y-3">
                             <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-purple-400 font-bold">
                               <Sparkles size={10} />
-                              {t("chart.ai_interpretation")}
+                              {t("chart.planet.personal_reading")}
 
                             </div>
                             <p className="text-sm text-gray-200 leading-relaxed">

@@ -103,6 +103,7 @@ export default function Navbar() {
   ];
 
   const toolLinks = [
+    { href: "/horary", label: t("nav.horary"), name: "horary" },
     { href: "/biyoritim", label: t("nav.biyoritim"), name: "biorhythm" },
     { href: "/ruya-analizi", label: t("nav.ruya_analizi"), name: "dream" },
     { href: "/numeroloji", label: t("nav.numeroloji"), name: "numerology" },

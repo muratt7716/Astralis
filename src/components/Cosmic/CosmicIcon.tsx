@@ -3,7 +3,7 @@ import React, { useId } from "react";
 
 interface IconProps {
   name: "horoscope" | "birthchart" | "compatibility" | "planets" |
-  "tarot" | "katina" | "lenormand" | "kahve" | "runler" | "iching" | "kristal" | "numerology" | "biorhythm" | "dream" |
+  "tarot" | "katina" | "lenormand" | "kahve" | "runler" | "iching" | "kristal" | "numerology" | "biorhythm" | "dream" | "horary" |
   "stars" | "fire" | "water" | "air" | "earth" | "planet" | "cardinal" | "fixed" | "mutable";
   className?: string;
   size?: number;
@@ -295,6 +295,30 @@ export default function CosmicIcon({ name, className = "", size = 32 }: IconProp
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="4" />
         <ellipse cx="50" cy="50" rx="45" ry="10" stroke="currentColor" strokeWidth="2" strokeOpacity="0.6" transform="rotate(-15 50 50)" />
+      </svg>
+    ),
+    horary: (
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id={getSubId("horaryGrad")} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#A855F7" />
+          </linearGradient>
+        </defs>
+        {/* Outer wheel */}
+        <circle cx="50" cy="50" r="44" stroke={`url(#${getSubId("horaryGrad")})`} strokeWidth="1.5" strokeDasharray="3 5" opacity="0.5" />
+        {/* Inner wheel */}
+        <circle cx="50" cy="50" r="30" stroke={`url(#${getSubId("horaryGrad")})`} strokeWidth="1" opacity="0.4" />
+        {/* Cross hairs */}
+        <path d="M50 6V22M50 78V94M6 50H22M78 50H94" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+        {/* Hour hand */}
+        <path d="M50 50L50 20" stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" />
+        {/* Minute hand */}
+        <path d="M50 50L70 38" stroke="#A855F7" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="50" cy="50" r="4" fill={`url(#${getSubId("horaryGrad")})`} />
+        {/* Stars */}
+        <circle cx="50" cy="16" r="2" fill="#F59E0B" opacity="0.8" />
+        <circle cx="74" cy="26" r="1.5" fill="#A855F7" opacity="0.6" />
       </svg>
     ),
   };
