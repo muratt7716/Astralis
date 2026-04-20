@@ -97,7 +97,7 @@ const GUIDES = [
 ];
 
 export default function MistikRehberPage() {
-  const { dir } = useTranslation();
+  const { t, dir } = useTranslation();
   const router = useRouter();
   const isRTL = dir === "rtl";
 
@@ -109,6 +109,17 @@ export default function MistikRehberPage() {
 
   const guide = GUIDES[activeIndex];
   const GuideIcon = guide.icon;
+
+  const guideContent = {
+    title: t(`guide.${guide.id}.card_title`),
+    quote: t(`guide.${guide.id}.quote`),
+    bio: t(`guide.${guide.id}.card_bio`),
+    traits: [
+      t(`guide.${guide.id}.trait1`),
+      t(`guide.${guide.id}.trait2`),
+      t(`guide.${guide.id}.trait3`),
+    ],
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -146,8 +157,19 @@ export default function MistikRehberPage() {
   const handleSelect = async () => {
     if (!user || selecting) return;
     setSelecting(true);
-    await updateProfile({ selected_guide_id: guide.id });
-    router.push(`/mistik-rehber/chat/${guide.id}`);
+
+    const timeout = setTimeout(() => {
+      setSelecting(false);
+    }, 8000);
+
+    try {
+      await updateProfile({ selected_guide_id: guide.id });
+      router.push(`/mistik-rehber/chat/${guide.id}`);
+    } catch {
+      setSelecting(false);
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   const handleChat = () => {
@@ -163,7 +185,7 @@ export default function MistikRehberPage() {
           <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 animate-pulse">
             <div className="w-full h-full bg-white/5" />
           </div>
-          <p className="text-[9px] text-white/20 uppercase tracking-[0.5em]">Yükleniyor</p>
+          <p className="text-[9px] text-white/20 uppercase tracking-[0.5em]">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -209,13 +231,13 @@ export default function MistikRehberPage() {
           className="group flex items-center gap-2 text-white/30 hover:text-white/70 transition-colors"
         >
           <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.3em]">Geri</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.3em]">{t("mistik.back")}</span>
         </button>
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 mb-1">
             <Sparkles className="w-2.5 h-2.5 text-white/20" />
-            <span className="text-[8px] text-white/20 font-bold uppercase tracking-[0.6em]">Mistik Rehberler</span>
+            <span className="text-[8px] text-white/20 font-bold uppercase tracking-[0.6em]">{t("mistik.guides_title")}</span>
             <Sparkles className="w-2.5 h-2.5 text-white/20" />
           </div>
           <div className="text-[9px] text-white/15 font-mono tracking-widest">
@@ -279,7 +301,7 @@ export default function MistikRehberPage() {
                 {/* Alt bilgi */}
                 <div className="absolute bottom-0 inset-x-0 p-6 lg:p-8">
                   <div className={cn("text-[9px] font-black uppercase tracking-[0.4em] mb-1.5", guide.accent)}>
-                    {guide.title}
+                    {guideContent.title}
                   </div>
                   <h2
                     className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2"
@@ -288,7 +310,7 @@ export default function MistikRehberPage() {
                     {guide.name}
                   </h2>
                   <p className="text-white/40 text-[12px] italic font-light line-clamp-1">
-                    &ldquo;{guide.quote}&rdquo;
+                    &ldquo;{guideContent.quote}&rdquo;
                   </p>
                 </div>
               </div>
@@ -316,7 +338,7 @@ export default function MistikRehberPage() {
               {/* Başlık */}
               <div className="mb-6">
                 <div className={cn("text-[9px] font-black uppercase tracking-[0.5em] mb-3", guide.accent)}>
-                  {guide.title}
+                  {guideContent.title}
                 </div>
                 <h1
                   className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-none mb-4"
@@ -335,17 +357,17 @@ export default function MistikRehberPage() {
                 className={cn("text-sm lg:text-base italic mb-5 font-light", guide.accent)}
                 style={{ opacity: 0.7 }}
               >
-                &ldquo;{guide.quote}&rdquo;
+                &ldquo;{guideContent.quote}&rdquo;
               </p>
 
               {/* Bio */}
               <p className="text-white/50 text-[13px] lg:text-[15px] leading-relaxed mb-8 font-light">
-                {guide.bio}
+                {guideContent.bio}
               </p>
 
               {/* Özellikler */}
               <div className="flex flex-wrap gap-2 mb-10 justify-center lg:justify-start">
-                {guide.traits.map(trait => (
+                {guideContent.traits.map(trait => (
                   <span
                     key={trait}
                     className={cn(
@@ -376,7 +398,7 @@ export default function MistikRehberPage() {
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2.5">
                     <MessageCircle className="w-4 h-4" />
-                    {selecting ? "Bağlanıyor…" : "Konuşmaya Başla"}
+                    {selecting ? t("mistik.connecting") : t("mistik.start_chat")}
                   </span>
                   <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
                 </button>
@@ -390,7 +412,7 @@ export default function MistikRehberPage() {
                     }}
                     className="group flex items-center gap-2 px-6 h-14 rounded-2xl border text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40 hover:text-white/70 transition-all border-white/[0.07] hover:border-white/15 hover:bg-white/[0.03] active:scale-95"
                   >
-                    <span>Bu Rehberi Seç</span>
+                    <span>{t("mistik.select_guide")}</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 )}
@@ -398,7 +420,7 @@ export default function MistikRehberPage() {
                 {isSelected && (
                   <div className={cn("flex items-center gap-2 px-5 h-14 rounded-2xl border text-[10px] font-bold uppercase tracking-[0.25em]", guide.bg, guide.border, guide.accent)}>
                     <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: guide.color }} />
-                    Aktif Rehberin
+                    {t("mistik.active_guide")}
                   </div>
                 )}
               </div>

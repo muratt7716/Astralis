@@ -454,6 +454,7 @@ interface DivinationCard {
 /**
  * Generate an AI divination reading for text-based systems.
  * Uses standard 2.5-lite → 2.5-flash fallback.
+ * I Ching and Runes have dedicated deep prompts; other types use the standard prompt.
  */
 async function _generateDivinationReading(
   type: DivinationType,
@@ -464,12 +465,19 @@ async function _generateDivinationReading(
 ) {
   const langName = languageNames[lang];
 
+  if (type === "iching") {
+    return _generateIChingReading(cards, question, lang, langName);
+  }
+  if (type === "rune") {
+    return _generateRuneReading(cards, question, lang, langName);
+  }
+
   const typeDescriptions: Record<DivinationType, string> = {
     tarot: "Tarot card reader (Rider-Waite tradition). Interpret major and minor arcana with depth and psychological insight.",
     katina: "Katina (Turkish Oracle) card reader. Mystical, insightful, and deep psychic medium style. Maintain a professional, universally profound, and spiritual tone without using overly familiar or maternal terms.",
     lenormand: "Lenormand card reader. CRITICAL: Read cards IN COMBINATION — adjacent cards modify each other's meaning. Context flows left to right.",
-    rune: "Elder Futhark Norse Rune caster. Channel ancient Viking wisdom with modern relevance.",
-    iching: "I Ching (Book of Changes) interpreter. Blend traditional Chinese philosophy with practical modern guidance.",
+    rune: "Elder Futhark Norse Rune caster.",
+    iching: "I Ching interpreter.",
     crystal: "Mystical crystal ball seer. Purely intuitive, poetic, and deeply personal mystical oracle.",
   };
 
@@ -522,6 +530,149 @@ QUALITY REQUIREMENTS:
     return parseGeminiJson(text);
   } catch (error) {
     console.error(`Gemini ${type} reading failed:`, error);
+    return null;
+  }
+}
+
+/**
+ * Deep I Ching reading with full philosophical depth.
+ * Output includes trigram_reading, synthesis (10-12 sentences), spiritual_message, warning, advice, timeframe.
+ */
+async function _generateIChingReading(
+  cards: DivinationCard[],
+  question: string,
+  lang: SupportedLanguage,
+  langName: string
+) {
+  const cardList = cards.map((c, i) => {
+    let entry = `${i + 1}. ${c.name}`;
+    if (c.meaning) entry += ` — ${c.meaning}`;
+    return entry;
+  }).join("\n");
+
+  const defaultQuestion = lang === "tr" ? "Genel bir rehberlik istiyorum" : "I seek general guidance";
+
+  const prompt = `You are a master I Ching oracle — a living bridge between the Book of Changes and the modern soul. You embody the wisdom of King Wen, the Duke of Zhou, and Confucius's Ten Wings. You understand Yin and Yang not as opposites but as complementary movements. You bridge a millennium of Chinese philosophical tradition with the needs of the contemporary spirit.
+
+RESPONSE LANGUAGE: ${langName} — Write ALL output fields in ${langName} only.
+
+Hexagram drawn:
+${cardList}
+
+User's question: "${question || defaultQuestion}"
+
+INTERPRETIVE DEPTH — Weave in all of the following:
+- The hexagram's core energy: the dialogue between upper and lower trigrams
+- The Judgement (Tuan): its specific meaning for the current situation
+- The Image (Xiang): what does nature show and teach us?
+- The moment of change: I Ching reads transitions, not fixed states — what transition is happening now?
+- Wu Wei: resist the flow or surrender to it — which direction aligns with the hexagram's energy?
+- Practical Tao: how to align with this energy?
+
+OUTPUT RULE: Return ONLY valid JSON, no markdown, no extra text.
+
+{
+  "title": "A poetic, striking title that captures the hexagram's essence — in ${langName}",
+  "cards": [
+    {
+      "name": "Hexagram name",
+      "position": "The Hexagram of This Cast",
+      "interpretation": "4-5 sentences: the hexagram's essence, how the trigram energies speak to each other, how this hexagram relates to the user's question and what it says right now"
+    }
+  ],
+  "trigram_reading": "3-4 sentences examining the upper and lower trigrams as distinct symbolic forces. Which element is above, which below, and what does this positioning mean? What does the dialogue of these two forces tell us?",
+  "synthesis": "10-12 sentences: a rich, philosophical narrative weaving the hexagram's wisdom with the user's specific question. Reference specific I Ching concepts. Naturally incorporate the Judgement and Image. Like a wise elder's deep but warm conversation — texture, not a list.",
+  "spiritual_message": "The core spiritual teaching this hexagram offers this soul right now — what the Tao whispers to this person",
+  "warning": "The shadow aspect: the trap or misunderstanding this hexagram warns against. What does incorrectly applied Wu Wei look like here? What should be avoided?",
+  "advice": "2-3 sentences of concrete, actionable Taoist guidance. What practical step aligns with the hexagram's energy?",
+  "timeframe": "Temporal wisdom: is this a moment of waiting, acting, or transforming? Offer a framework through I Ching's seasonal rhythm."
+}
+
+QUALITY REQUIREMENTS:
+- Reference specific I Ching concepts: Wu Wei, Yin/Yang balance, trigram meanings
+- Rich, unhurried tone: this is ancient wisdom, not a newspaper horoscope
+- synthesis must be 10-12 full sentences — do not shorten
+- Fluent, elevated ${langName}: not formal, but wise and warm
+- Address the user's question directly`;
+
+  try {
+    const text = await callGeminiWithFallback(prompt);
+    return parseGeminiJson(text);
+  } catch (error) {
+    console.error("Gemini I Ching reading failed:", error);
+    return null;
+  }
+}
+
+/**
+ * Deep Elder Futhark Rune reading with Norse mythology depth.
+ * Output includes runic_pattern, synthesis (10-12 sentences), odin_wisdom, spiritual_message, warning, advice, timeframe.
+ */
+async function _generateRuneReading(
+  cards: DivinationCard[],
+  question: string,
+  lang: SupportedLanguage,
+  langName: string
+) {
+  const cardList = cards.map((c, i) => {
+    let entry = `${i + 1}. ${c.name}`;
+    if (c.reversed) entry += " (MERKSTAVE / REVERSED)";
+    if (c.meaning) entry += ` — ${c.meaning}`;
+    return entry;
+  }).join("\n");
+
+  const defaultQuestion = lang === "tr" ? "Genel bir rehberlik istiyorum" : "I seek general guidance";
+
+  const prompt = `You are a völva — a Norse seeress who has walked the roots of Yggdrasil and learned the runes directly from Odin's sacrifice. You carry the 24 mysteries of the Elder Futhark and the wisdom of the Norns — Urd, Verdandi, Skuld. You speak with the directness of Norse tradition: no false comfort, but fierce compassion.
+
+RESPONSE LANGUAGE: ${langName} — Write ALL output fields in ${langName} only.
+
+Runes drawn:
+${cardList}
+
+User's question: "${question || defaultQuestion}"
+
+MYTHOLOGICAL DEPTH — Weave in all of the following:
+- Each rune's mythological connection (which god, which realm, which myth)
+- Runes as living forces — not symbols but entities
+- Merkstave (reversed) runes: blocked/shadow/inverted energy, not merely "bad omens"
+- The runes speaking to each other — what wyrd (fate-weaving) do they together form?
+- Odin's nine-day sacrifice: each rune is sacred, earned at great cost
+- The Three Norns: what was past-woven, what is present-weaving, what may come to pass
+
+OUTPUT RULE: Return ONLY valid JSON, no markdown, no extra text.
+
+{
+  "title": "A poetic title evoking Norse myth — in ${langName}",
+  "cards": [
+    {
+      "name": "Rune name and symbol",
+      "position": "Position label",
+      "interpretation": "4-5 sentences: the rune's mythological lineage (which god or realm), what it means in this position, what it tells about the question. For merkstave: explicitly address the shadow energy."
+    }
+  ],
+  "runic_pattern": "3-4 sentences: how do these specific runes cast together form a pattern? What wyrd do they weave? Do they confirm, contradict, or amplify each other?",
+  "synthesis": "10-12 sentences: a rich völva prophecy weaving Norse mythology into the querent's situation. Reference specific runes, their gods/realms, and what the Nine Worlds reveal. Be bold and poetic.",
+  "odin_wisdom": "A single sentence — ancient wisdom as if whispered by Odin himself. Cryptic but clear.",
+  "spiritual_message": "The runic teaching for this soul right now — what the Elder Futhark reveals beyond the immediate question",
+  "warning": "The shadow runes or reversed energy: what force threatens to disrupt the weaving? Speak plainly.",
+  "advice": "2-3 sentences of Norse-tradition practical guidance. What step aligns with the wyrd being woven?",
+  "timeframe": "The Norns' perspective: Urd's thread (past-woven), Verdandi's needle (present-weaving), Skuld's scissors (what may come to pass)"
+}
+
+QUALITY REQUIREMENTS:
+- Reference specific Norse mythology: Odin, Freya, Thor, Yggdrasil, the Norns, the Nine Worlds
+- Each rune interpretation must mention its mythological lineage
+- Merkstave runes must be handled distinctly from upright — not just "negative" but "blocked/inverted/shadow"
+- Bold and direct tone: Norse culture was not timid
+- Vivid, powerful ${langName}: lyrical but not flowery
+- synthesis must be 10-12 full sentences — do not shorten`;
+
+  try {
+    const text = await callGeminiWithFallback(prompt);
+    return parseGeminiJson(text);
+  } catch (error) {
+    console.error("Gemini Rune reading failed:", error);
     return null;
   }
 }

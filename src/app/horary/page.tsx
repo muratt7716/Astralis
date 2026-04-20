@@ -18,7 +18,8 @@ import {
 interface Stricture { type: string; severity: string; messageKey: string; }
 interface SignificatorInfo {
   planetId: string; planetName: string; signId: string;
-  signDegree: number; house: number; dignityLevel: string; dignityScore: number;
+  signDegree: number; house: number; representsHouse: number;
+  dignityLevel: string; dignityScore: number;
 }
 interface Timing { value: number; unit: string; }
 interface Analysis {
@@ -174,7 +175,7 @@ export default function HoraryPage() {
               {/* decorative top rule */}
               <div className="flex items-center gap-3 mb-8">
                 <div className="flex-1 h-px" style={{ background:"linear-gradient(90deg,transparent,rgba(201,168,76,.35))" }} />
-                <span className="text-xs tracking-widest uppercase" style={{ color:"#c9a84c88", fontFamily:"'Cinzel',serif" }}>Soru</span>
+                <span className="text-xs tracking-widest uppercase" style={{ color:"#c9a84c88", fontFamily:"'Cinzel',serif" }}>{t("horary.form.question_label_short")}</span>
                 <div className="flex-1 h-px" style={{ background:"linear-gradient(270deg,transparent,rgba(201,168,76,.35))" }} />
               </div>
 
@@ -381,7 +382,7 @@ export default function HoraryPage() {
                   {/* Click hint */}
                   {!selectedPlanet && (
                     <p className="text-center text-xs text-gray-700 mt-3 italic">
-                      Gezegene tıkla → detay
+                      {t("horary.result.planet_click_hint")}
                     </p>
                   )}
                 </div>
@@ -503,7 +504,12 @@ function SignificatorCard({ label, info, t, accent }: {
 }) {
   return (
     <div className="p-4 rounded-xl" style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${accent}28` }}>
-      <span className="text-xs block mb-2 tracking-wide" style={{ color:`${accent}88` }}>{label}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs tracking-wide" style={{ color:`${accent}88` }}>{label}</span>
+        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background:`${accent}12`, color:`${accent}99`, fontFamily:"'JetBrains Mono',monospace" }}>
+          {info.representsHouse}{t("horary.result.house_suffix")}
+        </span>
+      </div>
       <div className="flex items-start justify-between gap-2">
         <div>
           <span className="font-semibold text-white" style={{ fontFamily:"'Cinzel',serif" }}>

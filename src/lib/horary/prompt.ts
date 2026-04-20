@@ -57,18 +57,20 @@ ${chart.planets.map(p =>
 STRICTURES:
 ${stricturesStr(analysis)}
 
-QUERENT SIGNIFICATOR: ${querent.planet.name} (${querent.planet.id})
-  Position: ${querent.planet.signId.toUpperCase()} ${querent.planet.signDegree.toFixed(1)}° | House ${querent.planet.house}
+QUERENT SIGNIFICATOR (rules House 1 — represents the person asking):
+  Planet: ${querent.planet.name} (${querent.planet.id})
+  Actual position in chart: ${querent.planet.signId.toUpperCase()} ${querent.planet.signDegree.toFixed(1)}° | Located in House ${querent.planet.house}
   Essential dignity: ${DIGNITY_DESC[querent.essentialDignity.level]} (score: ${querent.essentialDignity.score})
-  Accidental: house=${querent.accidentalStrength.houseStrength}${querent.accidentalStrength.isRetrograde?", retrograde":""}${querent.accidentalStrength.isCombust?", combust":""}
+  Accidental: house strength=${querent.accidentalStrength.houseStrength}${querent.accidentalStrength.isRetrograde?", retrograde":""}${querent.accidentalStrength.isCombust?", combust":""}
 
-MOON (co-significator of querent):
-  ${moon.signId.toUpperCase()} ${moon.signDegree.toFixed(1)}° | House ${moon.house}${moon.retrograde?" [R]":""}
+MOON (universal co-significator of the querent):
+  Actual position: ${moon.signId.toUpperCase()} ${moon.signDegree.toFixed(1)}° | Located in House ${moon.house}${moon.retrograde?" [R]":""}
 
-QUESITED SIGNIFICATOR (${analysis.questionCategory} → House ${analysis.questionHouse}): ${quesited.planet.name} (${quesited.planet.id})
-  Position: ${quesited.planet.signId.toUpperCase()} ${quesited.planet.signDegree.toFixed(1)}° | House ${quesited.planet.house}
+QUESITED SIGNIFICATOR (rules House ${analysis.questionHouse} — represents the matter asked about: ${analysis.questionCategory}):
+  Planet: ${quesited.planet.name} (${quesited.planet.id})
+  Actual position in chart: ${quesited.planet.signId.toUpperCase()} ${quesited.planet.signDegree.toFixed(1)}° | Located in House ${quesited.planet.house}
   Essential dignity: ${DIGNITY_DESC[quesited.essentialDignity.level]} (score: ${quesited.essentialDignity.score})
-  Accidental: house=${quesited.accidentalStrength.houseStrength}${quesited.accidentalStrength.isRetrograde?", retrograde":""}${quesited.accidentalStrength.isCombust?", combust":""}
+  Accidental: house strength=${quesited.accidentalStrength.houseStrength}${quesited.accidentalStrength.isRetrograde?", retrograde":""}${quesited.accidentalStrength.isCombust?", combust":""}
 
 KEY ASPECT BETWEEN SIGNIFICATORS:
 ${keyAspect

@@ -233,7 +233,9 @@ export default function Footer() {
           <p className="text-gray-600 text-xs font-light tracking-wide">
             © 2026 {t("site.name")} • {t("footer.rights")}
           </p>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap items-center gap-6 justify-center">
+            <Link href="/gizlilik" className="text-gray-700 hover:text-gray-400 text-[10px] uppercase tracking-widest font-bold transition-colors">{t("footer.privacy")}</Link>
+            <Link href="/kullanim-kosullari" className="text-gray-700 hover:text-gray-400 text-[10px] uppercase tracking-widest font-bold transition-colors">{t("footer.terms")}</Link>
             <span className="text-gray-700 text-[10px] uppercase tracking-widest font-bold">{t("footer.cosmic_guide")}</span>
             <span className="text-gray-700 text-[10px] uppercase tracking-widest font-bold">{t("footer.stay_peaceful")}</span>
           </div>

@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
           planetName: analysis.querent.planet.name,
           signId: analysis.querent.planet.signId,
           signDegree: analysis.querent.planet.signDegree,
-          house: analysis.querent.house,
+          house: analysis.querent.planet.house,       // actual planet position in chart
+          representsHouse: 1,                          // rules/represents this house
           dignityLevel: analysis.querent.essentialDignity.level,
           dignityScore: analysis.querent.essentialDignity.score,
         },
@@ -104,7 +105,8 @@ export async function POST(request: NextRequest) {
           planetName: analysis.quesited.planet.name,
           signId: analysis.quesited.planet.signId,
           signDegree: analysis.quesited.planet.signDegree,
-          house: analysis.questionHouse,  // fixed from plan note
+          house: analysis.quesited.planet.house,      // actual planet position in chart
+          representsHouse: analysis.questionHouse,     // rules/represents this house
           dignityLevel: analysis.quesited.essentialDignity.level,
           dignityScore: analysis.quesited.essentialDignity.score,
         },

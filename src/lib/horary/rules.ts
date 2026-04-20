@@ -1,5 +1,5 @@
 // src/lib/horary/rules.ts
-import type { HoraryChart, HoraryPlanet, HoraryHouse, SignId } from "./engine";
+import type { HoraryChart, HoraryPlanet, HoraryHouse } from "./engine";
 
 // ─── Types ───────────────────────────────────────────────────
 export interface Stricture {
@@ -163,6 +163,9 @@ export function getAccidentalStrength(planet: HoraryPlanet): AccidentalStrength 
 
 // ─── Question detection ──────────────────────────────────────
 const CATEGORY_PATTERNS: Array<[QuestionCategory, RegExp]> = [
+  // Person-directed questions (must come before generic relationship pattern):
+  // "ona yazsam", "bana yazar mı", "onu aramalı mıyım", etc. → 7th house (the other person)
+  ["relationship", /\bona\b|\bonnun\b|\bondan\b|bana.{0,15}(yaz|ara|at\b|mesaj|ulaş)|ona.{0,15}(yaz|ara|at\b|mesaj|ulaş)|\bo\b.{0,20}(beni|bana|benle)|beni.{0,15}(sev|düşün|ara|yaz|özle|istiyor|beğen)/i],
   ["relationship", /sevgil|evlil|evli|partner|aşk|ilişki|nikah|boşan|nişan|wife|husband|marriage|love|partner/i],
   ["career",       /iş|kariyer|terfi|işe|işten|meslek|çalış|görev|pozisyon|job|work|career|promotion/i],
   ["money",        /para|borç|gelir|maaş|satış|kira|kredi|ödeme|kazanç|money|debt|salary|financial/i],
@@ -308,13 +311,22 @@ export function estimateTiming(aspect: KeyAspect, faster: HoraryPlanet): TimingE
 export function analyzeHoraryChart(chart: HoraryChart, question: string): HoraryAnalysis {
   const strictures    = checkStrictures(chart);
   const cat           = detectCategory(question);
-  const qHouse        = getQuestionHouse(cat);
+  let   qHouse        = getQuestionHouse(cat);
 
   const asc1          = chart.houses[0];
   const querentPlanet = getHouseRuler(asc1, chart.planets);
   const moon          = chart.planets.find(p => p.id === "moon")!;
-  const quesHouse     = chart.houses.find(h => h.house === qHouse) || chart.houses[0];
-  const quesitedPlanet= getHouseRuler(quesHouse, chart.planets);
+  let quesHouse       = chart.houses.find(h => h.house === qHouse) || chart.houses[0];
+  let quesitedPlanet  = getHouseRuler(quesHouse, chart.planets);
+
+  // Guard: if same planet rules both querent (house 1) and quesited house,
+  // fall back to house 7 (the natural "other person" house) to avoid a meaningless self-conjunction.
+  if (quesitedPlanet.id === querentPlanet.id) {
+    const fallbackHouse = 7;
+    qHouse = fallbackHouse;
+    quesHouse = chart.houses.find(h => h.house === fallbackHouse) || chart.houses[6];
+    quesitedPlanet = getHouseRuler(quesHouse, chart.planets);
+  }
 
   const querent: Significator = {
     role: "querent", planet: querentPlanet, house: 1,

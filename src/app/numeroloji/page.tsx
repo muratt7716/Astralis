@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import NumerologyProfileCard from '@/components/numerology/NumerologyProfileCard';
 import NameVibrations from '@/components/numerology/NameVibrations';
 import CyclesDashboard from '@/components/numerology/CyclesDashboard';
+import HolisticSynthesis from '@/components/numerology/HolisticSynthesis';
+import { calculateNeuroMatrix } from '@/lib/numerology/advancedAlgorithms';
 import { getPythagoreanCore } from '@/lib/numerology/pythagoras';
 import { translations, SupportedLanguage } from '@/lib/i18n-shared';
 import CosmicIcon from '@/components/Cosmic/CosmicIcon';
@@ -104,6 +106,13 @@ export default function NumerologyPage() {
             <NumerologyProfileCard data={coreNumbers} fullName={fullName} dob={dob} lang={lang} />
             <NameVibrations name={fullName} lang={lang} />
             <CyclesDashboard dobString={dob} lang={lang} />
+            <HolisticSynthesis 
+              fullName={fullName} 
+              dob={dob} 
+              coreNumbers={coreNumbers} 
+              neuroMatrix={calculateNeuroMatrix(dob, fullName)} 
+              lang={lang} 
+            />
           </div>
         )}
       </div>

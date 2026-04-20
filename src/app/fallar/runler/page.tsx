@@ -4,7 +4,7 @@ import { elderFutharkRunes, runeSpreads } from "@/data/runes";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import { Sparkles, Lightbulb, Info } from "lucide-react";
+import { Sparkles, Lightbulb, Info, Eye, AlertTriangle, Clock, Link2, Feather } from "lucide-react";
 
 export default function RunlerPage() {
   const { t, language } = useTranslation();
@@ -112,25 +112,86 @@ export default function RunlerPage() {
       )}
 
       {result && (
-        <section className="pb-20 px-4"><div className="max-w-3xl mx-auto space-y-6 fade-in-up">
+        <section className="pb-20 px-4"><div className="max-w-3xl mx-auto space-y-4 fade-in-up">
+          {/* Başlık ve Rün yorumları */}
           <div className="glass-card p-8 glow">
-            <h3 className="text-2xl font-bold text-white mb-4">{result.title}</h3>
+            <h3 className="text-2xl font-bold text-white mb-6">{result.title}</h3>
             {result.cards?.map((c: any, i: number) => (
-              <div key={i} className="mb-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                <p className="text-blue-300 font-bold text-sm mb-1">{c.position}: {c.name}</p>
-                <p className="text-gray-300 text-sm">{c.interpretation}</p>
+              <div key={i} className="mb-4 p-5 bg-white/5 rounded-xl border border-white/10">
+                <p className="text-blue-300 font-bold text-sm mb-2">{c.position}: {c.name}</p>
+                <p className="text-gray-300 text-sm leading-relaxed">{c.interpretation}</p>
               </div>
             ))}
-            <div className="mt-4 p-4 bg-blue-900/20 rounded-xl border border-blue-500/20">
-              <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                <Sparkles className="size-5 text-blue-400" /> {t("chart.overview")}
+          </div>
+
+          {/* Runik örüntü */}
+          {result.runic_pattern && (
+            <div className="glass-card p-6 border border-blue-500/20">
+              <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                <Link2 className="size-5 text-blue-400" /> Runların Dokusu
               </h4>
-              <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
+              <p className="text-gray-300 text-sm leading-relaxed">{result.runic_pattern}</p>
             </div>
-            {result.advice && (<div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10 flex items-center gap-3">
-              <Lightbulb className="size-5 text-blue-400 shrink-0" />
-              <span className="text-gray-300 text-sm">{result.advice}</span>
-            </div>)}
+          )}
+
+          {/* Genel Sentez */}
+          <div className="glass-card p-6 bg-blue-900/10 border border-blue-500/20">
+            <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+              <Sparkles className="size-5 text-blue-400" /> Völva'nın Kehaneti
+            </h4>
+            <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
+          </div>
+
+          {/* Odin'in Bilgeliği */}
+          {result.odin_wisdom && (
+            <div className="glass-card p-5 border border-indigo-500/30 bg-indigo-900/10">
+              <h4 className="text-base font-bold text-white mb-2 flex items-center gap-2">
+                <Feather className="size-5 text-indigo-400" /> Odin'in Fısıltısı
+              </h4>
+              <p className="text-indigo-200 text-sm italic leading-relaxed">"{result.odin_wisdom}"</p>
+            </div>
+          )}
+
+          {/* Manevi Mesaj */}
+          {result.spiritual_message && (
+            <div className="glass-card p-6 border border-cyan-500/20 bg-cyan-900/10">
+              <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                <Eye className="size-5 text-cyan-400" /> Runik Öğreti
+              </h4>
+              <p className="text-gray-300 text-sm leading-relaxed italic">{result.spiritual_message}</p>
+            </div>
+          )}
+
+          {/* Uyarı */}
+          {result.warning && (
+            <div className="glass-card p-6 border border-red-500/20 bg-red-900/10">
+              <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                <AlertTriangle className="size-5 text-red-400" /> Gölge Enerji
+              </h4>
+              <p className="text-gray-300 text-sm leading-relaxed">{result.warning}</p>
+            </div>
+          )}
+
+          {/* Tavsiye + Zamanlama */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {result.advice && (
+              <div className="glass-card p-5 border border-white/10 flex items-start gap-3">
+                <Lightbulb className="size-5 text-blue-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-white font-bold text-sm mb-1">Pratik Yol</p>
+                  <p className="text-gray-300 text-sm leading-relaxed">{result.advice}</p>
+                </div>
+              </div>
+            )}
+            {result.timeframe && (
+              <div className="glass-card p-5 border border-white/10 flex items-start gap-3">
+                <Clock className="size-5 text-purple-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-white font-bold text-sm mb-1">Norns'ların Zamanı</p>
+                  <p className="text-gray-300 text-sm leading-relaxed">{result.timeframe}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div></section>
       )}
