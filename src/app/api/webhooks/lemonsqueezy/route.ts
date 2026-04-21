@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
 // HMAC-SHA256 imza doğrulama
 function verifySignature(rawBody: string, signature: string, secret: string): boolean {
-  const hash = createHmac("sha256", secret)
-    .update(rawBody)
-    .digest("hex");
-  // Constant-time comparison (timing attack önlemi)
-  if (hash.length !== signature.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < hash.length; i++) {
-    mismatch |= hash.charCodeAt(i) ^ signature.charCodeAt(i);
+  const hash = createHmac("sha256", secret).update(rawBody).digest("hex");
+  try {
+    return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
+  } catch {
+    // timingSafeEqual throws if buffers differ in length
+    return false;
   }
-  return mismatch === 0;
 }
 
 export async function POST(req: NextRequest) {
@@ -50,12 +47,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true }); // Lemon Squeezy'ye 200 dön (retry'ı engelle)
   }
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(userId ?? "")) {
+    console.warn("[LS Webhook] Geçersiz user_id formatı:", userId);
+    return NextResponse.json({ ok: true }); // retry etme
+  }
+
   console.log(`[LS Webhook] Event: ${eventName}, User: ${userId}`);
 
   try {
     if (eventName === "order_created") {
       // Ömür boyu tek seferlik satın alma
       const orderId: string = payload?.data?.id ?? "";
+      if (!orderId) {
+        console.error("[LS Webhook] order_created: payload.data.id eksik");
+        return NextResponse.json({ error: "Missing order id" }, { status: 400 });
+      }
 
       // Idempotency: aynı order daha önce işlendiyse atla
       const { data: existing } = await supabaseAdmin
@@ -68,7 +75,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, duplicate: true });
       }
 
-      await supabaseAdmin
+      const { error: updateError1 } = await supabaseAdmin
         .from("profiles")
         .update({
           is_premium: true,
@@ -79,13 +86,14 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
+      if (updateError1) throw new Error(updateError1.message);
 
     } else if (eventName === "subscription_created") {
       // Aylık abonelik başlangıcı
       const subId: string = payload?.data?.id ?? "";
       const renewsAt: string | null = payload?.data?.attributes?.renews_at ?? null;
 
-      await supabaseAdmin
+      const { error: updateError2 } = await supabaseAdmin
         .from("profiles")
         .update({
           is_premium: true,
@@ -96,34 +104,37 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
+      if (updateError2) throw new Error(updateError2.message);
 
     } else if (eventName === "subscription_renewed") {
       // Aylık yenileme — bitiş tarihini güncelle
       const renewsAt: string | null = payload?.data?.attributes?.renews_at ?? null;
 
-      await supabaseAdmin
+      const { error: updateError3 } = await supabaseAdmin
         .from("profiles")
         .update({
           subscription_end_date: renewsAt,
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
+      if (updateError3) throw new Error(updateError3.message);
 
     } else if (eventName === "subscription_cancelled") {
       // İptal edildi — süre sonuna kadar premium kalır
       const endsAt: string | null = payload?.data?.attributes?.ends_at ?? null;
 
-      await supabaseAdmin
+      const { error: updateError4 } = await supabaseAdmin
         .from("profiles")
         .update({
           subscription_end_date: endsAt,
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
+      if (updateError4) throw new Error(updateError4.message);
 
     } else if (eventName === "subscription_expired") {
       // Abonelik sona erdi — premium kaldır
-      await supabaseAdmin
+      const { error: updateError5 } = await supabaseAdmin
         .from("profiles")
         .update({
           is_premium: false,
@@ -132,6 +143,7 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
+      if (updateError5) throw new Error(updateError5.message);
     }
     // Diğer eventler → 200 dön, bir şey yapma
 
