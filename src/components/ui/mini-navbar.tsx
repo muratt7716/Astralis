@@ -75,9 +75,9 @@ export function Navbar() {
   const toolLinks = [
     { href: "/biyoritim", label: t("nav.biyoritim"), icon: "🧬" },
     { href: "/ruya-analizi", label: t("nav.ruya_analizi"), icon: "🌙" },
-    { href: "/fallar/iching", label: t("fortune.iching.title"), icon: "☯️" },
-    { href: "/fallar/runler", label: t("fortune.runler.title"), icon: "ᚱ" },
-    { href: "/fallar/kristal", label: t("fortune.kristal.title"), icon: "🔮" },
+    { href: "/iching", label: t("fortune.iching.title"), icon: "☯️" },
+    { href: "/runler", label: t("fortune.runler.title"), icon: "ᚱ" },
+    { href: "/kristal", label: t("fortune.kristal.title"), icon: "🔮" },
   ];
 
   return (

@@ -48,7 +48,7 @@ export const ALL_TOOLS = [
   { id: "astrology", name: "Doğum Haritası", iconName: "birthchart", href: "/dogum-haritasi", color: "text-amber-400", bg: "bg-amber-500/10" },
   { id: "dream", name: "Rüya Analizi", iconName: "dream", href: "/ruya-analizi", color: "text-purple-400", bg: "bg-purple-500/10" },
   { id: "bio", name: "Biyoritim", iconName: "biorhythm", href: "/biyoritim", color: "text-cyan-400", bg: "bg-cyan-500/10" },
-  { id: "sphere", name: "Kristal Küre", iconName: "kristal", href: "/fallar/kristal", color: "text-rose-400", bg: "bg-rose-500/10" },
+  { id: "sphere", name: "Kristal Küre", iconName: "kristal", href: "/kristal", color: "text-rose-400", bg: "bg-rose-500/10" },
   { id: "numerology", name: "Numeroloji", iconName: "numerology", href: "/numeroloji", color: "text-indigo-400", bg: "bg-indigo-500/10" },
 ];
 

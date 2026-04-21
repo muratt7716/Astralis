@@ -61,3 +61,6 @@ gcp-key.json
 
 # Worktrees
 .worktrees/
+
+# Lemon Squeezy Store Assets
+/public/store_assets

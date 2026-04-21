@@ -9,9 +9,9 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   "/biyoritim": "bio",
   "/ruya-analizi": "dream",
   "/numeroloji": "numerology",
-  "/fallar/iching": "iching",
-  "/fallar/runler": "runler",
-  "/fallar/kristal": "sphere",
+  "/iching": "iching",
+  "/runler": "runler",
+  "/kristal": "sphere",
 };
 
 /**

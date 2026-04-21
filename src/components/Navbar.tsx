@@ -107,9 +107,9 @@ export default function Navbar() {
     { href: "/biyoritim", label: t("nav.biyoritim"), name: "biorhythm" },
     { href: "/ruya-analizi", label: t("nav.ruya_analizi"), name: "dream" },
     { href: "/numeroloji", label: t("nav.numeroloji"), name: "numerology" },
-    { href: "/fallar/iching", label: t("fortune.iching.title"), name: "iching" },
-    { href: "/fallar/runler", label: t("fortune.runler.title"), name: "runler" },
-    { href: "/fallar/kristal", label: t("fortune.kristal.title"), name: "kristal" },
+    { href: "/iching", label: t("fortune.iching.title"), name: "iching" },
+    { href: "/runler", label: t("fortune.runler.title"), name: "runler" },
+    { href: "/kristal", label: t("fortune.kristal.title"), name: "kristal" },
   ];
 
   return (

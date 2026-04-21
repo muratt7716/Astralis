@@ -11,6 +11,14 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      { source: '/fallar/iching', destination: '/iching', permanent: true },
+      { source: '/fallar/runler', destination: '/runler', permanent: true },
+      { source: '/fallar/kristal', destination: '/kristal', permanent: true },
+      { source: '/fallar', destination: '/', permanent: true },
+    ];
+  },
 };
 
 module.exports = nextConfig;

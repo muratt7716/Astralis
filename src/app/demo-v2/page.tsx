@@ -163,9 +163,9 @@ export default function HomePage() {
               <h3 className="text-center text-2xl font-bold text-white mb-8 font-serif">{t("home.ancient.title")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
                 {[
-                  { id: "iching", nameKey: "fortune.iching.title", href: "/fallar/iching", theme: "from-emerald-900/40 to-emerald-950/60" },
-                  { id: "runler", nameKey: "fortune.runler.title", href: "/fallar/runler", theme: "from-blue-900/40 to-blue-950/60" },
-                  { id: "kristal", nameKey: "fortune.kristal.title", href: "/fallar/kristal", theme: "from-violet-900/40 to-violet-950/60" },
+                  { id: "iching", nameKey: "fortune.iching.title", href: "/iching", theme: "from-emerald-900/40 to-emerald-950/60" },
+                  { id: "runler", nameKey: "fortune.runler.title", href: "/runler", theme: "from-blue-900/40 to-blue-950/60" },
+                  { id: "kristal", nameKey: "fortune.kristal.title", href: "/kristal", theme: "from-violet-900/40 to-violet-950/60" },
                 ].map((item, idx) => (
                   <Link key={item.id} href={item.href} className="group">
                     <div className={`
