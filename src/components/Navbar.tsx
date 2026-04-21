@@ -9,7 +9,7 @@ import { logInteraction, getActionByPath } from "@/lib/logging";
 import Logo from "@/components/Cosmic/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Crown } from "lucide-react";
 
 const AnimatedNavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const defaultTextColor = 'text-gray-300';
@@ -180,6 +180,22 @@ export default function Navbar() {
           <div className="hidden sm:block">
             <LanguageSwitcher />
           </div>
+
+          {/* Premium badge — sadece premium olmayanlara, desktop */}
+          {user && !profile?.is_premium && (
+            <Link
+              href="/premium"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                bg-gradient-to-r from-purple-600/20 to-amber-500/20
+                border border-purple-500/30 text-purple-300 text-xs
+                hover:border-purple-500/60 hover:text-purple-200
+                transition-all duration-200 font-medium"
+              aria-label="Premium üyeliğe geç"
+            >
+              <Crown className="w-3 h-3" />
+              Premium
+            </Link>
+          )}
 
           {/* Auth Button */}
           {!authLoading && (
