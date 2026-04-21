@@ -347,7 +347,7 @@ export default function DogumHaritasiPage() {
               </div>
               {t("chart.date")}
             </h2>
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
               <CosmicSelect
                 label={t("chart.day")}
                 value={day}
@@ -603,7 +603,7 @@ export default function DogumHaritasiPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex justify-center gap-2 flex-wrap fade-in-up-delay-3">
+            <div className="flex justify-center gap-1.5 sm:gap-2 flex-wrap fade-in-up-delay-3">
               {([
                 { key: "overview", label: t("chart.overview"), icon: BarChart3 },
                 { key: "planets", label: t("chart.planets"), icon: Orbit },
@@ -612,12 +612,12 @@ export default function DogumHaritasiPage() {
                 { key: "ai-yorumu", label: "Harita Yorumu", icon: Brain },
               ] as const).map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === tab.key
+                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${activeTab === tab.key
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/5"
                     }`}>
-                  <tab.icon className="size-4 mr-2 inline-block" />
-                  {tab.label}
+                  <tab.icon className="size-3.5 sm:size-4 mr-1.5 sm:mr-2 inline-block" />
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               ))}
             </div>

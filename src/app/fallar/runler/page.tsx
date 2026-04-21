@@ -50,7 +50,7 @@ export default function RunlerPage() {
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="runler" size={80} className="mx-auto mb-6 animate-float" />
-          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.runler.title")}</span></h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.runler.title")}</span></h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.runler.full_desc")}</p>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default function RunlerPage() {
               return (
                 <div key={idx} onClick={() => setRevealed(prev => new Set(prev).add(idx))} className="cursor-pointer">
                   {!isRevealed ? (
-                    <div className="p-8 rounded-2xl bg-gradient-to-b from-slate-800 to-gray-900 border-2 border-blue-500/30 flex flex-col items-center justify-center hover:scale-105 transition-transform hover:border-blue-400/50 shadow-lg">
+                    <div className="p-5 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-800 to-gray-900 border-2 border-blue-500/30 flex flex-col items-center justify-center hover:scale-105 transition-transform hover:border-blue-400/50 shadow-lg">
                       <span className="text-4xl text-gray-600">?</span>
                       <p className="text-blue-300 text-xs mt-2">{positions[idx] || `Rün ${idx + 1}`}</p>
                     </div>
@@ -114,7 +114,7 @@ export default function RunlerPage() {
       {result && (
         <section className="pb-20 px-4"><div className="max-w-3xl mx-auto space-y-4 fade-in-up">
           {/* Başlık ve Rün yorumları */}
-          <div className="glass-card p-8 glow">
+          <div className="glass-card p-5 sm:p-8 glow">
             <h3 className="text-2xl font-bold text-white mb-6">{result.title}</h3>
             {result.cards?.map((c: any, i: number) => (
               <div key={i} className="mb-4 p-5 bg-white/5 rounded-xl border border-white/10">

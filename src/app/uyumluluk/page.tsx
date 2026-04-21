@@ -232,13 +232,13 @@ function UyumlulukContent() {
   const renderSignPicker = (selectedId: string, onSelect: (id: string) => void, label: string) => (
     <div className="glass-card p-6 border-t-4 border-t-purple-500 shadow-2xl">
       <h3 className="text-xl font-bold text-white mb-6 text-center uppercase tracking-widest">{label}</h3>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
         {zodiacSigns.map((sign) => (
           <button
             key={sign.id}
             onClick={() => onSelect(sign.id)}
             className={`
-              flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-500 border
+              flex flex-col items-center justify-center p-2 sm:p-3 rounded-2xl transition-all duration-500 border
               ${selectedId === sign.id 
                 ? "bg-purple-500/30 border-purple-400 scale-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]" 
                 : "bg-white/5 border-transparent hover:bg-white/10 hover:border-white/20"}
@@ -424,20 +424,20 @@ function UyumlulukContent() {
               <div className="mt-16 fade-in-up">
                 {/* Simple Result Card */}
                 <div className="glass-card overflow-hidden border-b-4 border-b-pink-500 shadow-2xl relative">
-                  <div className="p-8 md:p-12 relative z-10 text-center">
-                    <div className="flex items-center justify-center gap-8 mb-12">
+                  <div className="p-5 sm:p-8 md:p-12 relative z-10 text-center">
+                    <div className="flex items-center justify-center gap-4 sm:gap-8 mb-8 sm:mb-12">
                        <div className="flex flex-col items-center">
-                          <ZodiacIcon signId={sign1} size={64} glowColor="#ffffff" className="mb-4" />
-                          <span className="text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign1}`)}</span>
+                          <ZodiacIcon signId={sign1} size={48} glowColor="#ffffff" className="mb-3 sm:mb-4" />
+                          <span className="text-xs sm:text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign1}`)}</span>
                        </div>
-                       <div className="relative">
-                          <div className="w-24 h-24 rounded-full border-4 border-pink-500 flex flex-col items-center justify-center bg-black/40">
-                             <span className="text-2xl font-black text-white">{simpleResult.overallScore}%</span>
+                       <div className="relative shrink-0">
+                          <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-4 border-pink-500 flex flex-col items-center justify-center bg-black/40">
+                             <span className="text-xl sm:text-2xl font-black text-white">{simpleResult.overallScore}%</span>
                           </div>
                        </div>
                        <div className="flex flex-col items-center">
-                          <ZodiacIcon signId={sign2} size={64} glowColor="#ffffff" className="mb-4" />
-                          <span className="text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign2}`)}</span>
+                          <ZodiacIcon signId={sign2} size={48} glowColor="#ffffff" className="mb-3 sm:mb-4" />
+                          <span className="text-xs sm:text-sm font-black text-white uppercase tracking-widest">{t(`zodiac.${sign2}`)}</span>
                        </div>
                     </div>
                     <p className="text-gray-300 text-lg italic leading-relaxed max-w-2xl mx-auto">

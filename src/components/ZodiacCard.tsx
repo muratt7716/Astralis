@@ -186,8 +186,8 @@ export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
           </div>
         </div>
 
-        <div className="relative z-10 flex items-start justify-between mb-10">
-          <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ${theme.iconBg} border border-white/10 shadow-2xl transition-all duration-700 group-hover:scale-105 group-hover:-rotate-2`}>
+        <div className="relative z-10 flex items-start justify-between mb-6 md:mb-10">
+          <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full overflow-hidden flex items-center justify-center ${theme.iconBg} border border-white/10 shadow-2xl transition-all duration-700 group-hover:scale-105 group-hover:-rotate-2`}>
             <ZodiacIcon signId={sign.id} size={112} glowColor={theme.svg} />
           </div>
           <div className={`px-4 py-2 rounded-xl ${theme.badge} flex items-center gap-2 border shadow-lg transition-all duration-500 group-hover:border-white/30`}>
@@ -200,7 +200,7 @@ export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
 
         <div className="relative z-10 mt-auto">
           <div className="mb-8">
-            <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 font-serif tracking-tight leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/60 transition-all duration-700">
+            <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 font-serif tracking-tight leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/60 transition-all duration-700">
               {t(`zodiac.${sign.id}`)}
             </h3>
             <div className="flex items-center gap-3">

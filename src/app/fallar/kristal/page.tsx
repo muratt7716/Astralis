@@ -38,13 +38,13 @@ export default function KristalPage() {
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="kristal" size={80} className="mx-auto mb-6 animate-float" />
-          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.kristal.title")}</span></h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.kristal.title")}</span></h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.kristal.full_desc")}</p>
         </div>
       </section>
 
       <section className="pb-8 px-4"><div className="max-w-2xl mx-auto space-y-4">
-        <div className="glass-card p-8">
+        <div className="glass-card p-5 sm:p-8">
           <label className="block text-gray-400 text-xs uppercase tracking-wider mb-3">{t("fortune.common.question.label")}</label>
           <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 text-sm resize-none" rows={4} />
         </div>
@@ -56,7 +56,7 @@ export default function KristalPage() {
 
       {result && (
         <section className="pb-20 px-4"><div className="max-w-3xl mx-auto fade-in-up">
-          <div className="glass-card p-8 relative overflow-hidden glow">
+          <div className="glass-card p-5 sm:p-8 relative overflow-hidden glow">
             <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
             

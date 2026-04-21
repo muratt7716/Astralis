@@ -48,7 +48,7 @@ export default function HomePage() {
       <div className="relative z-10 pointer-events-none">
         <header className="absolute top-20 lg:top-28 left-0 right-0 z-20 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-7xl font-normal mb-6 font-serif tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] transition-all duration-700">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-normal mb-6 font-serif tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] transition-all duration-700">
               {t("home.hero.title_part1")}{" "}
               <span className="italic inline-block px-4 text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-amber-500 underline decoration-amber-500/20 underline-offset-[12px]">
                 {t("home.hero.title_part2_italic")}
@@ -82,7 +82,7 @@ export default function HomePage() {
         </header>
 
         {/* Hero Spacer to see the 3D gallery */}
-        <section className="relative h-screen pointer-events-none" />
+        <section className="relative h-[70vh] sm:h-screen pointer-events-none" />
 
         {/* Features Section - RESTORED */}
         <section className="py-24 px-4 bg-black/10">
@@ -91,7 +91,7 @@ export default function HomePage() {
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-serif">{t("home.explore.title")}</h2>
               <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("home.explore.subtitle")}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               {[
                 { icon: <CosmicIcon name="horoscope" size={48} />, title: t("nav.horoscope"), desc: t("home.feature.horoscope.desc"), href: "/yorumlar", theme: "from-purple-900/40 to-indigo-950/60" },
                 { icon: <CosmicIcon name="birthchart" size={48} />, title: t("nav.birthchart"), desc: t("home.feature.chart.desc"), href: "/dogum-haritasi", theme: "from-blue-900/40 to-cyan-950/60" },
@@ -101,14 +101,14 @@ export default function HomePage() {
               ].map((feature, idx) => (
                 <Link key={feature.title} href={feature.href} className="group">
                   <div className={`
-                      relative overflow-hidden rounded-[2.5rem] p-10 h-full 
+                      relative overflow-hidden rounded-[2.5rem] p-6 xl:p-10 h-full
                       bg-gradient-to-br ${feature.theme} border border-white/10
                       enhanced-glass hover:scale-[1.05] transition-all duration-700
                       hover:border-purple-500/50 hover:shadow-[0_0_50px_rgba(168,85,247,0.25)]
                       fade-in-up flex flex-col items-center text-center
                     `} style={{ animationDelay: `${idx * 0.1}s` }}>
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-700 relative z-10 shadow-inner">
+                    <div className="w-16 h-16 xl:w-24 xl:h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 xl:mb-8 group-hover:rotate-[10deg] group-hover:scale-110 transition-all duration-700 relative z-10 shadow-inner">
                       {feature.icon}
                     </div>
                     <h3 className="text-2xl font-brand font-bold text-white mb-4 tracking-wide relative z-10 group-hover:text-purple-300 transition-colors">
@@ -137,7 +137,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 font-serif tracking-tight">
+              <h2 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-8 font-serif tracking-tight">
                 {t("home.analytics.title")}
               </h2>
               <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto font-light leading-relaxed tracking-wide italic">
@@ -243,9 +243,9 @@ export default function HomePage() {
               <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-white/20 rounded-bl-2xl" />
               <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-white/20 rounded-br-2xl" />
 
-              <div className="relative z-10 grid md:grid-cols-2 gap-16 items-center">
+              <div className="relative z-10 grid md:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
                 <div className="text-center md:text-left">
-                  <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 font-serif leading-tight tracking-tighter">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 font-serif leading-tight tracking-tighter">
                     {t("home.featured.title.1")} <br />
                     <span className="italic text-cyan-300 drop-shadow-[0_0_25px_rgba(34,211,238,0.4)]">
                       {t("home.featured.title.2")}
@@ -270,7 +270,7 @@ export default function HomePage() {
 
                 <div className="flex justify-center items-center relative py-12">
                   {/* Astro-Instrument HUD Component */}
-                  <div className="relative w-72 h-72 md:w-96 md:h-96">
+                  <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-96 md:h-96">
                     {/* Background Glow */}
                     <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500/10 via-white/5 to-magenta-500/10 animate-pulse blur-3xl opacity-50" />
                     
@@ -286,7 +286,7 @@ export default function HomePage() {
                         {/* Glow Pass */}
                         <div className="absolute -inset-8 bg-cyan-500/10 rounded-full blur-2xl opacity-0 group-hover/core:opacity-100 transition-opacity duration-700" />
                         
-                        <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-2 border-white/20 bg-black/80 shadow-[0_0_50px_rgba(6,182,212,0.1)] flex items-center justify-center p-2">
+                        <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-2 border-white/20 bg-black/80 shadow-[0_0_50px_rgba(6,182,212,0.1)] flex items-center justify-center p-2">
                           <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-magenta-500/5 pointer-events-none" />
                           <ZodiacIcon signId="aries" size={144} className="w-full h-full object-cover opacity-90 group-hover/core:opacity-100 transition-opacity" />
                           

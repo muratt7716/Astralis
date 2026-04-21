@@ -87,7 +87,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative w-full overflow-hidden border-t border-white/5 pt-20 pb-10 bg-transparent backdrop-blur-sm">
+    <footer className="relative w-full overflow-hidden border-t border-white/5 pt-12 sm:pt-20 pb-10 bg-transparent backdrop-blur-sm">
       {/* Gradient Fade for Readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40 pointer-events-none" />
       
@@ -101,7 +101,7 @@ export default function Footer() {
         {/* Newsletter Section - Glass Card */}
         <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 mb-20 border border-white/10 bg-white/5 backdrop-blur-3xl group/footer-card">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10 opacity-50 transition-opacity duration-700 group-hover/footer-card:opacity-80" />
-          <div className="relative z-10 grid md:grid-cols-2 items-center gap-12">
+          <div className="relative z-10 grid md:grid-cols-2 items-center gap-6 md:gap-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="p-1 px-2 rounded-md bg-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -156,7 +156,7 @@ export default function Footer() {
         </div>
 
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3 mb-16">
+        <div className="grid grid-cols-1 gap-8 md:gap-12 md:grid-cols-2 lg:grid-cols-3 mb-16">
           {/* Column 1: Brand */}
           <div className="space-y-8">
             <Link href="/" className="flex items-center gap-3 group">

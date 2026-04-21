@@ -275,7 +275,7 @@ export default function HoraryPage() {
               </div>
 
               {/* ── Main grid ── */}
-              <div className="grid lg:grid-cols-[1fr_320px] gap-8 mb-8 items-start">
+              <div className="grid lg:grid-cols-[1fr_260px] xl:grid-cols-[1fr_320px] gap-8 mb-8 items-start">
 
                 {/* Left: wheel + planet detail */}
                 <div>

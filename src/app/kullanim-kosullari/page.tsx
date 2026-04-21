@@ -22,8 +22,8 @@ export default function KullanimKosullariPage() {
         <div className="glass-card p-8 mb-6">
           <h2 className="text-xl font-bold text-white mb-3">1. Hizmetin Kapsamı</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Astralis, kullanıcılarına eğlence amaçlı astroloji, burç yorumları, tarot, I Ching ve çeşitli fal
-            hizmetleri sunan bir dijital platformdur.
+            Astralis, kullanıcılarına eğlence amaçlı astroloji, burç yorumları, Rünler, I Ching ve çeşitli ezoterik
+            analiz hizmetleri sunan bir dijital platformdur.
           </p>
           <p className="text-gray-300 text-sm leading-relaxed">
             Platformumuzda sunulan içerikler kehanet veya kesin öngörü niteliği taşımaz. Astralis, sunduğu yorumların
@@ -75,7 +75,7 @@ export default function KullanimKosullariPage() {
         <div className="glass-card p-8 mb-6">
           <h2 className="text-xl font-bold text-white mb-3">4. Sorumluluk Sınırlaması</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Astralis, platformda sunulan fal ve astroloji yorumlarının doğruluğunu, eksiksizliğini veya belirli bir
+            Astralis, platformda sunulan ezoterik analizlerin ve astroloji yorumlarının doğruluğunu, eksiksizliğini veya belirli bir
             amaca uygunluğunu garanti etmez.
           </p>
           <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">

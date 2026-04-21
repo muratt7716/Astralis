@@ -139,7 +139,7 @@ export default function DreamAnalysisPage() {
             </div>
 
             {/* The 3 Layers */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               {/* Archaeological */}
               {result.layer_archaeological && (
                 <div className="enhanced-glass rounded-3xl p-6 border border-emerald-500/20 bg-gradient-to-b from-emerald-900/10 to-transparent group hover:border-emerald-500/40 transition-colors">

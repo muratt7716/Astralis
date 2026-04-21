@@ -50,7 +50,7 @@ export default function NumerologyPage() {
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <CosmicIcon name="numerology" size={80} className="mx-auto mb-6 animate-float" />
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 mb-4 pb-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 mb-4 pb-2">
             {t('num.hero.title')}
           </h1>
           <p className="text-lg text-purple-200/70 max-w-2xl mx-auto">
@@ -59,7 +59,7 @@ export default function NumerologyPage() {
         </div>
 
         {!isCalculated ? (
-          <div className="max-w-md mx-auto bg-white/5 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-[0_0_40px_rgba(139,92,246,0.15)]">
+          <div className="max-w-md mx-auto bg-white/5 backdrop-blur-xl p-5 sm:p-8 rounded-3xl border border-white/10 shadow-[0_0_40px_rgba(139,92,246,0.15)]">
             <h2 className="text-2xl font-bold mb-6 text-center text-white">{t('num.form.title')}</h2>
             <form onSubmit={handleCalculate} className="space-y-6">
               <div>

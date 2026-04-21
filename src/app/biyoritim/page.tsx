@@ -333,7 +333,7 @@ function BiyoritimContent() {
                 { id: "aesthetic", label: t("bio.aesthetic"), icon: <Palette className="size-8 text-amber-400" />, value: targetPoint.aesthetic, cycle: "43", data: summary.aesthetic, color: "#f59e0b", grad: "from-amber-500 to-yellow-400" },
                 { id: "spiritual", label: t("bio.spiritual"), icon: <Waves className="size-8 text-indigo-400" />, value: targetPoint.spiritual, cycle: "53", data: summary.spiritual, color: "#6366f1", grad: "from-indigo-500 to-blue-400" },
               ]).map((item) => (
-                <div key={item.id} className="enhanced-glass rounded-3xl p-8 border border-white/10 text-center hover:bg-white/[0.03] transition-all duration-500 hover:transform hover:scale-[1.02]">
+                <div key={item.id} className="enhanced-glass rounded-3xl p-5 sm:p-8 border border-white/10 text-center hover:bg-white/[0.03] transition-all duration-500 hover:transform hover:scale-[1.02]">
                   <div className="flex justify-center mb-4 opacity-80">{item.icon}</div>
                   <h3 className="text-white font-black tracking-widest text-lg uppercase mb-1">{item.label}</h3>
                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-6">{t("bio.cycle")}: {item.cycle} {t("bio.days")}</p>

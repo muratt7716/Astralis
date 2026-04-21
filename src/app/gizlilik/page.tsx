@@ -51,7 +51,7 @@ export default function GizlilikPage() {
             <div>
               <h3 className="text-white font-semibold text-sm mb-1">Kimlik Bilgileri</h3>
               <p className="text-gray-300 text-sm leading-relaxed">
-                Ad, doğum tarihi, doğum yeri, doğum saati — astroloji ve fal hesaplamalarının temelini oluşturur.
+                Ad, doğum tarihi, doğum yeri, doğum saati — astroloji ve analitik hesaplamaların temelini oluşturur.
               </p>
             </div>
             <div>
@@ -75,9 +75,9 @@ export default function GizlilikPage() {
               </p>
             </div>
             <div>
-              <h3 className="text-white font-semibold text-sm mb-1">Fal ve Yorum Verileri</h3>
+              <h3 className="text-white font-semibold text-sm mb-1">Ezoterik Yorum Verileri</h3>
               <p className="text-gray-300 text-sm leading-relaxed">
-                Kullanıcının gerçekleştirdiği fal seansları ve AI yorumları (interaction_logs tablosunda saklanır).
+                Kullanıcının gerçekleştirdiği seanslar ve analizler (interaction_logs tablosunda saklanır).
               </p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function GizlilikPage() {
             Kişisel verileriniz aşağıdaki amaçlar doğrultusunda KVKK&apos;nın 5. maddesi kapsamında işlenmektedir:
           </p>
           <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>Kişiselleştirilmiş astroloji ve fal hizmetlerinin sunulması</li>
+            <li>Kişiselleştirilmiş astroloji ve ezoterik analiz hizmetlerinin sunulması</li>
             <li>Hesap oluşturma ve kimlik doğrulamanın sağlanması (Supabase Auth)</li>
             <li>Hizmet kalitesinin iyileştirilmesi ve kullanıcı deneyiminin geliştirilmesi</li>
             <li>Yasal yükümlülüklerin yerine getirilmesi</li>
@@ -145,10 +145,10 @@ export default function GizlilikPage() {
           </p>
           <div className="space-y-3">
             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <h3 className="text-white font-semibold text-sm mb-1">Google Gemini AI</h3>
+              <h3 className="text-white font-semibold text-sm mb-1">Analitik İşlem Sağlayıcıları</h3>
               <p className="text-gray-300 text-sm leading-relaxed">
-                Astroloji ve fal yorumlarının üretilmesi için kullanılır. Google ile veri işleme anlaşması (DPA)
-                mevcuttur; gönderilen veriler yalnızca yanıt üretimi için kullanılır.
+                Astroloji ve ezoterik analizlerin üretilmesi için güvenli bulut tabanlı API servisleri kullanılır. İlgili firmalarla veri işleme anlaşması (DPA)
+                mevcuttur; gönderilen veriler yalnızca yanıt üretimi için kullanılır ve sistemleri eğitmek amacıyla saklanmaz.
               </p>
             </div>
             <div className="p-4 bg-white/5 rounded-xl border border-white/10">

@@ -58,7 +58,7 @@ export default function IChingPage() {
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="iching" size={80} className="mx-auto mb-6 animate-float" />
-          <h1 className="text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.iching.title")}</span></h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.iching.title")}</span></h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.iching.full_desc")}</p>
         </div>
       </section>
@@ -69,7 +69,7 @@ export default function IChingPage() {
           <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
         </div>
 
-        <div className="glass-card p-8 text-center">
+        <div className="glass-card p-5 sm:p-8 text-center">
           <h3 className="text-lg font-bold text-white mb-4">{t("fortune.iching.create_hex")} ({lines.length}/6 {t("fortune.iching.lines") || "keys"})</h3>
           
           <div className="flex flex-col-reverse items-center gap-2 mb-6 min-h-[180px] justify-end">
@@ -77,11 +77,11 @@ export default function IChingPage() {
               <div key={idx} className="flex items-center gap-2 fade-in-up">
                 <span className="text-gray-500 text-xs w-4">{idx + 1}</span>
                 {line === "yang" ? (
-                  <div className="w-32 h-4 bg-emerald-500 rounded"></div>
+                  <div className="w-24 sm:w-32 h-3 sm:h-4 bg-emerald-500 rounded"></div>
                 ) : (
-                  <div className="flex gap-3">
-                    <div className="w-14 h-4 bg-emerald-700 rounded"></div>
-                    <div className="w-14 h-4 bg-emerald-700 rounded"></div>
+                  <div className="flex gap-2 sm:gap-3">
+                    <div className="w-10 sm:w-14 h-3 sm:h-4 bg-emerald-700 rounded"></div>
+                    <div className="w-10 sm:w-14 h-3 sm:h-4 bg-emerald-700 rounded"></div>
                   </div>
                 )}
                 <span className="text-gray-500 text-xs">{line === "yang" ? "Yang ━" : "Yin ╍╍"}</span>
@@ -107,7 +107,7 @@ export default function IChingPage() {
 
       {hexagram && (
         <section className="pb-8 px-4"><div className="max-w-2xl mx-auto fade-in-up">
-          <div className="glass-card p-8 text-center border-l-4 border-emerald-500">
+          <div className="glass-card p-5 sm:p-8 text-center border-l-4 border-emerald-500">
             <span className="text-5xl block mb-3">{hexagram.emoji}</span>
             <h3 className="text-2xl font-bold text-white">{hexagram.id}. {hexagram.name}</h3>
             <p className="text-emerald-400 text-lg font-medium mb-2">{hexagram.chineseName}</p>
@@ -127,7 +127,7 @@ export default function IChingPage() {
       {result && (
         <section className="pb-20 px-4"><div className="max-w-3xl mx-auto space-y-4 fade-in-up">
           {/* Başlık ve Hexagram yorumu */}
-          <div className="glass-card p-8 glow">
+          <div className="glass-card p-5 sm:p-8 glow">
             <h3 className="text-2xl font-bold text-white mb-6">{result.title}</h3>
             {result.cards?.map((c: any, i: number) => (
               <div key={i} className="mb-4 p-5 bg-white/5 rounded-xl border border-white/10">

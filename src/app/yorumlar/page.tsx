@@ -71,7 +71,7 @@ export default function YorumlarPage() {
               </div>
             </div>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 tracking-tighter">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tighter">
             <span className="gradient-text">{t("horoscope.title")}</span>
           </h1>
           <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
@@ -82,11 +82,11 @@ export default function YorumlarPage() {
 
       {/* Periods */}
       <section className="py-8 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           {periods.map((period, idx) => (
             <Link key={period.id} href={`/yorumlar/${period.id}`} className="group">
               <div className={`
-                glass-card p-8 bg-gradient-to-br ${period.color} 
+                glass-card p-5 sm:p-6 xl:p-8 bg-gradient-to-br ${period.color}
                 hover:border-white/20 transition-all duration-700 
                 h-full flex flex-col items-center text-center relative overflow-hidden
                 fade-in-up border-opacity-30
@@ -97,7 +97,7 @@ export default function YorumlarPage() {
                 <div className="absolute -right-1 -bottom-1 w-8 h-8 border-b border-r border-white/10 rounded-br-xl" />
 
                 {/* Icon HUD Frame */}
-                <div className="relative mb-8 group-hover:scale-110 transition-transform duration-500">
+                <div className="relative mb-5 sm:mb-8 group-hover:scale-110 transition-transform duration-500">
                   <div className={`absolute -inset-3 rounded-full blur-md opacity-20 transition-opacity duration-500 group-hover:opacity-40`} style={{ backgroundColor: period.iconColor }} />
                   <div className={`relative w-20 h-20 rounded-full bg-black/40 border ${period.accent} flex items-center justify-center backdrop-blur-xl shadow-2xl overflow-hidden`}>
                     <period.icon className="size-10" style={{ color: period.iconColor }} />

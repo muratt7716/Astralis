@@ -58,7 +58,7 @@ export default function BurclarPage() {
           <div className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm md:text-base text-gray-400 mb-6 tracking-widest uppercase fade-in">
             {t("site.name")} • {t("zodiac.signs")}
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
             <span className="gradient-text">{t("zodiac.signs")}</span>
           </h1>
           <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
@@ -73,7 +73,7 @@ export default function BurclarPage() {
           <div className={`glass-card p-0 overflow-hidden border-t-4 transition-all duration-1000 ${events.retrogrades.length > 0 ? "border-t-amber-500/50 bg-amber-500/[0.02]" : "border-t-sky-500/50 bg-sky-500/[0.02]"}`}>
             <div className="grid grid-cols-1 lg:grid-cols-2">
               {/* Moon Section */}
-              <div className="p-8 md:p-12 flex flex-col items-center md:items-start justify-center border-b lg:border-b-0 lg:border-r border-white/5 relative overflow-hidden group">
+              <div className="p-5 sm:p-8 md:p-12 flex flex-col items-center md:items-start justify-center border-b lg:border-b-0 lg:border-r border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-purple-500/10 transition-colors duration-700" />
                 <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
                   <div className="text-8xl md:text-9xl group-hover:scale-110 transition-transform duration-700 drop-shadow-[0_0_50px_rgba(255,255,255,0.15)] select-none">
@@ -98,7 +98,7 @@ export default function BurclarPage() {
               </div>
 
               {/* Retrograde / Direct Section */}
-              <div className="p-8 md:p-12 flex flex-col justify-center relative overflow-hidden group">
+              <div className="p-5 sm:p-8 md:p-12 flex flex-col justify-center relative overflow-hidden group">
                 <div className="absolute bottom-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -mr-32 -mb-32 group-hover:bg-amber-500/10 transition-colors duration-700" />
                 <div className="relative z-10 w-full">
                   <div className="mb-6">

@@ -30,7 +30,7 @@ export default function LanguageSwitcher() {
         style={{ touchAction: "manipulation" }}
       >
         <span className="text-base">{languageInfo.flag}</span>
-        <span className="text-gray-300 hidden sm:inline">{languageInfo.nativeName}</span>
+        <span className="text-gray-300 hidden xl:inline">{languageInfo.nativeName}</span>
         <svg className={`w-3 h-3 text-gray-500 transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

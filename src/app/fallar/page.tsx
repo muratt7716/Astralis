@@ -186,7 +186,7 @@ export default function FallarPage() {
             <div className="absolute inset-0 bg-purple-600/30 blur-3xl rounded-full" />
             <Logo size={80} className="relative float" />
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold font-serif mb-6 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-serif mb-6 tracking-tight">
             <span className="gradient-text">{t("fallar.hero.title")}</span>
           </h1>
           <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
@@ -219,7 +219,7 @@ export default function FallarPage() {
 
                 <DivinationIcon id={sys.id} emoji={sys.emoji} color={sys.theme.svgColor} />
                 
-                <h3 className="text-3xl font-bold text-white mb-4 font-serif tracking-tight">{t(sys.nameKey)}</h3>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 font-serif tracking-tight">{t(sys.nameKey)}</h3>
                 <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-10 flex-grow max-w-xs">
                   {t(sys.descKey)}
                 </p>
