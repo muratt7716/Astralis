@@ -8,6 +8,7 @@ import { GUIDES } from "@/components/Profile/ProfileConstants";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import PremiumGate from "@/components/PremiumGate";
 
 interface Message {
   id: string;
@@ -187,6 +188,7 @@ export default function ChatPage() {
   }
 
   return (
+    <PremiumGate featureName="Mistik Rehber">
     <div className="fixed inset-0 bg-[#050505] flex flex-col text-white overflow-hidden">
 
       {/* ── Atmosfer katmanı ─────────────────────────────────────── */}
@@ -488,5 +490,6 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    </PremiumGate>
   );
 }

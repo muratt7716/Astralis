@@ -13,6 +13,7 @@ import {
   Telescope, Sparkles, AlertTriangle, CheckCircle2,
   Clock, Star, MessageCircle, ArrowLeft, Scroll, X
 } from "lucide-react";
+import PremiumGate from "@/components/PremiumGate";
 
 // ─── Types ───────────────────────────────────────────────────
 interface Stricture { type: string; severity: string; messageKey: string; }
@@ -118,6 +119,7 @@ export default function HoraryPage() {
 
   // ─── Render ────────────────────────────────────────────────
   return (
+    <PremiumGate featureName="Horary Astrolojisi">
     <div className="min-h-screen text-white" style={{ fontFamily:"'EB Garamond', serif", background:"#06090f" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -483,6 +485,7 @@ export default function HoraryPage() {
         </AnimatePresence>
       </div>
     </div>
+    </PremiumGate>
   );
 }
 
