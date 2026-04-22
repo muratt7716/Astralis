@@ -35,7 +35,7 @@ function BiyoritimContent() {
   const [activeTab, setActiveTab] = useState<"primary" | "advanced">("primary");
   const [partnerBirthDate, setPartnerBirthDate] = useState("");
   const [showPartner, setShowPartner] = useState(false);
-  const [relationType, setRelationType] = useState("Bilinmeyen Bağ");
+  const [relationType, setRelationType] = useState(t("bio.synergy.relation.love"));
   const [aiAnalysis, setAiAnalysis] = useState<{overview: string, clashes: string, psychodynamics: string, strategy: string} | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -257,14 +257,14 @@ function BiyoritimContent() {
                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-purple-500/50 text-purple-300 hover:bg-purple-500/10 transition-colors uppercase tracking-widest text-xs font-bold"
              >
                 <Heart className="size-4" /> 
-                {showPartner ? "Sinerji Modunu Kapat" : "Başka Birisiyle Sinerjini Ölç (Opsiyonel)"}
+                {showPartner ? t("bio.synergy.close") : t("bio.synergy.open")}
              </button>
 
              {showPartner && (
                 <div className="mt-4 grid md:grid-cols-2 gap-6 p-6 rounded-2xl border border-purple-500/20 bg-purple-900/10 fade-in">
                    <div>
                      <label className="block text-gray-300 font-bold mb-2 uppercase tracking-wider text-sm">
-                        Partnerin Doğum Tarihi
+                        {t("bio.synergy.partner_birth")}
                      </label>
                      <input
                        type="date"
@@ -277,17 +277,17 @@ function BiyoritimContent() {
                    </div>
                    <div>
                      <label className="block text-gray-300 font-bold mb-2 uppercase tracking-wider text-sm">
-                        Kişiyle Bağın Nedir?
+                        {t("bio.synergy.relation_label")}
                      </label>
                      <select
                        value={relationType}
                        onChange={(e) => { setRelationType(e.target.value); setShowResult(false); }}
                        className="w-full px-5 py-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all shadow-inner appearance-none"
                      >
-                       <option value="Aşk (Partner)">💕 Aşk (Partner)</option>
-                       <option value="İş (Patron/Ortak)">💼 İş (Patron/Ortak)</option>
-                       <option value="Aile/Arkadaş">👨‍👩‍👧 Aile/Arkadaş</option>
-                       <option value="Rakip/Geçimsiz">⚔️ Rakip/Mücadele</option>
+                       <option value={t("bio.synergy.relation.love")}>💕 {t("bio.synergy.relation.love")}</option>
+                       <option value={t("bio.synergy.relation.work")}>💼 {t("bio.synergy.relation.work")}</option>
+                       <option value={t("bio.synergy.relation.family")}>👨‍👩‍👧 {t("bio.synergy.relation.family")}</option>
+                       <option value={t("bio.synergy.relation.rival")}>⚔️ {t("bio.synergy.relation.rival")}</option>
                      </select>
                    </div>
                 </div>
@@ -327,13 +327,13 @@ function BiyoritimContent() {
                   onClick={() => setActiveTab("primary")}
                   className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${activeTab === 'primary' ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                 >
-                   Temel Mod
+                   {t("bio.mode.primary")}
                 </button>
                 <button
                   onClick={() => setActiveTab("advanced")}
                   className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${activeTab === 'advanced' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                 >
-                   Gelişmiş Mod
+                   {t("bio.mode.advanced")}
                 </button>
               </div>
             </div>
@@ -391,13 +391,13 @@ function BiyoritimContent() {
                   <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30">
                     <Sparkles className={`size-6 text-purple-400 ${isAnalyzing ? 'animate-spin-slow' : 'animate-pulse'}`} />
                   </div>
-                  Kozmik Üstadın Analizi
+                  {t("bio.analysis.master_title")}
                 </h3>
 
                 {isAnalyzing ? (
                   <div className="py-8 flex flex-col items-center justify-center space-y-4">
                     <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
-                    <p className="text-purple-400 font-bold uppercase tracking-widest text-sm animate-pulse">Kozmik verileriniz yorumlanıyor...</p>
+                    <p className="text-purple-400 font-bold uppercase tracking-widest text-sm animate-pulse">{t("bio.analysis.loading")}</p>
                   </div>
                 ) : aiAnalysis ? (
                   <div className="space-y-6 relative z-10">
@@ -411,7 +411,7 @@ function BiyoritimContent() {
                       <div className="bg-rose-950/30 p-6 rounded-2xl border border-rose-500/20 flex flex-col gap-3 group-hover:bg-rose-950/40 transition-colors">
                         <div className="flex items-center gap-2">
                            <AlertTriangle className="size-5 text-rose-500" />
-                           <span className="text-rose-500 font-bold uppercase tracking-widest text-xs">Kritik Çarpışmalar</span>
+                           <span className="text-rose-500 font-bold uppercase tracking-widest text-xs">{t("bio.analysis.clashes")}</span>
                         </div>
                         <p className="text-rose-200/80 text-sm leading-relaxed font-light">
                           {aiAnalysis.clashes}
@@ -421,7 +421,7 @@ function BiyoritimContent() {
                       <div className="bg-purple-950/30 p-6 rounded-2xl border border-purple-500/20 flex flex-col gap-3 group-hover:bg-purple-950/40 transition-colors">
                         <div className="flex items-center gap-2">
                            <Brain className="size-5 text-purple-500" />
-                           <span className="text-purple-500 font-bold uppercase tracking-widest text-xs">Psikolojik Dinamikler</span>
+                           <span className="text-purple-500 font-bold uppercase tracking-widest text-xs">{t("bio.analysis.psychodynamics")}</span>
                         </div>
                         <p className="text-purple-200/80 text-sm leading-relaxed font-light">
                           {aiAnalysis.psychodynamics}
@@ -431,7 +431,7 @@ function BiyoritimContent() {
                       <div className="bg-emerald-950/30 p-6 rounded-2xl border border-emerald-500/20 flex flex-col gap-3 group-hover:bg-emerald-950/40 transition-colors">
                         <div className="flex items-center gap-2">
                            <Activity className="size-5 text-emerald-500" />
-                           <span className="text-emerald-500 font-bold uppercase tracking-widest text-xs">Üstadın Stratejisi</span>
+                           <span className="text-emerald-500 font-bold uppercase tracking-widest text-xs">{t("bio.analysis.strategy")}</span>
                         </div>
                         <p className="text-emerald-200/80 text-sm leading-relaxed font-light">
                           {aiAnalysis.strategy}
@@ -447,13 +447,13 @@ function BiyoritimContent() {
             {showPartner && synergyCompat && (
               <div className="glass-card p-8 md:p-10 border-t-2 border-t-pink-500 shadow-2xl relative group fade-in-up">
                  <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/10 blur-[80px] pointer-events-none rounded-full" />
-                 <h3 className="text-white font-black tracking-widest text-xl uppercase mb-6 text-center">{relationType} Uyumu (Sinerji Yüzdesi)</h3>
+                 <h3 className="text-white font-black tracking-widest text-xl uppercase mb-6 text-center">{relationType} {t("bio.compat.title")}</h3>
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                     {[
-                      { label: "💖 Duygusal Uyum", value: synergyCompat.emotional, color: "text-pink-400" },
-                      { label: "🧠 Zihinsel Uyum", value: synergyCompat.intellectual, color: "text-blue-400" },
-                      { label: "⚡ Fiziksel Uyum", value: synergyCompat.physical, color: "text-emerald-400" },
-                      { label: "🌟 Toplam Sinerji", value: synergyCompat.average, color: "text-purple-400" },
+                      { label: t("bio.synergy.gauge.emotional"), value: synergyCompat.emotional, color: "text-pink-400" },
+                      { label: t("bio.synergy.gauge.intellectual"), value: synergyCompat.intellectual, color: "text-blue-400" },
+                      { label: t("bio.synergy.gauge.physical"), value: synergyCompat.physical, color: "text-emerald-400" },
+                      { label: t("bio.synergy.gauge.total"), value: synergyCompat.average, color: "text-purple-400" },
                     ].map((c, i) => (
                       <div key={i} className="bg-black/40 p-6 rounded-2xl border border-white/5 text-center flex flex-col justify-center items-center hover:bg-white/5 transition-colors">
                          <h4 className={`font-bold uppercase tracking-widest text-[10px] mb-3 ${c.color}`}>{c.label}</h4>
@@ -632,7 +632,7 @@ function BiyoritimContent() {
                     {t("bio.critical_title")}
                   </h3>
                   <p className="text-gray-400 text-sm mb-6 max-w-3xl font-light leading-relaxed pl-14">
-                    {t("bio.critical_desc")} Kritik günlerde enerjiniz yön değiştirir (pozitiften negatife veya tersi). Bu dengesizlik anlarında ekstra dikkatli, yavaş ve sakin kararlar alınız.
+                    {t("bio.critical.extended_desc")}
                   </p>
                   <ul className="space-y-3 pl-14">
                     {summary.criticalDays.map((day, i) => (

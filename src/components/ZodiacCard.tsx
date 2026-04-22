@@ -157,7 +157,7 @@ export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
             <div>
               <h3 className="text-white font-bold tracking-wide text-sm mb-1">{t(`zodiac.${sign.id}`)}</h3>
               <div className="text-[10px] text-gray-500 font-medium uppercase tracking-widest">
-                {sign.dateRange}
+                {t(sign.dateKey)}
               </div>
             </div>
           </div>
@@ -203,9 +203,12 @@ export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
             <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 font-serif tracking-tight leading-none group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/60 transition-all duration-700">
               {t(`zodiac.${sign.id}`)}
             </h3>
-            <div className="flex items-center gap-3">
-              <div className="h-px bg-gradient-to-r from-purple-500/50 to-transparent w-8 group-hover:scale-x-150 origin-left transition-transform duration-700" />
-              <p className="text-gray-400 text-xs font-bold tracking-[0.3em] uppercase">{sign.dateRange}</p>
+            <div className="flex flex-col">
+              <p className="text-gray-400 text-[10px] font-bold tracking-[0.3em] uppercase mb-1">{t(sign.dateKey)}</p>
+              <div className="flex items-center gap-3">
+                <div className="h-px bg-gradient-to-r from-purple-500/50 to-transparent w-8 group-hover:scale-x-150 origin-left transition-transform duration-700" />
+                <span className="text-[10px] font-bold text-purple-400 tracking-[0.3em] uppercase">{t("home.feature.cosmic_analysis")} →</span>
+              </div>
             </div>
           </div>
 

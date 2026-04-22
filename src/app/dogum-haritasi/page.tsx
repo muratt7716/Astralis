@@ -229,7 +229,7 @@ export default function DogumHaritasiPage() {
         try {
           const profile = await getCurrentProfile();
           if (profile) {
-            logInteraction(profile.id, "astrology", "Doğum haritası hesaplaması yapıldı");
+            logInteraction(profile.id, "astrology", t("log.birth_chart_cal"));
           }
         } catch (err) {
           console.error("Log failed", err);
@@ -290,7 +290,7 @@ export default function DogumHaritasiPage() {
               onClick={() => setShowFinder(!showFinder)}
               className="text-xs font-black uppercase tracking-[0.2em] text-purple-400 hover:text-purple-300 transition-all duration-300 flex items-center gap-2 mx-auto bg-purple-500/5 px-4 py-2 rounded-full border border-purple-500/10 group"
             >
-              <Sparkles className="size-3.5 group-hover:rotate-12 transition-transform" /> {showFinder ? "Hızlı Bulucuyu Kapat" : "Burcunu Hemen Öğren"}
+              <Sparkles className="size-3.5 group-hover:rotate-12 transition-transform" /> {showFinder ? t("chart.quick_finder.close") : t("chart.quick_finder.open")}
             </button>
           </div>
 
@@ -594,7 +594,7 @@ export default function DogumHaritasiPage() {
                 { key: "planets", label: t("chart.planets"), icon: Orbit },
                 { key: "houses", label: t("chart.houses"), icon: Home },
                 { key: "aspects", label: t("chart.aspects"), icon: Link2 },
-                { key: "ai-yorumu", label: "Harita Yorumu", icon: Brain },
+                { key: "ai-yorumu", label: t("chart.interpretation.tab"), icon: Brain },
               ] as const).map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${activeTab === tab.key
@@ -795,12 +795,12 @@ export default function DogumHaritasiPage() {
                 <div className="glass-card p-5 rounded-2xl">
                   <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                     <Link2 size={16} className="text-pink-400" />
-                    En Güçlü Açılar
+                    {t("chart.aspects.strongest_title")}
                   </h3>
                   {aspectInterpretLoading ? (
                     <div className="flex items-center gap-2 text-purple-400 text-xs">
                       <span className="inline-block w-3 h-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
-                      Açı yorumları hazırlanıyor...
+                      {t("chart.aspects.interpreting")}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -832,7 +832,7 @@ export default function DogumHaritasiPage() {
                 <div className="glass-card p-5 rounded-2xl">
                   <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                     <Home size={16} className="text-indigo-400" />
-                    Hayat Alanlarınızdaki Gezegenler
+                    {t("chart.houses.title_desc")}
                   </h3>
                   <div className="grid grid-cols-2 gap-2">
                     {result.houses.slice(0, 10).map((house) => {
@@ -858,7 +858,7 @@ export default function DogumHaritasiPage() {
                               })}
                             </div>
                           ) : (
-                            <span className="text-[9px] text-white/15 italic">Boş</span>
+                            <span className="text-[9px] text-white/15 italic">{t("chart.house.empty_short")}</span>
                           )}
                         </div>
                       );
@@ -994,7 +994,7 @@ export default function DogumHaritasiPage() {
                 {houseInterpretLoading && (
                   <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-500/5 border border-blue-500/10 text-blue-400 text-xs mb-2">
                     <span className="inline-block w-3 h-3 rounded-full border-2 border-blue-400 border-t-transparent animate-spin shrink-0" />
-                    Ev yorumları hazırlanıyor...
+                    {t("chart.houses.interpreting")}
                   </div>
                 )}
                 <div className="grid md:grid-cols-2 gap-3">
@@ -1118,7 +1118,7 @@ export default function DogumHaritasiPage() {
                 {aspectInterpretLoading && (
                   <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-purple-500/5 border border-purple-500/10 text-purple-400 text-xs mb-2">
                     <span className="inline-block w-3 h-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin shrink-0" />
-                    Açılar kişiselleştiriliyor...
+                    {t("chart.aspects.personalizing")}
                   </div>
                 )}
                 {filteredAspects.length === 0 ? (

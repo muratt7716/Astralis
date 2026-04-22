@@ -7,6 +7,7 @@ interface AuthContextType {
   user: any | null;
   profile: any | null;
   loading: boolean;
+  profileLoading: boolean;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  profileLoading: false,
   signOut: async () => {},
   updateProfile: async () => {},
   refreshProfile: async () => {},
@@ -25,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Prevent fetchProfile from running concurrently or redundantly
   const fetchingProfileFor = useRef<string | null>(null);
@@ -42,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Skip if we're already fetching for this user
     if (fetchingProfileFor.current === userId) return;
     fetchingProfileFor.current = userId;
+    setProfileLoading(true);
 
     try {
       const { data, error } = await supabase
@@ -61,6 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("[AuthProvider] fetchProfile error:", err);
     } finally {
       fetchingProfileFor.current = null;
+      setProfileLoading(false);
     }
   };
 
@@ -179,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, updateProfile, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileLoading, signOut, updateProfile, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

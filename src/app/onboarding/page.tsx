@@ -29,9 +29,21 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { t, language, dir } = useTranslation();
   const isRTL = dir === "rtl";
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth() as any;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const [isLoginProcessing, setIsLoginProcessing] = useState(false);
+  const [hasStartedProfileFetch, setHasStartedProfileFetch] = useState(false);
+
+  useEffect(() => {
+    if (user && profileLoading) {
+      setHasStartedProfileFetch(true);
+    }
+    // If we've started a fetch, and it completes, but profile is null, show form
+    if (hasStartedProfileFetch && !profileLoading && !profile && isLoginProcessing) {
+      setIsLoginProcessing(false);
+    }
+  }, [user, profileLoading, profile, hasStartedProfileFetch, isLoginProcessing]);
 
   useEffect(() => {
     if (!authLoading && user && profile) {
@@ -39,7 +51,7 @@ export default function OnboardingPage() {
     }
   }, [user, profile, authLoading, router]);
 
-  if (authLoading || (user && profile)) {
+  if (authLoading || profileLoading || isLoginProcessing || (user && profile)) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="space-y-4 text-center">
@@ -84,10 +96,12 @@ export default function OnboardingPage() {
   };
 
   const handleGoogleLogin = async (credential: string) => {
+    setIsLoginProcessing(true);
     try {
       await signInWithGoogleIdToken(credential);
     } catch (error: any) {
-      alert("Google girişi başarısız: " + error.message);
+      alert(t("auth.error.google") + " " + error.message);
+      setIsLoginProcessing(false);
     }
   };
 
@@ -145,15 +159,15 @@ export default function OnboardingPage() {
           </div>
 
           <p className="text-[10px] text-gray-500 uppercase tracking-widest leading-relaxed">
-            Astralis'e katılarak{" "}
+            {t("auth.terms.part1")}{" "}
             <Link href="/kullanim-kosullari" className="underline hover:text-white transition-colors duration-300">
-              kullanım koşullarını
+              {t("auth.terms.terms")}
             </Link>{" "}
-            ve{" "}
+            {t("auth.terms.part2")}{" "}
             <Link href="/gizlilik" className="underline hover:text-white transition-colors duration-300">
-              gizlilik politikasını
+              {t("auth.terms.privacy")}
             </Link>{" "}
-            kabul etmiş olursunuz.
+            {t("auth.terms.part3")}
           </p>
         </div>
       ) : (

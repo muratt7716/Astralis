@@ -2,7 +2,21 @@ import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_ROUTES = ['/profil', '/mistik-rehber'];
+const PROTECTED_ROUTES = [
+  '/profil', 
+  '/mistik-rehber',
+  '/numeroloji',
+  '/biyoritim',
+  '/horary',
+  '/ruya-analizi',
+  '/uyumluluk',
+  '/dogum-haritasi',
+  '/iching',
+  '/katina',
+  '/kristal',
+  '/runler',
+  '/fallar'
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

@@ -5,6 +5,7 @@ export interface ZodiacSign {
   symbol: string;
   emoji: string;
   dateRange: string;
+  dateKey: string;
   startDate: { month: number; day: number };
   endDate: { month: number; day: number };
   element: string;
@@ -31,6 +32,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♈",
     emoji: "🐏",
     dateRange: "21 Mart - 20 Nisan",
+    dateKey: "zodiac.date.koc",
     startDate: { month: 3, day: 21 },
     endDate: { month: 4, day: 20 },
     element: "Ateş",
@@ -55,6 +57,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♉",
     emoji: "🐂",
     dateRange: "21 Nisan - 20 Mayıs",
+    dateKey: "zodiac.date.boga",
     startDate: { month: 4, day: 21 },
     endDate: { month: 5, day: 20 },
     element: "Toprak",
@@ -79,6 +82,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♊",
     emoji: "👯",
     dateRange: "21 Mayıs - 21 Haziran",
+    dateKey: "zodiac.date.ikizler",
     startDate: { month: 5, day: 21 },
     endDate: { month: 6, day: 21 },
     element: "Hava",
@@ -103,6 +107,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♋",
     emoji: "🦀",
     dateRange: "22 Haziran - 22 Temmuz",
+    dateKey: "zodiac.date.yengec",
     startDate: { month: 6, day: 22 },
     endDate: { month: 7, day: 22 },
     element: "Su",
@@ -127,6 +132,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♌",
     emoji: "🦁",
     dateRange: "23 Temmuz - 22 Ağustos",
+    dateKey: "zodiac.date.aslan",
     startDate: { month: 7, day: 23 },
     endDate: { month: 8, day: 22 },
     element: "Ateş",
@@ -151,6 +157,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♍",
     emoji: "👩‍🌾",
     dateRange: "23 Ağustos - 22 Eylül",
+    dateKey: "zodiac.date.basak",
     startDate: { month: 8, day: 23 },
     endDate: { month: 9, day: 22 },
     element: "Toprak",
@@ -175,6 +182,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♎",
     emoji: "⚖️",
     dateRange: "23 Eylül - 22 Ekim",
+    dateKey: "zodiac.date.terazi",
     startDate: { month: 9, day: 23 },
     endDate: { month: 10, day: 22 },
     element: "Hava",
@@ -199,6 +207,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♏",
     emoji: "🦂",
     dateRange: "23 Ekim - 21 Kasım",
+    dateKey: "zodiac.date.akrep",
     startDate: { month: 10, day: 23 },
     endDate: { month: 11, day: 21 },
     element: "Su",
@@ -223,6 +232,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♐",
     emoji: "🏹",
     dateRange: "22 Kasım - 21 Aralık",
+    dateKey: "zodiac.date.yay",
     startDate: { month: 11, day: 22 },
     endDate: { month: 12, day: 21 },
     element: "Ateş",
@@ -247,6 +257,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♑",
     emoji: "🐐",
     dateRange: "22 Aralık - 20 Ocak",
+    dateKey: "zodiac.date.oglak",
     startDate: { month: 12, day: 22 },
     endDate: { month: 1, day: 20 },
     element: "Toprak",
@@ -271,6 +282,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♒",
     emoji: "🏺",
     dateRange: "21 Ocak - 18 Şubat",
+    dateKey: "zodiac.date.kova",
     startDate: { month: 1, day: 21 },
     endDate: { month: 2, day: 18 },
     element: "Hava",
@@ -295,6 +307,7 @@ export const zodiacSigns: ZodiacSign[] = [
     symbol: "♓",
     emoji: "🐟",
     dateRange: "19 Şubat - 20 Mart",
+    dateKey: "zodiac.date.balik",
     startDate: { month: 2, day: 19 },
     endDate: { month: 3, day: 20 },
     element: "Su",

@@ -27,7 +27,9 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Zap,
-  Info
+  Info,
+  Crown,
+  Grid
 } from "lucide-react";
 import { useFreemiumQuota } from "@/lib/freemium";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
@@ -169,7 +171,7 @@ function UyumlulukContent() {
       return;
     }
     
-    if (!isPremium && activeTab === "matrix") {
+    if (!isPremium && activeTab === "personal") {
       setPremiumVariant("premium_required");
       setShowPremium(true);
       return;
@@ -378,27 +380,27 @@ function UyumlulukContent() {
               {t("compatibility.tabs.simple")}
             </button>
             <button
-              onClick={() => setActiveTab("personal")}
-              className={`flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                activeTab === "personal" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              {t("compatibility.tabs.personal")}
-            </button>
-            <button
               onClick={() => {
                 if (!isPremium) {
                   setPremiumVariant("premium_required");
                   setShowPremium(true);
                   return;
                 }
-                setActiveTab("matrix");
+                setActiveTab("personal");
               }}
-              className={`flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                activeTab === "matrix" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-purple-400 font-bold hover:text-white bg-purple-500/10 border border-purple-500/30"
+              className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === "personal" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-purple-400 font-bold hover:text-white bg-purple-500/10 border border-purple-500/30"
               }`}
             >
-              🌌 MATRİS (PRO)
+              <Crown className="w-4 h-4" /> {t("compatibility.tabs.personal")}
+            </button>
+            <button
+              onClick={() => setActiveTab("matrix")}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === "matrix" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Grid className="w-4 h-4" /> {t("compatibility.tabs.matrix")}
             </button>
           </div>
         </div>

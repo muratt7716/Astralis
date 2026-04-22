@@ -3,7 +3,7 @@ import React from 'react';
 interface ZodiacIconProps {
   signId: string;
   className?: string;
-  size?: number;
+  size?: number | string;
   glowColor?: string;
   variant?: 'image' | 'classic';
 }

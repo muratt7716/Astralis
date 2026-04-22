@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { translations, type SupportedLanguage } from "@/lib/i18n-shared";
 import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
+import { Target, BookOpen, Heart, Sparkles, Globe } from "lucide-react";
 
 // Helper for server-side translation with interpolation
 const getT = (lang: SupportedLanguage) => (key: string, params?: Record<string, string>) => {
@@ -71,27 +72,27 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
   };
 
   return (
-    <div className="cosmic-gradient min-h-screen">
+    <div className="cosmic-gradient min-h-screen overflow-x-hidden">
       {/* Hero */}
       <section className={`pt-32 md:pt-40 pb-12 px-4 bg-gradient-to-b ${elementColors[sign.elementKey] || ""} to-transparent`}>
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
           <div className="relative group mb-8">
             <div className="absolute -inset-4 bg-white/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-            <div className="relative w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-2 border-white/20 shadow-[0_0_50px_rgba(255,255,255,0.1)] float">
-              <ZodiacIcon signId={signId} size={224} className="w-full h-full object-cover" />
+            <div className="relative w-40 h-40 md:w-56 md:h-56 rounded-full overflow-hidden border-2 border-white/20 shadow-[0_0_50px_rgba(255,255,255,0.1)] float mx-auto">
+              <ZodiacIcon signId={signId} size="100%" className="w-full h-full object-cover" />
             </div>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-2">{t(sign.nameKey)}</h1>
           <p className="text-xl text-gray-400 mb-4">{dateRange}</p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300">
-              {sign.elementEmoji} {t(sign.elementKey)}
+            <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 flex items-center justify-center whitespace-nowrap">
+              <Sparkles className="w-4 h-4 mr-2" /> {t(sign.elementKey)}
             </span>
-            <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300">
-              {sign.rulingPlanetEmoji} {t(sign.rulingPlanetKey)}
+            <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 flex items-center justify-center whitespace-nowrap">
+              <Globe className="w-4 h-4 mr-2" /> {t(sign.rulingPlanetKey)}
             </span>
-            <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300">
-              🎯 {t(sign.qualityKey)}
+            <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 flex items-center justify-center whitespace-nowrap">
+              <Target className="w-4 h-4 mr-2" /> {t(sign.qualityKey)}
             </span>
           </div>
         </div>
@@ -100,7 +101,7 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
       <div className="max-w-6xl mx-auto px-4 pb-20">
         {/* Quick Info */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">🎯 {t("chart.overview")}</h2>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Target className="text-purple-400 w-6 h-6" /> {t("chart.overview")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="glass-card p-4 text-center hover:border-purple-500/30 transition-colors">
               <p className="text-gray-500 text-xs mb-1">{t("astrology.label.lucky_numbers")}</p>
@@ -123,13 +124,13 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
 
         {/* Daily Horoscope */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">📖 {t("horoscope.daily")} {t("chart.interpretation.title")}</h2>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><BookOpen className="text-blue-400 w-6 h-6" /> {t("horoscope.daily")} {t("chart.interpretation.title")}</h2>
           <ClientHoroscopeCard signId={signId} period="daily" />
         </section>
 
         {/* Compatibility */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">💕 {t("nav.compatibility")}</h2>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Heart className="text-pink-400 w-6 h-6" /> {t("nav.compatibility")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {compatibleSigns.map((cs) => cs && (
               <Link key={cs.id} href={`/burclar/${cs.id}`}>

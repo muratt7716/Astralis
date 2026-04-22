@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "@/lib/i18n";
 import Logo from "./Cosmic/Logo";
-import { 
-  Mail, 
+import {
+  Mail,
   Sparkles,
   ArrowRight
 } from "lucide-react";
@@ -13,7 +13,7 @@ import { GlassButton } from "./ui/glass-button";
 
 export default function Footer() {
   const { t } = useTranslation();
-  
+
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState("");
@@ -38,12 +38,12 @@ export default function Footer() {
 
       setStatus('success');
       setEmail("");
-      
+
       // 3 saniye sonra resetle
       setTimeout(() => {
         setStatus('idle');
       }, 3000);
-      
+
     } catch (err: any) {
       console.error(err);
       setStatus('error');
@@ -57,16 +57,16 @@ export default function Footer() {
   ];
 
   const socialLinks = [
-    { 
+    {
       icon: (props: any) => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-          <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+          <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
         </svg>
-      ), 
-      label: "Instagram", 
-      href: "https://instagram.com" 
+      ),
+      label: "Instagram",
+      href: "https://instagram.com"
     },
   ];
 
@@ -77,6 +77,7 @@ export default function Footer() {
     { name: t("nav.numeroloji"), href: "/numeroloji" },
     { name: t("nav.biyoritim"), href: "/biyoritim" },
     { name: t("nav.ruya_analizi"), href: "/ruya-analizi" },
+    { name: t("nav.horary"), href: "/horary" },
   ];
 
   const supportLinks = [
@@ -90,7 +91,7 @@ export default function Footer() {
     <footer className="relative w-full overflow-hidden border-t border-white/5 pt-12 sm:pt-20 pb-10 bg-transparent backdrop-blur-sm">
       {/* Gradient Fade for Readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40 pointer-events-none" />
-      
+
       {/* Background Cosmic Effects */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-10">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/30 blur-[150px] rounded-full" />
@@ -116,7 +117,7 @@ export default function Footer() {
                 {t("footer.newsletter_desc")}
               </p>
             </div>
-            
+
             <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
               <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:bg-black/40 sm:p-1.5 sm:rounded-full sm:border sm:border-white/5 sm:shadow-2xl transition-all duration-300 focus-within:sm:border-cyan-500/30">
                 <input
@@ -128,20 +129,20 @@ export default function Footer() {
                   placeholder={t("footer.newsletter_placeholder")}
                   className="w-full sm:flex-1 bg-black/40 sm:bg-transparent border border-white/10 sm:border-none rounded-2xl sm:rounded-full text-white placeholder-gray-500 px-6 py-4 focus:ring-0 focus:outline-none text-base disabled:opacity-50"
                 />
-                <GlassButton 
-                  type="submit" 
-                  size="lg" 
+                <GlassButton
+                  type="submit"
+                  size="lg"
                   disabled={status === 'loading' || status === 'success'}
                   className="hover:border-cyan-500/50 w-full sm:w-auto relative"
                 >
                   {status === 'loading' ? (
                     <span className="flex items-center gap-2">
-                       <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                       Bekleniyor...
+                      <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      {t("footer.status.loading")}
                     </span>
                   ) : status === 'success' ? (
                     <span className="text-green-400 flex items-center gap-2">
-                       Abonelik Başarılı!
+                      {t("footer.status.success")}
                     </span>
                   ) : (
                     t("footer.newsletter_button")

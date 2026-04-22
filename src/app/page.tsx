@@ -62,12 +62,12 @@ export default function HomePage() {
               {authLoading ? (
                 <div className="flex items-center gap-2 text-white/20 text-[10px] uppercase tracking-widest animate-pulse">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Kozmik Veriler Senkronize Ediliyor...
+                  {t("home.hero.loading")}
                 </div>
               ) : user ? (
                 <Link href="/profil">
                   <GlassButton size="lg" className="hover:border-purple-500/30">
-                    Profilime Git
+                    {t("home.hero.profile_btn")}
                   </GlassButton>
                 </Link>
               ) : (

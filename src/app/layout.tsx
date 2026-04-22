@@ -51,7 +51,7 @@ export default async function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#070714] text-white font-sans min-h-screen antialiased">
+      <body className="bg-[#070714] text-white font-sans min-h-screen antialiased overflow-x-hidden">
         <Providers>
           <GlobalBackground />
           <ConditionalShell>

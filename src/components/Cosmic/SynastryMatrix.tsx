@@ -84,7 +84,7 @@ export default function SynastryMatrix() {
                           {t(rowSign.nameKey)} + {t(colSign.nameKey)}
                         </div>
                         <div className="text-xs text-white leading-tight">
-                          {score >= 80 ? "Mükemmel uyum ve doğal akış!" : score >= 60 ? "Uyumlu ama çaba gerektiren bir bağ." : "Zorlayıcı ama geliştirici bir etkileşim."}
+                          {score >= 80 ? t("synastry.matrix.high") : score >= 60 ? t("synastry.matrix.medium") : t("synastry.matrix.low")}
                         </div>
                         <div className={`
                           absolute ${colIndex < 2 ? "left-4" : colIndex > 9 ? "right-4" : "left-1/2 -translate-x-1/2"} 
@@ -105,19 +105,19 @@ export default function SynastryMatrix() {
       <div className="mt-6 flex flex-wrap justify-center gap-6 px-4">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-emerald-500/40 border border-emerald-500/50" />
-          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">Muazzam (%90+)</span>
+          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">{t("synastry.legend.incredible")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-cyan-500/40 border border-cyan-500/50" />
-          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">Çok İyi (%80+)</span>
+          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">{t("synastry.legend.verygood")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500/30 border border-blue-500/50" />
-          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">Uyumlu (%60+)</span>
+          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">{t("synastry.legend.compatible")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-red-500/30 border border-red-500/50" />
-          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">Sınav Yapıcı (%50-)</span>
+          <span className="text-[10px] text-gray-400 uppercase font-black uppercase tracking-widest">{t("synastry.legend.challenging")}</span>
         </div>
       </div>
     </div>

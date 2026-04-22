@@ -39,7 +39,7 @@ export default function RunlerPage() {
   };
 
   const allRevealed = drawnRunes.length > 0 && revealed.size === drawnRunes.length;
-  const positions = spread === "norns" ? [t("horoscope.past"), t("horoscope.present"), t("horoscope.future")] : [t("fortune.runler.position.odin")];
+  const positions = spread === "norns" ? [t("fortune.runler.position.past"), t("fortune.runler.position.present"), t("fortune.runler.position.future")] : [t("fortune.runler.position.odin")];
 
   const getReading = async () => {
     if (!isPremium && isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
@@ -50,7 +50,7 @@ export default function RunlerPage() {
     try {
       console.log("[Runes] Calling divination API for user:", user?.id);
       const res = await fetch("/api/divination", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "rune", cards: drawnRunes.map((r, i) => ({ name: `${r.symbol} ${r.name}`, meaning: r.isReversed ? r.reversed : r.meaning, reversed: r.isReversed })), question, language, userId: user?.id }) });
+        body: JSON.stringify({ type: "rune", cards: drawnRunes.map((r, i) => ({ name: `${r.symbol} ${t(r.nameKey)}`, meaning: r.isReversed ? t(r.reversedKey) : t(r.meaningKey), reversed: r.isReversed })), question, language, userId: user?.id }) });
       const data = await res.json();
       if (data.success) setResult(data.data);
     } catch (e) { console.error(e); }
@@ -76,7 +76,7 @@ export default function RunlerPage() {
             {runeSpreads.map(s => (
               <button key={s.id} onClick={() => { setSpread(s.id); setDrawnRunes([]); setResult(null); }}
                 className={`p-3 rounded-xl text-sm font-medium transition-all ${spread === s.id ? "bg-blue-600 text-white" : "bg-white/5 text-gray-400 hover:bg-white/10"}`}>
-                {s.name} ({s.count})
+                {t(s.nameKey)} ({s.count})
               </button>
             ))}
           </div>
@@ -103,15 +103,15 @@ export default function RunlerPage() {
                   {!isRevealed ? (
                     <div className="p-5 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-800 to-gray-900 border-2 border-blue-500/30 flex flex-col items-center justify-center hover:scale-105 transition-transform hover:border-blue-400/50 shadow-lg">
                       <span className="text-4xl text-gray-600">?</span>
-                      <p className="text-blue-300 text-xs mt-2">{positions[idx] || `Rün ${idx + 1}`}</p>
+                      <p className="text-blue-300 text-xs mt-2">{positions[idx] || `${t("fortune.runler.rune_index")} ${idx + 1}`}</p>
                     </div>
                   ) : (
                     <div className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-center fade-in-up shadow-lg ${rune.isReversed ? "bg-gradient-to-b from-red-900/30 to-gray-900 border-red-500/30" : "bg-gradient-to-b from-blue-900/30 to-gray-900 border-blue-500/30"}`}>
-                      <p className="text-gray-400 text-xs mb-2">{positions[idx] || `Rün ${idx + 1}`}</p>
+                      <p className="text-gray-400 text-xs mb-2">{positions[idx] || `${t("fortune.runler.rune_index")} ${idx + 1}`}</p>
                       <span className={`text-5xl font-bold mb-2 ${rune.isReversed ? "rotate-180 inline-block text-red-300" : "text-blue-200"}`} style={{ fontFamily: "serif" }}>{rune.symbol}</span>
-                      <p className="text-white font-bold">{rune.name}</p>
+                      <p className="text-white font-bold">{t(rune.nameKey)}</p>
                       {rune.isReversed && <p className="text-red-400 text-xs">{t("fortune.runler.reversed")}</p>}
-                      <p className="text-gray-400 text-xs mt-2 text-center">{rune.isReversed ? rune.reversed : rune.meaning}</p>
+                      <p className="text-gray-400 text-xs mt-2 text-center">{rune.isReversed ? t(rune.reversedKey) : t(rune.meaningKey)}</p>
                     </div>
                   )}
                 </div>
@@ -146,7 +146,7 @@ export default function RunlerPage() {
           {result.runic_pattern && (
             <div className="glass-card p-6 border border-blue-500/20">
               <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-                <Link2 className="size-5 text-blue-400" /> Runların Dokusu
+                <Link2 className="size-5 text-blue-400" /> {t("fortune.runler.reading.pattern")}
               </h4>
               <p className="text-gray-300 text-sm leading-relaxed">{result.runic_pattern}</p>
             </div>
@@ -155,7 +155,7 @@ export default function RunlerPage() {
           {/* Genel Sentez */}
           <div className="glass-card p-6 bg-blue-900/10 border border-blue-500/20">
             <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-              <Sparkles className="size-5 text-blue-400" /> Völva'nın Kehaneti
+              <Sparkles className="size-5 text-blue-400" /> {t("fortune.runler.reading.synthesis")}
             </h4>
             <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
           </div>
@@ -164,7 +164,7 @@ export default function RunlerPage() {
           {result.odin_wisdom && (
             <div className="glass-card p-5 border border-indigo-500/30 bg-indigo-900/10">
               <h4 className="text-base font-bold text-white mb-2 flex items-center gap-2">
-                <Feather className="size-5 text-indigo-400" /> Odin'in Fısıltısı
+                <Feather className="size-5 text-indigo-400" /> {t("fortune.runler.reading.wisdom")}
               </h4>
               <p className="text-indigo-200 text-sm italic leading-relaxed">"{result.odin_wisdom}"</p>
             </div>
@@ -174,7 +174,7 @@ export default function RunlerPage() {
           {result.spiritual_message && (
             <div className="glass-card p-6 border border-cyan-500/20 bg-cyan-900/10">
               <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-                <Eye className="size-5 text-cyan-400" /> Runik Öğreti
+                <Eye className="size-5 text-cyan-400" /> {t("fortune.runler.reading.message")}
               </h4>
               <p className="text-gray-300 text-sm leading-relaxed italic">{result.spiritual_message}</p>
             </div>
@@ -184,7 +184,7 @@ export default function RunlerPage() {
           {result.warning && (
             <div className="glass-card p-6 border border-red-500/20 bg-red-900/10">
               <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-                <AlertTriangle className="size-5 text-red-400" /> Gölge Enerji
+                <AlertTriangle className="size-5 text-red-400" /> {t("fortune.runler.reading.warning")}
               </h4>
               <p className="text-gray-300 text-sm leading-relaxed">{result.warning}</p>
             </div>
@@ -196,7 +196,7 @@ export default function RunlerPage() {
               <div className="glass-card p-5 border border-white/10 flex items-start gap-3">
                 <Lightbulb className="size-5 text-blue-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-white font-bold text-sm mb-1">Pratik Yol</p>
+                  <p className="text-white font-bold text-sm mb-1">{t("fortune.runler.reading.advice")}</p>
                   <p className="text-gray-300 text-sm leading-relaxed">{result.advice}</p>
                 </div>
               </div>
@@ -205,7 +205,7 @@ export default function RunlerPage() {
               <div className="glass-card p-5 border border-white/10 flex items-start gap-3">
                 <Clock className="size-5 text-purple-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-white font-bold text-sm mb-1">Norns'ların Zamanı</p>
+                  <p className="text-white font-bold text-sm mb-1">{t("fortune.runler.reading.timeframe")}</p>
                   <p className="text-gray-300 text-sm leading-relaxed">{result.timeframe}</p>
                 </div>
               </div>
