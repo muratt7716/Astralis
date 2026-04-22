@@ -40,6 +40,23 @@ export async function signInWithGoogle() {
 }
 
 /**
+ * Sign in silently with Google Identity Services (GIS) ID Token
+ */
+export async function signInWithGoogleIdToken(token: string) {
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: 'google',
+    token,
+  });
+
+  if (error) {
+    console.error("Google ID Token login error:", error.message);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
  * Fetch the current user's profile
  */
 export async function getCurrentProfile() {
@@ -102,21 +119,20 @@ export async function uploadAvatar(file: File) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User not authenticated");
 
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-  const filePath = `avatars/${fileName}`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("userId", user.id);
 
-  const { error: uploadError } = await supabase.storage
-    .from('cosmic-assets')
-    .upload(filePath, file);
+  const res = await fetch("/api/upload-avatar", {
+    method: "POST",
+    body: formData,
+  });
 
-  if (uploadError) {
-    throw uploadError;
+  const data = await res.json();
+  
+  if (!res.ok) {
+    throw new Error(data.error || "Sunucu yükleme hatası");
   }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from('cosmic-assets')
-    .getPublicUrl(filePath);
-
-  return publicUrl;
+  return data.url;
 }

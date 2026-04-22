@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { OnboardingForm } from "@/components/Cosmic/OnboardingForm";
-import { useAuth, signInWithGoogle, updateProfile, uploadAvatar } from "@/lib/auth-helpers";
+import { useAuth, signInWithGoogleIdToken, updateProfile, uploadAvatar } from "@/lib/auth-helpers";
 import { supabase } from "@/lib/supabase";
+import { GoogleLogin } from '@react-oauth/google';
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n";
 import { compressImage } from "@/lib/image-utils";
@@ -81,9 +83,9 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (credential: string) => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogleIdToken(credential);
     } catch (error: any) {
       alert("Google girişi başarısız: " + error.message);
     }
@@ -123,16 +125,35 @@ export default function OnboardingPage() {
              <p className="text-gray-400">{t("auth.login.subtitle")}</p>
           </div>
           
-          <Button 
-            onClick={handleGoogleLogin} 
-            className="w-full h-14 bg-white text-black hover:bg-gray-200 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
-          >
-            <GoogleIcon />
-            {t("auth.login.google")}
-          </Button>
+          
+          <div className="flex justify-center w-full playfair-btn-wrapper">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (credentialResponse.credential) {
+                  handleGoogleLogin(credentialResponse.credential);
+                }
+              }}
+              onError={() => {
+                console.error("Google Auth Başarısız");
+              }}
+              useOneTap
+              theme="filled_black"
+              shape="pill"
+              text="continue_with"
+              width="320"
+            />
+          </div>
 
           <p className="text-[10px] text-gray-500 uppercase tracking-widest leading-relaxed">
-            {t("auth.login.disclaimer")}
+            Astralis'e katılarak{" "}
+            <Link href="/kullanim-kosullari" className="underline hover:text-white transition-colors duration-300">
+              kullanım koşullarını
+            </Link>{" "}
+            ve{" "}
+            <Link href="/gizlilik" className="underline hover:text-white transition-colors duration-300">
+              gizlilik politikasını
+            </Link>{" "}
+            kabul etmiş olursunuz.
           </p>
         </div>
       ) : (

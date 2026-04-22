@@ -180,7 +180,7 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
 }
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageSquare, Sparkles, Eye, Info, Database } from "lucide-react";
+import { X, MessageSquare, Sparkles, Eye, Info, Database, Telescope, Star, HeartHandshake, Brain } from "lucide-react";
 
 export function ActivityDetailModal({ activity, onClose }: { activity: any; onClose: () => void }) {
   if (!activity) return null;
@@ -266,7 +266,40 @@ export function ActivityDetailModal({ activity, onClose }: { activity: any; onCl
               </div>
             )}
 
-            {activity.metadata?.full_result ? (
+            {activity.action_type === "horary" && activity.metadata?.full_result ? (
+              <div className="space-y-6">
+                {[
+                  { key: 'radicality', label: 'Harita Radikalliği', icon: Telescope },
+                  { key: 'primary_significators', label: 'Göstergeler', icon: Star },
+                  { key: 'moon_analysis', label: 'Ay Analizi', icon: Sparkles },
+                  { key: 'aspects', label: 'Açılar', icon: Eye },
+                  { key: 'receptions', label: 'Ağırlamalar', icon: HeartHandshake },
+                  { key: 'timing', label: 'Zamanlama', icon: Clock },
+                  { key: 'conclusion', label: 'Sonuç', icon: Brain },
+                ].map((item) => (
+                  activity.metadata.full_result[item.key] && (
+                    <div key={item.key} className="space-y-3">
+                      <p className="text-[10px] text-indigo-400 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+                        <item.icon className="w-3.5 h-3.5" />
+                        {item.label}
+                      </p>
+                      <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-5 rounded-2xl text-white/80 text-[15px] font-serif leading-relaxed">
+                        {activity.metadata.full_result[item.key]}
+                      </div>
+                    </div>
+                  )
+                ))}
+                
+                {activity.metadata.full_result.advice && (
+                  <div className="bg-gradient-to-r from-amber-500/[0.05] to-transparent border border-amber-500/10 p-5 rounded-2xl flex items-start gap-4 shadow-sm">
+                    <div className="p-2 rounded-full bg-amber-500/10 shrink-0">
+                       <Sparkles className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <p className="text-white/70 text-[14px] font-serif italic leading-relaxed pt-1.5">{activity.metadata.full_result.advice}</p>
+                  </div>
+                )}
+              </div>
+            ) : activity.metadata?.full_result ? (
               <div className="space-y-6">
                 {activity.metadata.full_result.cards?.map((c: any, i: number) => (
                   <div key={i} className="space-y-3">

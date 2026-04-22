@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { LanguageProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -21,10 +22,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        {children}
-      </LanguageProvider>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+      <AuthProvider>
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }

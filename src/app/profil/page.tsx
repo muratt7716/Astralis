@@ -142,12 +142,23 @@ export default function ProfilePage() {
   if (!profile && !authLoading) return null;
 
   // Handlers
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Optimistic preview
       setSelectedAvatar(file);
       setPreviewUrl(URL.createObjectURL(file));
-      showToast(t("profile.avatar_ready"));
+      
+      try {
+        const optimized = await compressImage(file);
+        const avatarUrl = await uploadAvatar(optimized);
+        // Only update the avatar_url in DB to prevent unwanted form overwrites
+        await updateProfile({ avatar_url: avatarUrl });
+        showToast(t("profile.saved") || "Profil resmi güncellendi!");
+      } catch (err: any) {
+        console.error("Avatar upload issue:", err);
+        showToast("Hata: " + err.message);
+      }
     }
   };
 
