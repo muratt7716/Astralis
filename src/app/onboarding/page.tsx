@@ -39,7 +39,7 @@ export default function OnboardingPage() {
     }
   }, [user, profile, authLoading, router]);
 
-  if (authLoading) {
+  if (authLoading || (user && profile)) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="space-y-4 text-center">
