@@ -8,15 +8,18 @@ import {
   generateBiorhythmSummary,
   calculateBiorhythmCompatibility,
 } from "@/lib/biorhythm";
-import { getCurrentProfile } from "@/lib/auth-helpers";
+import { getCurrentProfile, useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import PremiumModal from "@/components/PremiumModal";
 import { AlertTriangle, Info, TrendingUp, Heart, Brain, Dumbbell, Sparkles, Eye, Palette, Waves, Activity } from "lucide-react";
 
 function BiyoritimContent() {
   const { t, language } = useTranslation();
-  
+  const { profile } = useAuth();
+  const [showPremium, setShowPremium] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -82,6 +85,7 @@ function BiyoritimContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile?.is_premium) { setShowPremium(true); return; }
     if (parsedBirth) {
       router.push(`?birth=${birthDate}&target=${targetDateInput}`, { scroll: false });
       setShowResult(true);
@@ -165,6 +169,7 @@ function BiyoritimContent() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32 pb-16 px-4">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("bio.time_travel") || "Biyoritim"} />
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">

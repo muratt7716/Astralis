@@ -4,6 +4,7 @@ import { hexagrams } from "@/data/iching";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import PremiumModal from "@/components/PremiumModal";
 import { RefreshCw, Coins, Sparkles, Lightbulb, Info, ArrowLeft, Eye, AlertTriangle, Clock, Layers } from "lucide-react";
 
 export default function IChingPage() {
@@ -13,11 +14,13 @@ export default function IChingPage() {
   const [hexagram, setHexagram] = useState<typeof hexagrams[0] | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [flipping, setFlipping] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
 
   const throwCoin = () => {
     if (lines.length >= 6) return;
+    if (!profile?.is_premium) { setShowPremium(true); return; }
     setFlipping(true);
     setTimeout(() => {
       const coins = [Math.random() > 0.5 ? 3 : 2, Math.random() > 0.5 ? 3 : 2, Math.random() > 0.5 ? 3 : 2];
@@ -38,6 +41,7 @@ export default function IChingPage() {
 
   const getReading = async () => {
     if (!hexagram) return;
+    if (!profile?.is_premium) { setShowPremium(true); return; }
     if (!user) {
       console.warn("[IChing] User not found, logging might fail");
     }
@@ -55,6 +59,7 @@ export default function IChingPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("fortune.iching.title")} />
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="iching" size={80} className="mx-auto mb-6 animate-float" />

@@ -4,6 +4,7 @@ import { elderFutharkRunes, runeSpreads } from "@/data/runes";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import PremiumModal from "@/components/PremiumModal";
 import { Sparkles, Lightbulb, Info, Eye, AlertTriangle, Clock, Link2, Feather } from "lucide-react";
 
 export default function RunlerPage() {
@@ -14,11 +15,13 @@ export default function RunlerPage() {
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const [showPremium, setShowPremium] = useState(false);
 
   const selectedSpread = runeSpreads.find(s => s.id === spread)!;
 
   const draw = () => {
+    if (!profile?.is_premium) { setShowPremium(true); return; }
     setResult(null); setRevealed(new Set());
     const shuffled = [...elderFutharkRunes].sort(() => Math.random() - 0.5);
     const drawn = shuffled.slice(0, selectedSpread.count).map(r => ({
@@ -31,6 +34,7 @@ export default function RunlerPage() {
   const positions = spread === "norns" ? [t("horoscope.past"), t("horoscope.present"), t("horoscope.future")] : [t("fortune.runler.position.odin")];
 
   const getReading = async () => {
+    if (!profile?.is_premium) { setShowPremium(true); return; }
     if (!user) {
       console.warn("[Runes] User not found, logging might fail");
     }
@@ -47,6 +51,7 @@ export default function RunlerPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("fortune.runler.title")} />
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="runler" size={80} className="mx-auto mb-6 animate-float" />

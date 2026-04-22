@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
+import PremiumModal from "@/components/PremiumModal";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { 
   Moon, 
@@ -21,15 +22,17 @@ import {
 
 export default function DreamAnalysisPage() {
   const { t, language } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const [showPremium, setShowPremium] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (dream.trim().length < 10) return;
+    if (!profile?.is_premium) { setShowPremium(true); return; }
     setLoading(true);
     setError("");
     setResult(null);
@@ -60,6 +63,7 @@ export default function DreamAnalysisPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("dream.title")} />
       <div className="max-w-3xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
