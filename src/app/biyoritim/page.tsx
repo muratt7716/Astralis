@@ -12,13 +12,16 @@ import { getCurrentProfile, useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import PremiumModal from "@/components/PremiumModal";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
+import { useFreemiumQuota } from "@/lib/freemium";
 import { AlertTriangle, Info, TrendingUp, Heart, Brain, Dumbbell, Sparkles, Eye, Palette, Waves, Activity } from "lucide-react";
 
 function BiyoritimContent() {
   const { t, language } = useTranslation();
-  const { profile } = useAuth();
+  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("biyoritim");
   const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,7 +88,10 @@ function BiyoritimContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.is_premium) { setShowPremium(true); return; }
+    if (!isPremium) {
+      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
     if (parsedBirth) {
       router.push(`?birth=${birthDate}&target=${targetDateInput}`, { scroll: false });
       setShowResult(true);
@@ -169,7 +175,7 @@ function BiyoritimContent() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32 pb-16 px-4">
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("bio.time_travel") || "Biyoritim"} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName="Biyoritim" variant={premiumVariant} />
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -183,6 +189,9 @@ function BiyoritimContent() {
           <p className="text-gray-400 text-sm max-w-3xl mx-auto font-light leading-relaxed bg-black/20 p-4 rounded-2xl border border-white/5">
              {t("bio.main_desc")}
           </p>
+          <div className="mt-4">
+            <FreemiumBadge toolKey="biyoritim" />
+          </div>
         </div>
 
         {/* Biorhythm Guide */}

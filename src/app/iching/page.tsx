@@ -4,7 +4,9 @@ import { hexagrams } from "@/data/iching";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import PremiumModal from "@/components/PremiumModal";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
+import { useFreemiumQuota } from "@/lib/freemium";
 import { RefreshCw, Coins, Sparkles, Lightbulb, Info, ArrowLeft, Eye, AlertTriangle, Clock, Layers } from "lucide-react";
 
 export default function IChingPage() {
@@ -14,13 +16,18 @@ export default function IChingPage() {
   const [hexagram, setHexagram] = useState<typeof hexagrams[0] | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("iching");
   const [flipping, setFlipping] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   const throwCoin = () => {
     if (lines.length >= 6) return;
-    if (!profile?.is_premium) { setShowPremium(true); return; }
+    if (!isPremium) {
+      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      if (lines.length === 0) consumeQuota(); // consume on first coin throw
+    }
     setFlipping(true);
     setTimeout(() => {
       const coins = [Math.random() > 0.5 ? 3 : 2, Math.random() > 0.5 ? 3 : 2, Math.random() > 0.5 ? 3 : 2];
@@ -41,7 +48,7 @@ export default function IChingPage() {
 
   const getReading = async () => {
     if (!hexagram) return;
-    if (!profile?.is_premium) { setShowPremium(true); return; }
+    if (!isPremium && quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
     if (!user) {
       console.warn("[IChing] User not found, logging might fail");
     }
@@ -59,12 +66,13 @@ export default function IChingPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32">
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("fortune.iching.title")} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("fortune.iching.title")} variant={premiumVariant} />
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="iching" size={80} className="mx-auto mb-6 animate-float" />
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.iching.title")}</span></h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.iching.full_desc")}</p>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-4">{t("fortune.iching.full_desc")}</p>
+          <FreemiumBadge toolKey="iching" />
         </div>
       </section>
 

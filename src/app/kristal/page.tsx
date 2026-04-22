@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-helpers";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import PremiumModal from "@/components/PremiumModal";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
+import { useFreemiumQuota } from "@/lib/freemium";
 import { Sparkles, Orbit, Info } from "lucide-react";
 
 export default function KristalPage() {
@@ -11,12 +13,17 @@ export default function KristalPage() {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("kristal");
   const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   const getReading = async () => {
     if (!question.trim()) return;
-    if (!profile?.is_premium) { setShowPremium(true); return; }
+    if (!isPremium) {
+      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
     setResult(null); setLoading(true);
     try {
       const res = await fetch("/api/divination", { 
@@ -38,12 +45,13 @@ export default function KristalPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32">
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("fortune.kristal.title")} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("fortune.kristal.title")} variant={premiumVariant} />
       <section className="pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <CosmicIcon name="kristal" size={80} className="mx-auto mb-6 animate-float" />
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"><span className="gradient-text">{t("fortune.kristal.title")}</span></h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("fortune.kristal.full_desc")}</p>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-4">{t("fortune.kristal.full_desc")}</p>
+          <FreemiumBadge toolKey="kristal" />
         </div>
       </section>
 

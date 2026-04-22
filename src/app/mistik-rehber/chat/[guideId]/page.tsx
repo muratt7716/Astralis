@@ -6,9 +6,10 @@ import { useAuth } from "@/lib/auth-helpers";
 import { supabase } from "@/lib/supabase";
 import { GUIDES } from "@/components/Profile/ProfileConstants";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Lock } from "lucide-react";
+import { ArrowLeft, Send, Lock, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import PremiumGate from "@/components/PremiumGate";
+import PremiumModal from "@/components/PremiumModal";
+import { getMistikMessageCount, incrementMistikMessageCount, FREE_MISTIK_MESSAGES } from "@/lib/freemium";
 
 interface Message {
   id: string;
@@ -29,7 +30,8 @@ export default function ChatPage() {
   const guideId = params.guideId as string;
   const guide = GUIDES.find(g => g.id === guideId) || GUIDES[0];
 
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
+  const isPremium = profile?.is_premium ?? false;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -39,8 +41,17 @@ export default function ChatPage() {
   const [distinctDays, setDistinctDays] = useState(0);
   const [premiumBlocked, setPremiumBlocked] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [freeMessagesUsed, setFreeMessagesUsed] = useState(0);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Init free message count from localStorage
+  useEffect(() => {
+    if (!isPremium) {
+      setFreeMessagesUsed(getMistikMessageCount(guideId));
+    }
+  }, [guideId, isPremium]);
 
   // Auth + history yükleme
   const userId = user?.id;
@@ -97,9 +108,21 @@ export default function ChatPage() {
   const sendMessage = useCallback(async () => {
     if (!input.trim() || sending || !user) return;
 
+    // Free message limit check
+    if (!isPremium && freeMessagesUsed >= FREE_MISTIK_MESSAGES) {
+      setShowPremiumModal(true);
+      return;
+    }
+
     const userMessage = input.trim();
     setInput("");
     setSending(true);
+
+    // Increment free message count
+    if (!isPremium) {
+      const next = incrementMistikMessageCount(guideId);
+      setFreeMessagesUsed(next);
+    }
 
     const tempId = `temp-${Date.now()}`;
     setMessages(prev => [...prev, {
@@ -148,7 +171,7 @@ export default function ChatPage() {
       setSending(false);
       inputRef.current?.focus();
     }
-  }, [input, sending, user, guideId, conversationId]);
+  }, [input, sending, user, guideId, conversationId, isPremium, freeMessagesUsed]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -188,8 +211,13 @@ export default function ChatPage() {
   }
 
   return (
-    <PremiumGate featureName="Mistik Rehber">
     <div className="fixed inset-0 bg-[#050505] flex flex-col text-white overflow-hidden">
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        featureName="Mistik Rehber"
+        variant="premium_required"
+      />
 
       {/* ── Atmosfer katmanı ─────────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none">
@@ -436,6 +464,31 @@ export default function ChatPage() {
         style={{ background: "linear-gradient(to top, rgba(5,5,5,1) 60%, rgba(5,5,5,0))" }}
       >
         <div className="max-w-2xl mx-auto">
+          {/* Free message counter */}
+          {!isPremium && freeMessagesUsed < FREE_MISTIK_MESSAGES && (
+            <div className="flex items-center justify-center mb-2">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/30">
+                {Array.from({ length: FREE_MISTIK_MESSAGES }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      i < freeMessagesUsed ? "bg-white/20" : "bg-white/50"
+                    }`}
+                  />
+                ))}
+                <span className="ml-1">{FREE_MISTIK_MESSAGES - freeMessagesUsed} ücretsiz mesaj kaldı</span>
+              </div>
+            </div>
+          )}
+          {!isPremium && freeMessagesUsed >= FREE_MISTIK_MESSAGES && (
+            <button
+              onClick={() => setShowPremiumModal(true)}
+              className="w-full mb-2 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-purple-500/30 text-purple-300 text-xs font-medium hover:from-violet-600/30 hover:to-fuchsia-600/30 transition-all"
+            >
+              <Crown className="w-3.5 h-3.5" />
+              Ücretsiz mesaj hakkınız doldu — Premium'a geç
+            </button>
+          )}
           <div
             className={cn(
               "flex items-end gap-2 px-3 py-2 rounded-2xl border transition-all duration-200",
@@ -490,6 +543,5 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
-    </PremiumGate>
   );
 }

@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
-import PremiumModal from "@/components/PremiumModal";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
+import { useFreemiumQuota } from "@/lib/freemium";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { 
   Moon, 
@@ -22,17 +24,22 @@ import {
 
 export default function DreamAnalysisPage() {
   const { t, language } = useTranslation();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("ruya");
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
   const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (dream.trim().length < 10) return;
-    if (!profile?.is_premium) { setShowPremium(true); return; }
+    if (!isPremium) {
+      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
     setLoading(true);
     setError("");
     setResult(null);
@@ -63,7 +70,7 @@ export default function DreamAnalysisPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen pt-32">
-      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("dream.title")} />
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("dream.title")} variant={premiumVariant} />
       <div className="max-w-3xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
@@ -71,7 +78,8 @@ export default function DreamAnalysisPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-serif">
             {t("dream.title")}
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("dream.subtitle")}</p>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-4">{t("dream.subtitle")}</p>
+          <FreemiumBadge toolKey="ruya" />
         </div>
 
         {/* Form */}
