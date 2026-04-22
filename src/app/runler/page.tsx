@@ -18,7 +18,7 @@ export default function RunlerPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("runler");
+  const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("runler");
   const [showPremium, setShowPremium] = useState(false);
   const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
@@ -26,7 +26,7 @@ export default function RunlerPage() {
 
   const draw = () => {
     if (!isPremium) {
-      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
       consumeQuota();
     }
     setResult(null); setRevealed(new Set());
@@ -41,7 +41,7 @@ export default function RunlerPage() {
   const positions = spread === "norns" ? [t("horoscope.past"), t("horoscope.present"), t("horoscope.future")] : [t("fortune.runler.position.odin")];
 
   const getReading = async () => {
-    if (!isPremium && quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+    if (!isPremium && isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
     if (!user) {
       console.warn("[Runes] User not found, logging might fail");
     }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { grantPremium, revokePremium } from "./actions";
-import { Crown, Search, ShieldCheck, ShieldX, User, Calendar, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Crown, Search, ShieldCheck, ShieldX, User, Calendar, Loader2, CheckCircle, XCircle, Infinity, Repeat } from "lucide-react";
 
 interface UserRow {
   id: string;
@@ -74,7 +74,12 @@ function UserCard({ user }: { user: UserRow }) {
             <div className="flex items-center gap-2 mt-0.5">
               {user.is_premium ? (
                 <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">
-                  {user.subscription_type === "lifetime" ? "⭐ Lifetime" : "💜 Monthly"}
+                  <span className="flex items-center gap-1">
+                    {user.subscription_type === "lifetime"
+                      ? <><Infinity className="w-3 h-3" /> Lifetime</>
+                      : <><Repeat className="w-3 h-3" /> Monthly</>
+                    }
+                  </span>
                 </span>
               ) : (
                 <span className="text-[10px] text-white/25 uppercase tracking-wider">Free</span>

@@ -25,7 +25,7 @@ import {
 export default function DreamAnalysisPage() {
   const { t, language } = useTranslation();
   const { user } = useAuth();
-  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("ruya");
+  const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("ruya");
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -37,7 +37,7 @@ export default function DreamAnalysisPage() {
     e.preventDefault();
     if (dream.trim().length < 10) return;
     if (!isPremium) {
-      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
       consumeQuota();
     }
     setLoading(true);

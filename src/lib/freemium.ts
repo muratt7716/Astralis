@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-helpers";
 const STORAGE_KEY = "astralis_freemium_v1";
 const MISTIK_KEY = "astralis_mistik_v1";
 const FREE_TOOL_LIMIT = 1; // per day per tool
-export const FREE_MISTIK_MESSAGES = 5; // total free messages per guide
+export const FREE_MISTIK_MESSAGES = 5;
 
 // ── Storage helpers ────────────────────────────────────────────────────────
 
@@ -32,8 +32,10 @@ function getTodayUsage(): Record<string, number> {
 }
 
 function saveTodayUsage(usage: Record<string, any>) {
-  const today = getTodayKey();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...usage, date: today }));
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ ...usage, date: getTodayKey() })
+  );
 }
 
 // ── Mistik Rehber message counter ─────────────────────────────────────────
@@ -63,7 +65,7 @@ export function incrementMistikMessageCount(guideId: string): number {
   }
 }
 
-// ── Reset countdown (ms until midnight) ───────────────────────────────────
+// ── Reset countdown ────────────────────────────────────────────────────────
 
 export function getMsUntilMidnight(): number {
   const now = new Date();
@@ -83,49 +85,67 @@ export function formatResetTime(ms: number): string {
 }
 
 // ── Main hook ──────────────────────────────────────────────────────────────
+//
+// Key concepts:
+//   quotaUsedToday  — persistent: has the user used their quota today?
+//                     Used for badge display.
+//   sessionActive   — component-local: has the user consumed quota THIS session?
+//                     Once true, all subsequent actions in the same component
+//                     lifecycle are allowed (prevents mid-flow blocks).
+//   isBlocked       — true only when quota exhausted AND no active session.
+//                     Use this for action guards.
 
 export function useFreemiumQuota(toolKey: string) {
   const { profile, loading } = useAuth();
   const isPremium = profile?.is_premium ?? false;
 
-  const [quotaUsed, setQuotaUsed] = useState(false);
+  const [quotaUsedToday, setQuotaUsedToday] = useState(false);
+  const [sessionActive, setSessionActive] = useState(false);
   const [msUntilReset, setMsUntilReset] = useState(getMsUntilMidnight());
 
-  // Init quota state from localStorage
+  // Read quota from localStorage once profile is ready
   useEffect(() => {
     if (loading || isPremium) return;
     const usage = getTodayUsage();
-    setQuotaUsed((usage[toolKey] ?? 0) >= FREE_TOOL_LIMIT);
+    setQuotaUsedToday((usage[toolKey] ?? 0) >= FREE_TOOL_LIMIT);
   }, [toolKey, isPremium, loading]);
 
-  // Live countdown tick (every second)
+  // Live countdown + auto-reset at midnight
   useEffect(() => {
     const id = setInterval(() => {
       const ms = getMsUntilMidnight();
       setMsUntilReset(ms);
-      // Auto-reset quota when new day starts
       if (ms < 1000) {
-        setQuotaUsed(false);
+        setQuotaUsedToday(false);
+        setSessionActive(false);
       }
     }, 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Try to consume 1 quota unit. Returns true if allowed.
+  // Consume 1 quota unit. Returns true if the action should proceed.
+  // Idempotent: safe to call multiple times in the same session.
   const consumeQuota = useCallback((): boolean => {
     if (isPremium) return true;
+    if (sessionActive) return true; // already started this session
+
     const usage = getTodayUsage();
     const count = usage[toolKey] ?? 0;
     if (count >= FREE_TOOL_LIMIT) return false;
+
     usage[toolKey] = count + 1;
     saveTodayUsage(usage);
-    setQuotaUsed(count + 1 >= FREE_TOOL_LIMIT);
+    setQuotaUsedToday(count + 1 >= FREE_TOOL_LIMIT);
+    setSessionActive(true);
     return true;
-  }, [isPremium, toolKey]);
+  }, [isPremium, toolKey, sessionActive]);
 
   return {
     isPremium,
-    quotaUsed: !isPremium && quotaUsed,
+    /** Use for action guards: blocks only when quota gone AND no active session */
+    isBlocked: !isPremium && !sessionActive && quotaUsedToday,
+    /** Use for badge display: shows timer when quota was used today */
+    quotaUsed: !isPremium && quotaUsedToday,
     consumeQuota,
     msUntilReset,
     resetTimeStr: formatResetTime(msUntilReset),

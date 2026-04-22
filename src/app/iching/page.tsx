@@ -17,7 +17,7 @@ export default function IChingPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("iching");
+  const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("iching");
   const [flipping, setFlipping] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
   const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
@@ -25,7 +25,7 @@ export default function IChingPage() {
   const throwCoin = () => {
     if (lines.length >= 6) return;
     if (!isPremium) {
-      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
       if (lines.length === 0) consumeQuota(); // consume on first coin throw
     }
     setFlipping(true);
@@ -48,7 +48,7 @@ export default function IChingPage() {
 
   const getReading = async () => {
     if (!hexagram) return;
-    if (!isPremium && quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+    if (!isPremium && isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
     if (!user) {
       console.warn("[IChing] User not found, logging might fail");
     }

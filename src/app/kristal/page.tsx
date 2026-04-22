@@ -14,14 +14,14 @@ export default function KristalPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("kristal");
+  const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("kristal");
   const [showPremium, setShowPremium] = useState(false);
   const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   const getReading = async () => {
     if (!question.trim()) return;
     if (!isPremium) {
-      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
       consumeQuota();
     }
     setResult(null); setLoading(true);

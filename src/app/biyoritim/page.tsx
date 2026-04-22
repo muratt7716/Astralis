@@ -19,7 +19,7 @@ import { AlertTriangle, Info, TrendingUp, Heart, Brain, Dumbbell, Sparkles, Eye,
 
 function BiyoritimContent() {
   const { t, language } = useTranslation();
-  const { isPremium, quotaUsed, consumeQuota } = useFreemiumQuota("biyoritim");
+  const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("biyoritim");
   const [showPremium, setShowPremium] = useState(false);
   const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
@@ -89,7 +89,7 @@ function BiyoritimContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPremium) {
-      if (quotaUsed) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
       consumeQuota();
     }
     if (parsedBirth) {
