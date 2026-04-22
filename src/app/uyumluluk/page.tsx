@@ -2,12 +2,11 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { turkishCities } from "@/data/cities";
 import { countries } from "@/data/countries";
 import { useTranslation } from "@/lib/i18n";
 import { getZodiacById, zodiacSigns } from "@/data/zodiac";
-import CosmicInput from "@/components/Cosmic/CosmicInput";
 import CosmicSelect from "@/components/Cosmic/CosmicSelect";
+import LocationSearch from "@/components/ui/LocationSearch";
 import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 import PlanetIcon from "@/components/PlanetIcon";
@@ -30,6 +29,9 @@ import {
   Zap,
   Info
 } from "lucide-react";
+import { useFreemiumQuota } from "@/lib/freemium";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
 
 const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
   const sign = getZodiacById(signId);
@@ -59,9 +61,13 @@ const SignIcon = ({ signId, size = 80 }: { signId: string; size?: number }) => {
 };
 
 function UyumlulukContent() {
-  const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, language } = useTranslation();
+
+  const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("uyumluluk");
+  const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -70,12 +76,12 @@ function UyumlulukContent() {
 
   // Person 1 State
   const [p1, setP1] = useState({
-    day: "", month: "", year: "", hour: "", minute: "", country: "TR", city: "", manualCity: ""
+    day: "", month: "", year: "", hour: "", minute: "", country: "TR", city: "", lat: 0, lng: 0
   });
 
   // Person 2 State
   const [p2, setP2] = useState({
-    day: "", month: "", year: "", hour: "", minute: "", country: "TR", city: "", manualCity: ""
+    day: "", month: "", year: "", hour: "", minute: "", country: "TR", city: "", lat: 0, lng: 0
   });
   
   const [activeTab, setActiveTab] = useState<"simple" | "personal" | "matrix">((searchParams?.get("tab") as any) || "simple");
@@ -155,41 +161,41 @@ function UyumlulukContent() {
     }
   };
 
-  const getCityData = (countryCode: string, cityName: string) => {
-    if (countryCode === "TR") {
-      const city = turkishCities.find(c => c.name === cityName);
-      return { lat: city?.lat || 39.9, lng: city?.lng || 32.8 };
-    }
-    return { lat: 41.0, lng: 28.9 }; // Default fallback for manual cities
-  };
+
 
   const handleCalculate = async () => {
     if (!p1.day || !p1.month || !p1.year || !p2.day || !p2.month || !p2.year) {
       setError(t("error.date.both"));
       return;
     }
+    
+    if (!isPremium && activeTab === "matrix") {
+      setPremiumVariant("premium_required");
+      setShowPremium(true);
+      return;
+    }
+
+    if (!isPremium) {
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
+
     setError("");
     setLoading(true);
 
     try {
-      const p1City = p1.country === "TR" ? p1.city : p1.manualCity;
-      const p2City = p2.country === "TR" ? p2.city : p2.manualCity;
-
-      const p1LatLn = getCityData(p1.country, p1City);
-      const p2LatLn = getCityData(p2.country, p2City);
-
       const requestBody = {
         language,
         person1: {
           year: parseInt(p1.year), month: parseInt(p1.month), day: parseInt(p1.day),
           hour: parseInt(p1.hour || "12"), minute: parseInt(p1.minute || "0"),
-          latitude: p1LatLn.lat, longitude: p1LatLn.lng,
+          latitude: p1.lat || 41.0, longitude: p1.lng || 28.9,
           utcOffset: countries.find(c => c.code === p1.country)?.utcOffset || 3
         },
         person2: {
           year: parseInt(p2.year), month: parseInt(p2.month), day: parseInt(p2.day),
           hour: parseInt(p2.hour || "12"), minute: parseInt(p2.minute || "0"),
-          latitude: p2LatLn.lat, longitude: p2LatLn.lng,
+          latitude: p2.lat || 41.0, longitude: p2.lng || 28.9,
           utcOffset: countries.find(c => c.code === p2.country)?.utcOffset || 3
         }
       };
@@ -328,24 +334,20 @@ function UyumlulukContent() {
               onChange={e => { updateFn("country", e.target.value); updateFn("city", ""); }}
               options={countries.map(c => ({ value: c.code, label: c.name }))}
             />
-            {isTr ? (
-              <CosmicSelect
-                label={t("chart.city")}
+            <div>
+              <label className="block text-gray-400 text-xs font-medium uppercase tracking-widest pl-1 mb-1.5">{t("chart.city")}</label>
+              <LocationSearch
                 value={person.city}
-                onChange={e => updateFn("city", e.target.value)}
-                options={[
-                  { value: "", label: t("chart.city") },
-                  ...turkishCities.map(c => ({ value: c.name, label: c.name }))
-                ]}
+                onChange={(loc) => {
+                  updateFn("city", loc?.displayName || "");
+                  if (loc) {
+                    updateFn("lat", loc.lat.toString());
+                    updateFn("lng", loc.lng.toString());
+                  }
+                }}
+                inputClassName="!h-[50px] !rounded-xl"
               />
-            ) : (
-              <CosmicInput
-                label={t("chart.city")}
-                placeholder={t("chart.city")}
-                value={person.manualCity}
-                onChange={e => updateFn("manualCity", e.target.value)}
-              />
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -354,15 +356,17 @@ function UyumlulukContent() {
 
   return (
     <div className="bg-transparent min-h-screen">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName="Gelişmiş Sinastri v4.0" variant={premiumVariant} />
       <section className="pt-32 pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <Logo size={80} className="mx-auto mb-4 float" />
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text">{t("compatibility.title")}</span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-4">
             {t("compatibility.desc")}
           </p>
+          <FreemiumBadge toolKey="uyumluluk" />
 
           <div className="flex items-center justify-center gap-2 mt-12 bg-white/5 p-1.5 rounded-2xl border border-white/10 max-w-lg mx-auto">
             <button
@@ -382,12 +386,19 @@ function UyumlulukContent() {
               {t("compatibility.tabs.personal")}
             </button>
             <button
-              onClick={() => setActiveTab("matrix")}
+              onClick={() => {
+                if (!isPremium) {
+                  setPremiumVariant("premium_required");
+                  setShowPremium(true);
+                  return;
+                }
+                setActiveTab("matrix");
+              }}
               className={`flex-1 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                activeTab === "matrix" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-gray-400 hover:text-white"
+                activeTab === "matrix" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30" : "text-purple-400 font-bold hover:text-white bg-purple-500/10 border border-purple-500/30"
               }`}
             >
-              {t("compatibility.tabs.matrix")}
+              🌌 MATRİS (PRO)
             </button>
           </div>
         </div>

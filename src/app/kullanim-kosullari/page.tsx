@@ -18,128 +18,55 @@ export default function KullanimKosullariPage() {
         </h1>
         <p className="text-gray-400 text-sm mb-10">Son güncelleme: Nisan 2026</p>
 
-        {/* 1. Hizmetin Kapsamı */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">1. Hizmetin Kapsamı</h2>
+        {/* 1. Hizmetin Şartları */}
+        <div className="glass-card p-8 mb-6 shadow-xl border-l-4 border-l-amber-500">
+          <h2 className="text-xl font-bold text-white mb-3">1. Sözleşmenin Tarafları ve Niteliği</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Astralis, kullanıcılarına eğlence amaçlı astroloji, burç yorumları, Rünler, I Ching ve çeşitli ezoterik
-            analiz hizmetleri sunan bir dijital platformdur.
-          </p>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Platformumuzda sunulan içerikler kehanet veya kesin öngörü niteliği taşımaz. Astralis, sunduğu yorumların
-            bilimsel kanıta dayandığı iddiasında bulunmaz. Tüm içerikler yalnızca kişisel ilham ve eğlence amacıyla
-            tasarlanmıştır.
+            İşbu Kullanım Koşulları sözleşmesi, bir yanda Astralis Platformu ("Şirket") ile diğer yanda platforma herhangi bir arayüzden erişim sağlayan tüketici veya kullanıcı ("Kullanıcı") arasındaki yasal ticari ve dijital hizmet ilişkisini ihtiva eder. Platforma erişim sağlayarak veya üye olarak, tüm hukuki ve cezai yükümlülükleri eksiksiz olarak okuyup, idrak edip açıkça kabul ettiğinizi beyan edersiniz.
           </p>
         </div>
 
-        {/* 2. Kullanım Koşulları */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">2. Kullanım Kuralları</h2>
+        {/* 2. Sorumluluk Reddi */}
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">2. Kesin İbra ve Sorumluluğun Sınırlandırılması Yeminli Beyanı</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Platforma erişerek aşağıdaki koşulları kabul etmiş sayılırsınız:
+            Astralis üzerinde gerçekleştirilen astroloji, doğum haritası, Rün, I-Ching ve emsali tüm ezoterik analizlerin, bilimsel gerçekliği, mutlak kesinliği veya akademik geçerliliği <strong>iddia edilmemektedir.</strong> Uygulama, algoritmaların yorumlarına ve asırlık mitolojik sistemlere dayanan, <strong>sadece ve sadece EĞLENCE ve İÇGÖRÜ ("entertainment and introspection") amaçlı dijital bir servistir.</strong>
           </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>Platform 18 yaş ve üstü kullanıcılar için tasarlanmıştır.</li>
-            <li>Hesabınızı başkalarıyla paylaşmanız yasaktır; her kullanıcı yalnızca bir hesap oluşturabilir.</li>
-            <li>
-              Hizmetin kötüye kullanımı (spam, bot trafiği, zararlı içerik yayma vb.) hesabınızın geçici veya kalıcı
-              olarak askıya alınmasına neden olabilir.
-            </li>
-            <li>Platformu yalnızca yasal amaçlarla kullanmayı kabul edersiniz.</li>
-            <li>Başka kullanıcıların deneyimini olumsuz etkileyecek davranışlardan kaçınmanız beklenir.</li>
+          <ul className="space-y-2 text-gray-400 text-sm leading-relaxed list-disc list-inside mt-4 bg-white/5 p-4 rounded-xl">
+            <li>Platform içeriklerinden elde edilen analizler asla psikolojik, tıbbi, mali (ör: yatırım danışmanlığı), adli veya hukuki profesyonel teşhis, tedavi veya yönlendirme niteliği/yerini almaz.</li>
+            <li>Bu çıkarımlara dayanarak alınacak şahsi tüm fiili, mali, ticari ve manevi kararlardan tamamen ve salt Kullanıcı sorumludur.</li>
+            <li>Astralis ve bağlı teknoloji ortakları, sağlanan yorumlar üzerinden doğabilecek doğrudan veya dolaylı maddi/manevi hiçbir zarardan yasal ve cezai mesuliyet kabul etmez; bu hususta Kullanıcı, Şirket'i tam ve kati surette ibra etmiştir.</li>
           </ul>
         </div>
 
-        {/* 3. Premium Abonelik */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">3. Premium Abonelik</h2>
+        {/* 3. Dijital Abonelik */}
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">3. Premium Üyelik ve Cayma Hakkı İstisnası (Mesafeli Sözleşmeler Kapsamı)</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Astralis, ücretsiz ve premium olmak üzere iki kullanım planı sunmaktadır:
+            Ticaret Bakanlığı'na bağlı <span className="text-amber-400">Mesafeli Sözleşmeler Yönetmeliği Madde 15/(1)-(ğ)</span> bendi gereğince; "elektronik ortamda anında ifa edilen hizmetler veya tüketiciye anında teslim edilen gayrimaddi mallara ilişkin sözleşmeler" kapsamına giren dijital yazılım, kod ve anlık premium hesap aktivasyonu satışlarımızda <strong>CAYMA HAKKI KULLANILAMAZ</strong> ve ücret iadesi (refund) talep edilemez.
           </p>
           <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>Ücretsiz planda günlük içerik ve seans limitleri geçerlidir.</li>
-            <li>
-              Premium abonelik, ek özellikler ve sınırsız erişim sağlar; otomatik yenileme içerebilir.
-            </li>
-            <li>
-              Abonelik iptali, hesap ayarları sayfasından istediğiniz zaman gerçekleştirilebilir. İptal işlemi bir
-              sonraki fatura döneminden itibaren geçerli olur.
-            </li>
-            <li>
-              Astralis, abonelik ücretlerini önceden bildirerek değiştirme hakkını saklı tutar.
-            </li>
+            <li>Kullanıcı abonelik işlemini teyit ettiği an ifa anında yerine getirilmiş kabul edilir ve cayma süresine ilişkin istisna yürürlüğe girer.</li>
+            <li>Platform paket fiyatlarını, içerik erişim kotalarını veya abonelik türlerini önceden haber verilmeksizin piyasa koşullarına göre tek taraflı güncelleme hakkını saklı tutar.</li>
           </ul>
         </div>
 
-        {/* 4. Sorumluluk Sınırlaması */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">4. Sorumluluk Sınırlaması</h2>
+        {/* 4. Fikri Mülkiyet */}
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">4. Sınai Haklar ve Fikri Mülkiyet Muhafazası</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Astralis, platformda sunulan ezoterik analizlerin ve astroloji yorumlarının doğruluğunu, eksiksizliğini veya belirli bir
-            amaca uygunluğunu garanti etmez.
+            Astralis arayüzü, logoları, "Liquid Glass" ve türevi özgün UX tasarımları, metinler, astrolojik algoritma matrisleri, sistem mantığı ve yayınlanan diğer tüm sanatsal/matematiksel veriler, 5846 sayılı Fikir ve Sanat Eserleri Kanunu ile Markalar Kararnamesi dahil tüm uluslararası telif normlarınca koruma altındadır.
           </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>
-              Sunulan içerikler yatırım tavsiyesi, sağlık tavsiyesi veya hukuki danışmanlık niteliği taşımaz.
-            </li>
-            <li>
-              Kullanıcının platformdaki içeriklere dayanarak aldığı kararlardan Astralis sorumlu tutulamaz.
-            </li>
-            <li>
-              Teknik aksaklıklar, sunucu kesintileri veya veri kayıplarından doğabilecek dolaylı zararlar için
-              Astralis&apos;in sorumluluğu sınırlıdır.
-            </li>
-          </ul>
-        </div>
-
-        {/* 5. Fikri Mülkiyet */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">5. Fikri Mülkiyet</h2>
-          <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Platformda yer alan tüm içerikler, tasarımlar, görseller, yazılım kodları, metinler ve marka unsurları
-            Astralis&apos;e aittir ve telif hukuku ile fikri mülkiyet mevzuatı kapsamında koruma altındadır.
-          </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>
-              Astralis&apos;in yazılı izni olmaksızın içeriklerin kopyalanması, çoğaltılması veya dağıtılması yasaktır.
-            </li>
-            <li>
-              Platform üzerinde tersine mühendislik (reverse engineering) veya kaynak kodu çıkarma girişimleri
-              yasaktır.
-            </li>
-          </ul>
-        </div>
-
-        {/* 6. Değişiklikler */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">6. Koşullardaki Değişiklikler</h2>
           <p className="text-gray-300 text-sm leading-relaxed">
-            Astralis, bu Kullanım Koşulları&apos;nı önceden haber vermeksizin güncelleme hakkını saklı tutar. Önemli
-            değişiklikler e-posta veya platform bildirimleri aracılığıyla duyurulabilir. Değişikliklerin yayımlanmasından
-            sonra platformu kullanmaya devam etmeniz, güncel koşulları kabul ettiğiniz anlamına gelir. Bu sayfayı
-            düzenli olarak kontrol etmenizi öneririz.
+            Platform içeriklerinin veri madenciliği (data mining), kaynak kodu tersine mühendisliği (reverse engineering), ya da sunuculara aşırı yük bindirecek yetkisiz script ve robot manipülasyonlarıyla alınması açık bir siber suç teşkil eder. Böylesi girişimlerde Kullanıcı hesabı sistemden kalıcı olarak bertaraf edilir ve derhal yasal yollara başvurulur.
           </p>
         </div>
 
-        {/* 7. Uygulanacak Hukuk */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">7. Uygulanacak Hukuk ve Yetki</h2>
+        {/* 5. Yetkili Mahkeme */}
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">5. Yürürlük ve Uygulanacak Hukuk</h2>
           <p className="text-gray-300 text-sm leading-relaxed">
-            Bu Kullanım Koşulları, Türk Hukuku&apos;na tabidir. Koşulların uygulanmasından doğabilecek her türlü
-            uyuşmazlıkta İstanbul Mahkemeleri ve İcra Daireleri münhasıran yetkilidir.
-          </p>
-        </div>
-
-        {/* 8. İletişim */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">8. İletişim</h2>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Bu Kullanım Koşulları hakkında sorularınız veya bildirimleriniz için:
-          </p>
-          <p className="mt-3 text-sm">
-            <a href="mailto:destek@astralis.app" className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
-              destek@astralis.app
-            </a>
+            İşbu 5 (beş) temel hükümden oluşan Kullanım Koşulları, elektronik vasıtalarla onaylandığı saniyede kesinleşerek yürürlüğe girer. Taraflar arası ihtilafların vuku bulması halinde, esasa Türk Hukuku uygulanacak olup; yargı mercii ve kesin icra dairesi olarak <strong>İstanbul Merkez Çağlayan Mahkemeleri</strong> yetkili kılınmıştır.
           </p>
         </div>
 

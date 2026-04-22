@@ -21,6 +21,7 @@ import {
   PenTool,
   ArrowLeft
 } from "lucide-react";
+import { GlassButton } from "@/components/ui/glass-button";
 
 export default function DreamAnalysisPage() {
   const { t, language } = useTranslation();
@@ -96,25 +97,28 @@ export default function DreamAnalysisPage() {
                 required
                 minLength={10}
               />
-              <button
-                type="submit"
-                disabled={loading || dream.trim().length < 10}
-                className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white font-bold hover:scale-[1.02] transition-all duration-300 hover:shadow-[0_0_30px_rgba(139,92,246,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    {t("dream.analyzing")}
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    {t("dream.submit")} <Moon className="size-5" />
-                  </span>
-                )}
-              </button>
+              <div className="pt-6">
+                <GlassButton
+                  type="submit"
+                  fullWidth
+                  disabled={loading || dream.trim().length < 10}
+                  className="hover:border-purple-500/50"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      {t("dream.analyzing")}
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      {t("dream.submit")} <Moon className="size-5" />
+                    </span>
+                  )}
+                </GlassButton>
+              </div>
             </div>
           </form>
         )}

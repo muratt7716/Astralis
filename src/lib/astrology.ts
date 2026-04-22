@@ -140,7 +140,42 @@ function calculateJulianDay(year: number, month: number, day: number, hour: numb
 
 function calculateObliquity(jd: number): number {
   const T = (jd - 2451545.0) / 36525;
-  return 23.4393 - 0.013 * T;
+  // IAU 2000 mean obliquity (Lieske 1979, extended)
+  return 23.439291111
+    - 0.0130042   * T
+    - 0.00000016  * T * T
+    + 0.000000504 * T * T * T;
+}
+
+/**
+ * Nutation in longitude (Δψ) and obliquity (Δε) — simplified Brown terms
+ * Returns { dPsi, dEps } in degrees.
+ */
+function calculateNutation(jd: number): { dPsi: number; dEps: number } {
+  const T  = (jd - 2451545.0) / 36525;
+  // Longitude of ascending node of Moon
+  const omega = safeMod(125.04452 - 1934.136261 * T, 360);
+  // Mean longitude of Sun
+  const Ls = safeMod(280.4665 + 36000.7698 * T, 360);
+  // Mean longitude of Moon
+  const Lm = safeMod(218.3165 + 481267.8813 * T, 360);
+
+  const oRad = toRad(omega);
+  const lsRad = toRad(2 * Ls);
+  const lmRad = toRad(2 * Lm);
+
+  // Nutation in longitude (arcseconds → degrees)
+  const dPsiArc = -17.20 * Math.sin(oRad)
+                  -  1.32 * Math.sin(lsRad)
+                  -  0.23 * Math.sin(lmRad)
+                  +  0.21 * Math.sin(2 * oRad);
+  // Nutation in obliquity (arcseconds → degrees)
+  const dEpsArc =   9.20 * Math.cos(oRad)
+                  + 0.57 * Math.cos(lsRad)
+                  + 0.10 * Math.cos(lmRad)
+                  - 0.09 * Math.cos(2 * oRad);
+
+  return { dPsi: dPsiArc / 3600, dEps: dEpsArc / 3600 };
 }
 
 function calculateSunLongitude(jd: number): number {
@@ -159,12 +194,17 @@ function calculateLST(jd: number, longitude: number): number {
   let GMST = 280.46061837 + 360.98564736629 * (jd - 2451545.0) +
              0.000387933 * T * T - T * T * T / 38710000;
   GMST = safeMod(GMST, 360);
-  return safeMod(GMST + longitude, 360);
+  // Apparent sidereal time: apply nutation correction
+  const { dPsi } = calculateNutation(jd);
+  const obliquity = calculateObliquity(jd) + calculateNutation(jd).dEps;
+  const eqEq = dPsi * Math.cos(toRad(obliquity)); // equation of the equinoxes
+  return safeMod(GMST + eqEq + longitude, 360);
 }
 
 function calculateAscendant(jd: number, latitude: number, longitude: number): number {
   const LST = calculateLST(jd, longitude);
-  const obliquity = calculateObliquity(jd);
+  const { dEps } = calculateNutation(jd);
+  const obliquity = calculateObliquity(jd) + dEps; // true obliquity
   const LSTrad = toRad(LST);
   const oblRad = toRad(obliquity);
   const latRad = toRad(latitude);

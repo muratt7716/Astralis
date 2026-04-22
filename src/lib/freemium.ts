@@ -84,6 +84,31 @@ export function formatResetTime(ms: number): string {
   return `${s}sn`;
 }
 
+// ── Multi-tool overview ───────────────────────────────────────────────────
+
+export const FEATURE_KEYS = [
+  { id: 'dogum-haritasi', label: 'Doğum Haritası', isPremiumOnly: true },
+  { id: 'uyumluluk', label: 'Aşk ve Uyumluluk', isPremiumOnly: false },
+  { id: 'ruya-analizi', label: 'Rüya Analizi', isPremiumOnly: false },
+  { id: 'horary', label: 'Soru Astrolojisi', isPremiumOnly: true },
+  { id: 'biyoritim', label: 'Biyoritim Uzmanı', isPremiumOnly: false },
+  { id: 'numeroloji', label: 'Numeroloji', isPremiumOnly: true },
+  { id: 'kristal', label: 'Kristal Küre', isPremiumOnly: false },
+  { id: 'iching', label: 'I-Ching', isPremiumOnly: false },
+  { id: 'runler', label: 'Runik Kehanet', isPremiumOnly: false }
+];
+
+export function getAllToolQuotas() {
+  if (typeof window === "undefined") return [];
+  const usage = getTodayUsage();
+  return FEATURE_KEYS.map(f => ({
+    ...f,
+    used: (usage[f.id] ?? 0) >= FREE_TOOL_LIMIT,
+    limit: FREE_TOOL_LIMIT,
+    count: usage[f.id] ?? 0
+  }));
+}
+
 // ── Main hook ──────────────────────────────────────────────────────────────
 //
 // Key concepts:
@@ -98,6 +123,7 @@ export function formatResetTime(ms: number): string {
 export function useFreemiumQuota(toolKey: string) {
   const { profile, loading } = useAuth();
   const isPremium = profile?.is_premium ?? false;
+  const isPremiumOnly = FEATURE_KEYS.find(f => f.id === toolKey)?.isPremiumOnly ?? false;
 
   const [quotaUsedToday, setQuotaUsedToday] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
@@ -105,7 +131,7 @@ export function useFreemiumQuota(toolKey: string) {
 
   // Read quota from localStorage once profile is ready
   useEffect(() => {
-    if (loading || isPremium) return;
+    if (loading || isPremium || isPremiumOnly) return;
     const usage = getTodayUsage();
     setQuotaUsedToday((usage[toolKey] ?? 0) >= FREE_TOOL_LIMIT);
   }, [toolKey, isPremium, loading]);
@@ -142,8 +168,9 @@ export function useFreemiumQuota(toolKey: string) {
 
   return {
     isPremium,
+    isPremiumOnly,
     /** Use for action guards: blocks only when quota gone AND no active session */
-    isBlocked: !isPremium && !sessionActive && quotaUsedToday,
+    isBlocked: isPremiumOnly ? !isPremium : (!isPremium && !sessionActive && quotaUsedToday),
     /** Use for badge display: shows timer when quota was used today */
     quotaUsed: !isPremium && quotaUsedToday,
     consumeQuota,

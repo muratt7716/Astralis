@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "@/lib/i18n";
+import LocationSearch from "@/components/ui/LocationSearch";
 
 interface OnboardingFormProps extends React.HTMLAttributes<HTMLDivElement> {
   imageSrc: string;
@@ -196,12 +197,11 @@ const OnboardingForm = React.forwardRef<HTMLDivElement, OnboardingFormProps>(
                       </div>
                       <div className={cn("space-y-1", isRTL ? "text-right" : "text-left")}>
                         <label className={cn("text-xs text-gray-400", isRTL ? "mr-2" : "ml-2")}>{t("onboarding.birth_city")}</label>
-                        <Input 
-                          placeholder={t("chart.city")} 
-                          className="bg-white/5 border-white/10 text-white"
+                        <LocationSearch
                           value={formData.birthCity}
-                          onChange={(e) => setFormData({ ...formData, birthCity: e.target.value })}
-                          required
+                          onChange={(loc) => setFormData({ ...formData, birthCity: loc?.displayName || "" })}
+                          variant="onboarding"
+                          inputClassName="!h-10 !rounded-md"
                         />
                       </div>
                    </div>

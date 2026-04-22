@@ -1,6 +1,6 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Clock, MapPin, Settings, LogOut, ArrowUpCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Settings, LogOut, ArrowUpCircle, Crown } from "lucide-react";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { motion } from "framer-motion";
@@ -34,6 +34,15 @@ export function ProfileHero({
 }: ProfileHeroProps) {
   const { t, dir } = useTranslation();
 
+  const isPremium = profile?.is_premium;
+  const isLifetime = profile?.subscription_type === 'lifetime';
+  const endDate = profile?.subscription_end_date ? new Date(profile.subscription_end_date) : null;
+  let remainingDays = null;
+  if (!isLifetime && endDate) {
+    const diff = endDate.getTime() - new Date().getTime();
+    remainingDays = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+
   return (
     <motion.section 
       initial={{ opacity: 0, y: 30 }} 
@@ -56,9 +65,19 @@ export function ProfileHero({
 
         {/* Info */}
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl font-sans font-bold tracking-tight text-white mb-2">
-            {profile?.full_name}
-          </h1>
+          <div className="flex flex-col md:flex-row items-center md:items-baseline gap-3 mb-2">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-white">
+              {profile?.full_name}
+            </h1>
+            {isPremium && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/20 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)] group hover:shadow-[0_0_30px_rgba(245,158,11,0.25)] transition-all">
+                <Crown className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-bold text-amber-300/90 tracking-widest uppercase">
+                  {isLifetime ? "Pro • Sınırsız" : `Pro • ${remainingDays ?? 0} Gün`}
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Zodiac triple */}
           {(zodiacSign || risingSignName || moonSignName) && (

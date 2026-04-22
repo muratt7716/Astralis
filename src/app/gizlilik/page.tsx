@@ -19,211 +19,74 @@ export default function GizlilikPage() {
         <p className="text-gray-400 text-sm mb-10">Son güncelleme: Nisan 2026</p>
 
         {/* 1. Veri Sorumlusu */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">1. Veri Sorumlusu</h2>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) kapsamında veri sorumlusu sıfatını taşıyan işletme
-            aşağıda belirtilmiştir:
+        <div className="glass-card p-8 mb-6 border-l-4 border-l-purple-500 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">1. Veri Sorumlusu ve Amacımız</h2>
+          <p className="text-gray-300 text-sm leading-relaxed mb-2">
+            6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) ve ilgili alt mevzuat kapsamında, Astralis (&quot;Veri Sorumlusu&quot; veya &quot;Şirket&quot;) olarak kişisel verilerinizin hukuka uygun olarak işlenmesine, korunmasına ve veri minimizasyonu ilkesine azami özeni göstermekteyiz.
           </p>
-          <ul className="mt-3 space-y-1 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>
-              <span className="font-semibold text-white">İşletme adı:</span> Astralis
-            </li>
-            <li>
-              <span className="font-semibold text-white">Platform:</span> astralis.app
-            </li>
-            <li>
-              <span className="font-semibold text-white">İletişim:</span>{" "}
-              <a href="mailto:destek@astralis.app" className="text-purple-400 hover:text-purple-300 transition-colors">
-                destek@astralis.app
-              </a>
-            </li>
-          </ul>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            Bu aydınlatma metni, sunduğumuz dijital astroloji ve ezoterik analiz hizmetleri kapsamında hangi verilerinizi, hangi daraltılmış amaçlarla işlediğimizi şeffaf bir biçimde ortaya koymak amacıyla hazırlanmıştır.
+          </p>
         </div>
 
         {/* 2. Toplanan Veriler */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">2. Toplanan Kişisel Veriler</h2>
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-4">2. İşlenen Kişisel Veriler ve Veri Minimizasyonu</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-4">
-            Hizmetlerimizi sunabilmek amacıyla aşağıdaki kişisel veriler işlenmektedir:
+            Astralis, <strong>&quot;Veri Minimizasyonu&quot; (gerektiği kadar veri işleme)</strong> evrensel hukuk prensibini esas alır. Kullanıcılarımızdan asla gerçek ad-soyad, T.C. kimlik numarası, açık adres veya finansal kimlik doğrulayıcı veriler talep edilmez ve arşivlenmez. Yalnızca aşağıdaki asgari veriler işlenmektedir:
           </p>
-          <div className="space-y-3">
-            <div>
-              <h3 className="text-white font-semibold text-sm mb-1">Kimlik Bilgileri</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Ad, doğum tarihi, doğum yeri, doğum saati — astroloji ve analitik hesaplamaların temelini oluşturur.
+          <div className="space-y-4">
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+              <h3 className="text-purple-300 font-bold text-sm mb-1">Astrolojik Çekirdek Veriler (Sözde Anonim)</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Kullanıcı adı (rumuz), doğum tarihi, doğum yeri (şehir düzeyinde) ve doğum saati. Bu veriler yalnızca astronomik hesaplamalar ve göksel konumlandırmaların matematiksel formülasyonu için teknik altyapımıza anlık olarak iletilir.
               </p>
             </div>
-            <div>
-              <h3 className="text-white font-semibold text-sm mb-1">İletişim Bilgileri</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                E-posta adresi — hesap oluşturma, kimlik doğrulama ve bildirimler için kullanılır.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold text-sm mb-1">Kullanım Verileri</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Uygulama içi etkileşimler, tercihler, görüntülenen içerikler — hizmet kalitesini artırmak amacıyla
-                işlenir.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold text-sm mb-1">Teknik Veriler</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                IP adresi, cihaz türü, tarayıcı bilgisi — Vercel ve Supabase altyapısı tarafından otomatik olarak
-                toplanır.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold text-sm mb-1">Ezoterik Yorum Verileri</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Kullanıcının gerçekleştirdiği seanslar ve analizler (interaction_logs tablosunda saklanır).
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+              <h3 className="text-purple-300 font-bold text-sm mb-1">Dijital Ayak İzi ve İletişim Verileri</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Hesap güvenliği ve kimlik doğrulama süreçleri için yalnızca E-posta adresi (Google vb. kimlik doğrulayıcılarla entegre) ve genel analitik veri amacı taşıyan standart tarayıcı giriş (log) bilgileri işlenmektedir.
               </p>
             </div>
           </div>
         </div>
 
-        {/* 3. Verilerin İşlenme Amacı */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">3. Verilerin İşlenme Amacı</h2>
-          <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Kişisel verileriniz aşağıdaki amaçlar doğrultusunda KVKK&apos;nın 5. maddesi kapsamında işlenmektedir:
+        {/* 3. KVKK M.9Yurtdışı Aktarım */}
+        <div className="glass-card p-8 mb-6 shadow-xl border border-amber-500/20 bg-amber-500/5">
+          <h2 className="text-xl font-bold text-amber-500 mb-3 flex items-center gap-2">
+            3. Yurt Dışı Aktarım Çerçevesi (KVKK Madde 9 uyumluluğu)
+          </h2>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            Astralis, kesintisiz hizmet sunabilmek ve üst düzey uçtan uca şifreleme metotları kullanabilmek amacıyla küresel ölçekte akredite edilmiş, standart izolasyonlu bulut altyapısı ve yetkilendirme sağlayıcıları kullanmaktadır. 
           </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>Kişiselleştirilmiş astroloji ve ezoterik analiz hizmetlerinin sunulması</li>
-            <li>Hesap oluşturma ve kimlik doğrulamanın sağlanması (Supabase Auth)</li>
-            <li>Hizmet kalitesinin iyileştirilmesi ve kullanıcı deneyiminin geliştirilmesi</li>
-            <li>Yasal yükümlülüklerin yerine getirilmesi</li>
-            <li>Güvenlik önlemlerinin alınması ve sahteciliğin önlenmesi</li>
-          </ul>
+          <p className="text-gray-300 text-sm leading-relaxed mt-2 font-medium">
+            Platforma üye olarak ve hizmetlerimizi kullanarak; temel kimlik doğrulama işlemleri ve astrolojik çekirdek verilerinizin, yüksek güvenlik protokolleriyle korunan yurt dışı merkezli sunucularda barındırıldığını kabul eder ve bu verilerin KVKK Madde 9 uyarınca yurt dışına aktarılmasına şeffaf biçimde <strong>açık rıza göstermiş sayılırsınız.</strong>
+          </p>
         </div>
 
-        {/* 4. Verilerin Saklanması */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">4. Verilerin Saklanması ve Güvenliği</h2>
+        {/* 4. İşleme Amacı ve Hukuki Sebep */}
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">4. İşlenme ve Saklama Şartları</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">
-            Kişisel verileriniz, Supabase altyapısında AB (Avrupa Birliği) bölgesi sunucularında şifreli biçimde
-            saklanmaktadır. Supabase, SOC 2 Type II sertifikalı ve GDPR uyumlu bir veri işleme hizmetidir.
+            Kişisel verileriniz, <strong>KVKK Madde 5/2-c (Sözleşmenin ifası)</strong> ve <strong>Madde 5/2-f (Veri sorumlusunun meşru menfaati)</strong> hukuki sebeplerine dayalı olarak dijital deneyimin oluşturulması, hesabın şifrelenmesi ve ödeme altyapılarının güvenliği amacıyla işlenir.
           </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>Veriler yalnızca hizmet sunumu için gerekli olduğu süre boyunca saklanır.</li>
-            <li>Hesabınızı silmeniz halinde verileriniz 30 gün içinde imha edilir.</li>
-            <li>Teknik veriler (log dosyaları) en fazla 90 gün süreyle tutulur.</li>
-          </ul>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            Yapay zeka modellerimiz verilerinizi "öğrenme setleri" içerisine kopyalamaz; istatistiksel işlemler sadece anlık gerçekleşerek size özel raporu oluşturur. Hizmetimizi sonlandırıp üyeliğinizi sildiğinizde, yasal log zorunlulukları saklı kalmak kaydıyla şahsi eşleştirmeli astrolojik profil verileriniz veritabanlarımızdan kalıcı olarak anonimleştirilir veya yok edilir.
+          </p>
         </div>
 
         {/* 5. Kullanıcı Hakları */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">5. Kullanıcı Hakları (KVKK Madde 11)</h2>
+        <div className="glass-card p-8 mb-6 shadow-xl">
+          <h2 className="text-xl font-bold text-white mb-3">5. KVKK Madde 11 Kapsamında Haklarınız</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-4">
-            KVKK&apos;nın 11. maddesi uyarınca kişisel verilerinize ilişkin aşağıdaki haklara sahipsiniz:
+            Astralis Kullanıcısı olarak; verilerinizin işlenip işlenmediğini öğrenme, işlenen verilerinizin amacına uygun kullanılıp kullanılmadığını anlama, yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme, eksik/yanlış verilerin düzeltilmesini ve silinmesini/yok edilmesini (KVKK Madde 7) talep etme hakkına daima sahipsiniz.
           </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme hakkı</li>
-            <li>İşlenen verilerinize erişim hakkı</li>
-            <li>Yanlış veya eksik verilerin düzeltilmesini talep etme hakkı</li>
-            <li>Kişisel verilerinizin silinmesini talep etme hakkı</li>
-            <li>İşlemenin kısıtlanmasını talep etme hakkı</li>
-            <li>Verilerinizin üçüncü taraflara aktarılmasına itiraz etme hakkı</li>
-            <li>Otomatik karar alma süreçlerine itiraz etme hakkı</li>
-          </ul>
           <p className="text-gray-300 text-sm leading-relaxed mt-4">
-            Bu haklarınızı kullanmak için{" "}
-            <a href="mailto:destek@astralis.app" className="text-purple-400 hover:text-purple-300 transition-colors">
+            Veri sorumlusuna yasal başvurularınızı bildirmek için resmi kanallarımız üzerinden{" "}
+            <a href="mailto:destek@astralis.app" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold underline underline-offset-2">
               destek@astralis.app
             </a>{" "}
-            adresine e-posta gönderebilirsiniz. Talepleriniz 30 gün içinde yanıtlanır.
-          </p>
-        </div>
-
-        {/* 6. Üçüncü Taraf Hizmetler */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">6. Üçüncü Taraf Hizmetler</h2>
-          <p className="text-gray-300 text-sm leading-relaxed mb-4">
-            Hizmetlerimizi sunabilmek için aşağıdaki üçüncü taraf sağlayıcılarla çalışmaktayız. Her biri kendi gizlilik
-            politikasına tabidir:
-          </p>
-          <div className="space-y-3">
-            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <h3 className="text-white font-semibold text-sm mb-1">Analitik İşlem Sağlayıcıları</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Astroloji ve ezoterik analizlerin üretilmesi için güvenli bulut tabanlı API servisleri kullanılır. İlgili firmalarla veri işleme anlaşması (DPA)
-                mevcuttur; gönderilen veriler yalnızca yanıt üretimi için kullanılır ve sistemleri eğitmek amacıyla saklanmaz.
-              </p>
-            </div>
-            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <h3 className="text-white font-semibold text-sm mb-1">Supabase</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Kimlik doğrulama ve veritabanı altyapısı olarak kullanılır. GDPR uyumlu, AB bölgesi sunucuları.
-              </p>
-            </div>
-            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-              <h3 className="text-white font-semibold text-sm mb-1">Vercel</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Uygulamamızın barındırıldığı (hosting) altyapıdır. Erişim logları Vercel tarafından tutulabilir.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 7. Çerezler */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">7. Çerezler (Cookies)</h2>
-          <p className="text-gray-300 text-sm leading-relaxed mb-4">
-            Platformumuz aşağıdaki çerez türlerini kullanmaktadır:
-          </p>
-          <ul className="space-y-2 text-gray-300 text-sm leading-relaxed list-disc list-inside">
-            <li>
-              <span className="font-semibold text-white">Oturum çerezi (Zorunlu):</span> Giriş durumunuzu koruyan,
-              hizmetin çalışması için gerekli çerez.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Dil tercihi çerezi (Fonksiyonel):</span> Seçtiğiniz dili
-              hatırlamak için kullanılır.
-            </li>
-            <li>
-              <span className="font-semibold text-white">Analitik çerezler (İsteğe bağlı):</span> Platformun nasıl
-              kullanıldığını anlamak amacıyla, yalnızca onayınızla etkinleştirilir.
-            </li>
-          </ul>
-          <p className="text-gray-400 text-sm mt-4">
-            Çerez tercihlerinizi tarayıcı ayarlarınızdan yönetebilirsiniz.
-          </p>
-        </div>
-
-        {/* 8. Güncellemeler */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">8. Politika Güncellemeleri</h2>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Bu Gizlilik Politikası ve KVKK Aydınlatma Metni zaman zaman güncellenebilir. Önemli değişiklikler e-posta
-            ile bildirilir. Değişikliklerin yürürlüğe girdiği tarihten sonra platformu kullanmaya devam etmeniz,
-            güncel politikayı kabul ettiğiniz anlamına gelir. Bu sayfanın en üstündeki &quot;Son güncelleme&quot;
-            tarihini düzenli olarak kontrol etmenizi öneririz.
-          </p>
-        </div>
-
-        {/* 9. İletişim */}
-        <div className="glass-card p-8 mb-6">
-          <h2 className="text-xl font-bold text-white mb-3">9. İletişim</h2>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Bu politikayla ilgili sorularınız, kişisel veri talepleriniz veya şikayetleriniz için:
-          </p>
-          <p className="mt-3 text-sm">
-            <a href="mailto:destek@astralis.app" className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
-              destek@astralis.app
-            </a>
-          </p>
-          <p className="text-gray-400 text-sm mt-3">
-            Talepleriniz en geç 30 gün içinde yanıtlanacaktır. KVKK kapsamındaki başvurularınızı ayrıca{" "}
-            <a
-              href="https://www.kvkk.gov.tr"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              Kişisel Verileri Koruma Kurumu (KVKK)
-            </a>{" "}
-            aracılığıyla da iletebilirsiniz.
+            adresine elektronik posta gönderebilirsiniz. Başvurunuz, hukuki süreler olan 30 (otuz) gün içerisinde sonuçlandırılarak tarafınıza yazılı bildirim yapılacaktır.
           </p>
         </div>
 

@@ -4,6 +4,7 @@ import { elderFutharkRunes, runeSpreads } from "@/data/runes";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import { GlassButton } from "@/components/ui/glass-button";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 import FreemiumBadge from "@/components/FreemiumBadge";
 import { useFreemiumQuota } from "@/lib/freemium";
@@ -84,7 +85,11 @@ export default function RunlerPage() {
           <label className="block text-gray-400 text-xs uppercase tracking-wider mb-2">{t("fortune.common.question.label")}</label>
           <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-gray-600 text-sm resize-none" rows={2} />
         </div>
-        <button onClick={draw} className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-700 to-cyan-600 text-white font-bold text-lg hover:shadow-lg transition-all glow">{t("fortune.runler.draw_btn")}</button>
+        <div className="mt-6">
+          <GlassButton fullWidth onClick={draw} className="hover:border-cyan-500/50">
+            {t("fortune.runler.draw_btn")}
+          </GlassButton>
+        </div>
       </div></section>
 
       {drawnRunes.length > 0 && (
@@ -118,9 +123,9 @@ export default function RunlerPage() {
 
       {allRevealed && !result && (
         <section className="pb-8 px-4"><div className="max-w-3xl mx-auto">
-          <button onClick={getReading} disabled={loading} className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 glow">
+          <GlassButton fullWidth onClick={getReading} disabled={loading} className="hover:border-cyan-500/50">
             {loading ? t("fortune.runler.loading") : t("fortune.runler.result_btn")}
-          </button>
+          </GlassButton>
         </div></section>
       )}
 

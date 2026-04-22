@@ -133,11 +133,11 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {compatibleSigns.map((cs) => cs && (
               <Link key={cs.id} href={`/burclar/${cs.id}`}>
-                <div className="glass-card p-4 text-center hover:scale-105 transition-all duration-300 hover:border-purple-500/40 group flex flex-col items-center">
-                  <div className="w-20 h-20 rounded-full border border-white/10 overflow-hidden mb-3 bg-black/40 group-hover:border-purple-500/30 transition-all flex items-center justify-center">
-                    <ZodiacIcon signId={cs.id} size={80} className="w-full h-full object-cover group-hover:animate-bounce" />
+                <div className="glass-card p-4 text-center hover:-translate-y-1.5 hover:bg-purple-500/5 hover:shadow-[0_15px_30px_-10px_rgba(168,85,247,0.25)] transition-all duration-400 ease-out hover:border-purple-500/40 group flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full border border-white/10 overflow-hidden mb-3 bg-black/40 group-hover:border-purple-500/40 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all duration-400 flex items-center justify-center">
+                    <ZodiacIcon signId={cs.id} size={80} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" />
                   </div>
-                  <p className="text-white font-medium">{t(cs.nameKey)}</p>
+                  <p className="text-white font-medium group-hover:text-purple-200 transition-colors">{t(cs.nameKey)}</p>
                   <p className="text-gray-500 text-xs">{formatZodiacDate(cs, t)}</p>
                 </div>
               </Link>

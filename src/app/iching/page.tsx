@@ -4,6 +4,7 @@ import { hexagrams } from "@/data/iching";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import { GlassButton } from "@/components/ui/glass-button";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 import FreemiumBadge from "@/components/FreemiumBadge";
 import { useFreemiumQuota } from "@/lib/freemium";
@@ -103,13 +104,13 @@ export default function IChingPage() {
           </div>
 
           {lines.length < 6 ? (
-            <button onClick={throwCoin} disabled={flipping} className="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-3 mx-auto">
+            <GlassButton onClick={throwCoin} disabled={flipping} className="mx-auto flex items-center justify-center gap-3 hover:border-emerald-500/50">
               {flipping ? (
-                <RefreshCw className="animate-spin size-6" />
+                <RefreshCw className="animate-spin size-5" />
               ) : (
-                <><Coins className="size-6" /> {t("fortune.iching.coins_btn")} ({lines.length + 1}/6)</>
+                <><Coins className="size-5" /> {t("fortune.iching.coins_btn")} ({lines.length + 1}/6)</>
               )}
-            </button>
+            </GlassButton>
           ) : (
             <button onClick={reset} className="flex items-center gap-2 mx-auto px-6 py-2 rounded-lg bg-white/5 text-gray-400 text-sm hover:bg-white/10 transition-colors">
               <RefreshCw className="size-4" /> {t("common.back") || "Baştan Başla"}
@@ -129,9 +130,11 @@ export default function IChingPage() {
             <p className="text-emerald-300 text-sm mt-2 italic">&ldquo;{hexagram.judgement}&rdquo;</p>
 
             {!result && (
-              <button onClick={getReading} disabled={loading} className="mt-6 w-full py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 glow">
-                {loading ? t("fortune.iching.loading") : t("fortune.iching.result_btn")}
-              </button>
+              <div className="mt-6">
+                <GlassButton fullWidth onClick={getReading} disabled={loading} className="hover:border-emerald-500/50">
+                  {loading ? t("fortune.iching.loading") : t("fortune.iching.result_btn")}
+                </GlassButton>
+              </div>
             )}
           </div>
         </div></section>

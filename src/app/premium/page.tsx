@@ -1,13 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-helpers";
 import { useTranslation } from "@/lib/i18n";
 import { createCheckout } from "./actions";
 import { GlassButton } from "@/components/ui/glass-button";
 import {
-  Crown, BanIcon, Video, Sparkles, Star, Telescope,
-  Brain, Check, Loader2, Shield, Zap
+  Crown, BanIcon, Sparkles, Telescope,
+  Brain, Loader2, Shield, Zap, Gem, HeartHandshake, AlertCircle, PlayCircle
 } from "lucide-react";
 
 function PricingCard({
@@ -24,6 +24,8 @@ function PricingCard({
   isCurrentPlan,
   ctaLabel,
   activePlanLabel,
+  features,
+  quota,
 }: {
   badge?: string;
   title: string;
@@ -38,6 +40,11 @@ function PricingCard({
   isCurrentPlan: boolean;
   ctaLabel: string;
   activePlanLabel: string;
+  features: { icon: any; text: string }[];
+  quota?: {
+    current: number;
+    total: number;
+  };
 }) {
   return (
     <div
@@ -67,8 +74,22 @@ function PricingCard({
         <span className="text-white/40 text-sm ml-2">{period}</span>
       </div>
 
+      {quota && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-inner">
+          <div className="flex justify-between items-end mb-2">
+             <span className="text-[10px] text-amber-500/80 uppercase font-bold tracking-widest flex items-center gap-1.5">
+               <AlertCircle className="w-3 h-3" /> Destekçi Kontenjanı
+             </span>
+             <span className="text-sm font-black text-amber-400">{quota.current} <span className="text-amber-500/40">/ {quota.total}</span></span>
+          </div>
+          <div className="w-full h-1 bg-black/60 rounded-full overflow-hidden">
+             <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full" style={{ width: `${(quota.current/quota.total)*100}%` }} />
+          </div>
+        </div>
+      )}
+
       {isCurrentPlan ? (
-        <div className="flex items-center justify-center gap-2 py-4 rounded-full bg-white/5 border border-white/10 text-white/50 text-sm">
+        <div className="flex items-center justify-center gap-2 py-4 rounded-full bg-white/5 border border-white/10 text-emerald-400 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.1)]">
           <Shield className="w-4 h-4" />
           {activePlanLabel}
         </div>
@@ -76,19 +97,31 @@ function PricingCard({
         <GlassButton
           onClick={onBuy}
           disabled={loading}
-          className={`w-full ${highlight ? "hover:border-amber-500/40" : "hover:border-purple-500/30"}`}
+          className={`${highlight ? "hover:border-amber-500/40 bg-gradient-to-r from-amber-600/20 to-orange-500/20 border-amber-500/30" : "hover:border-purple-500/30"}`}
           size="lg"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <span className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
+            <span className="flex items-center gap-2 font-bold tracking-wide">
+              {highlight ? <Crown className="w-4 h-4 text-amber-400" /> : <Zap className="w-4 h-4 text-purple-400" />}
               {ctaLabel}
             </span>
           )}
         </GlassButton>
       )}
+
+      <div className="mt-8 space-y-3 pt-6 border-t border-white/5">
+         {features.map((feature: { icon: any, text: string }, i: number) => {
+           const Icon = feature.icon;
+           return (
+             <div key={i} className="flex items-start gap-3">
+                <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${highlight ? 'text-amber-400' : 'text-purple-400'}`} aria-hidden="true" />
+                <span className="text-sm text-white/70 leading-relaxed font-light">{feature.text}</span>
+             </div>
+           );
+         })}
+      </div>
     </div>
   );
 }
@@ -103,14 +136,33 @@ export default function PremiumPage() {
   const isMonthly = isPremium && profile?.subscription_type === "monthly";
   const isLifetime = isPremium && profile?.subscription_type === "lifetime";
 
-  const FEATURES = [
-    { icon: Crown,     text: t("premium.features.1") },
-    { icon: BanIcon,   text: t("premium.features.2") },
-    { icon: Video,     text: t("premium.features.3") },
-    { icon: Sparkles,  text: t("premium.features.4") },
-    { icon: Star,      text: t("premium.features.5") },
-    { icon: Telescope, text: t("premium.features.6") },
-    { icon: Brain,     text: t("premium.features.7") },
+  const [lifetimeCount, setLifetimeCount] = useState<number>(184); // Initial fallback
+
+  useEffect(() => {
+    fetch("/api/premium-count")
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.count === "number") {
+          setLifetimeCount(data.count);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const PRO_FEATURES = [
+    { icon: Crown, text: "Doğum Haritası ve Matrix Sinastri dahil tüm premium araçlara erişim" },
+    { icon: Sparkles, text: "Günlük araç limitlerinin tamamen kaldırılması" },
+    { icon: BanIcon, text: "Tamamen reklamsız, temiz arayüz deneyimi" },
+    { icon: Telescope, text: "Detaylı transitler ve anlık gökyüzü raporları" },
+    { icon: Brain, text: "VIP Yapay Zeka destekli astrolojik yorumlamalar" },
+  ];
+
+  const VIP_FEATURES = [
+    ...PRO_FEATURES,
+    { icon: PlayCircle, text: "Hedef kontenjan tamamlandığında kapalı destekçi canlı yayınları" },
+    { icon: HeartHandshake, text: "Canlı yayınlarda astrologlara doğrudan soru sorma önceliği" },
+    { icon: Crown, text: "Proje Destekçisi rozeti ve Astralis'in gelişimine doğrudan katkı" },
+    { icon: Gem, text: "Gelecekte eklenecek olan tüm yeni yapay zeka araçlarına ÜCRETSİZ ömür boyu erişim" },
   ];
 
   function handleMonthly() {
@@ -153,7 +205,7 @@ export default function PremiumPage() {
         </div>
 
         {/* Kartlar */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 items-stretch">
           <PricingCard
             badge={t("premium.monthly.badge")}
             title={t("premium.monthly.title")}
@@ -167,14 +219,15 @@ export default function PremiumPage() {
             isCurrentPlan={isMonthly}
             ctaLabel={t("premium.cta")}
             activePlanLabel={t("premium.active_plan")}
+            features={PRO_FEATURES}
           />
 
           <PricingCard
-            badge={t("premium.lifetime.badge")}
-            title={t("premium.lifetime.title")}
+            badge="PROJE DESTEKÇİSİ"
+            title="Ömür Boyu VIP (Sınırlı)"
             price={t("premium.lifetime.price")}
             period={t("premium.lifetime.period")}
-            description={t("premium.lifetime.desc")}
+            description="Erken aşamada vizyonumuza inanan destekçilerimize özel ömür boyu ayrıcalıklar."
             highlight
             glowColor="rgba(245,158,11,0.2)"
             borderColor="border-amber-500/40"
@@ -183,30 +236,40 @@ export default function PremiumPage() {
             isCurrentPlan={isLifetime}
             ctaLabel={t("premium.cta")}
             activePlanLabel={t("premium.active_plan")}
+            features={VIP_FEATURES}
+            quota={{ current: lifetimeCount, total: 250 }}
           />
         </div>
 
-        {/* Özellik listesi */}
-        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8">
-          <h2 className="font-serif text-xl font-semibold text-white mb-6 text-center">
-            {t("premium.features.title")}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FEATURES.map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mt-0.5">
-                  <Icon className="w-3.5 h-3.5 text-purple-400" aria-hidden="true" />
-                </div>
-                <div className="flex items-center gap-2 text-white/60 text-sm pt-1.5">
-                  <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />
-                  {text}
-                </div>
+        {/* Founding Member Explanation */}
+        <div className="backdrop-blur-xl bg-gradient-to-br from-amber-500/5 to-purple-500/5 border border-amber-500/10 rounded-3xl p-8 md:p-12 mb-20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none -mt-48 -mr-48" />
+          
+          <div className="relative z-10">
+            <h2 className="font-serif text-2xl md:text-3xl font-semibold text-white mb-4 flex items-center justify-center md:justify-start gap-3">
+              <Crown className="w-6 h-6 text-amber-400" />
+              Proje Destekçisi (VIP) Ayrıcalıkları
+            </h2>
+            <p className="text-white/60 text-base md:text-lg leading-relaxed mb-8 max-w-3xl text-center md:text-left">
+              Ömür Boyu VIP paketi, sadece bir abonelik değil, aynı zamanda Astralis projesinin gelişimine destek olma fırsatıdır. 250 kişilik özel kontenjan dolduğunda, destekçilerimize özel aşağıdaki eşsiz ayrıcalıklar devreye girecektir:
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-black/20 rounded-2xl p-6 border border-white/5 shadow-2xl transition hover:border-amber-500/20">
+                <PlayCircle className="w-8 h-8 text-amber-400 mb-4" />
+                <h3 className="text-lg font-bold text-white mb-2">Kapalı Astrolog Yayınları</h3>
+                <p className="text-white/50 text-sm">250 kişilik kontenjan hedefimiz tamamlandığında, uzman astrolog konuklarımızla sadece proje destekçilerinin katılabileceği kapalı devre canlı yayınlar düzenlenecektir (Yayın platformu ilerleyen süreçte duyurulacaktır).</p>
               </div>
-            ))}
+              <div className="bg-black/20 rounded-2xl p-6 border border-white/5 shadow-2xl transition hover:border-amber-500/20">
+                <HeartHandshake className="w-8 h-8 text-pink-400 mb-4" />
+                <h3 className="text-lg font-bold text-white mb-2">Öncelikli Soru Yanıtlama</h3>
+                <p className="text-white/50 text-sm">Canlı yayınlarda soracağınız harita, transit ve yönlendirme soruları uzmanlar tarafından öncelikli olarak analiz edilip cevaplanacaktır. Erken destekçimiz olarak adımlarınızı ilk siz planlayın.</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <p className="text-center text-white/20 text-xs mt-8">
+        <p className="text-center text-white/20 text-xs pb-12">
           {t("premium.trust")}
         </p>
       </div>

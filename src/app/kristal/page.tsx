@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-helpers";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
+import { GlassButton } from "@/components/ui/glass-button";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 import FreemiumBadge from "@/components/FreemiumBadge";
 import { useFreemiumQuota } from "@/lib/freemium";
@@ -60,10 +61,11 @@ export default function KristalPage() {
           <label className="block text-gray-400 text-xs uppercase tracking-wider mb-3">{t("fortune.common.question.label")}</label>
           <textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={t("fortune.common.question.placeholder")} className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 text-sm resize-none" rows={4} />
         </div>
-        <button onClick={getReading} disabled={loading || !question.trim() || !user}
-          className="w-full py-5 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white font-bold text-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 glow">
-          {loading ? t("fortune.kristal.loading") : t("fortune.kristal.result_btn")}
-        </button>
+        <div className="mt-6">
+          <GlassButton fullWidth onClick={getReading} disabled={loading || !question.trim() || !user} className="hover:border-purple-500/50">
+            {loading ? t("fortune.kristal.loading") : t("fortune.kristal.result_btn")}
+          </GlassButton>
+        </div>
       </div></section>
 
       {result && (

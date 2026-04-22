@@ -27,7 +27,7 @@ export function ActiveGuideCard({
   return (
     <div className="lg:col-span-4 space-y-6">
       {/* Active Guide */}
-      <div className={cn("relative rounded-[2rem] overflow-hidden border p-8 group isolate transform-gpu", activeGuide.borderAccent)} style={{ background: `linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.8))` }}>
+      <div className={cn("relative rounded-[2.5rem] overflow-hidden border p-8 md:p-10 group isolate transform-gpu shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl", activeGuide.borderAccent)} style={{ background: `linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.8))` }}>
         {/* Guide image bg */}
         <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
           <img src={activeGuide.image} alt="" className="w-full h-full object-cover" />
@@ -48,8 +48,8 @@ export function ActiveGuideCard({
               </Avatar>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-2xl font-serif font-bold text-white leading-tight">{activeGuide.name}</h3>
-              <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mt-1", activeGuide.accent)}>{activeGuide.role}</p>
+              <h3 className="text-3xl font-serif font-bold text-white leading-tight">{activeGuide.name}</h3>
+              <p className={cn("text-[11px] font-bold uppercase tracking-[0.2em] mt-1", activeGuide.accent)}>{activeGuide.role}</p>
             </div>
           </div>
 
@@ -79,7 +79,7 @@ export function ActiveGuideCard({
       </div>
 
       {/* Quick Tools */}
-      <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-6">
+      <div className="rounded-[2.5rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl p-8">
         <SectionLabel>{t("profile.tools")}</SectionLabel>
         <div className="grid grid-cols-1 gap-2.5">
           {ALL_TOOLS.map(tool => (

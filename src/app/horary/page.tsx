@@ -3,17 +3,20 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GlassButton } from "@/components/ui/glass-button";
 import { useTranslation } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-helpers";
-import { turkishCities } from "@/data/cities";
-import CosmicSelect from "@/components/Cosmic/CosmicSelect";
+import LocationSearch, { type LocationResult } from "@/components/ui/LocationSearch";
 import HoraryChartWheel, { WheelPlanet } from "@/components/horary/HoraryChartWheel";
 import { planets as PLANET_DATA } from "@/data/planets";
 import {
   Telescope, Sparkles, AlertTriangle, CheckCircle2,
-  Clock, Star, MessageCircle, ArrowLeft, Scroll, X
+  Clock, Star, MessageCircle, ArrowLeft, Scroll, X,
+  Shield, Moon, Handshake, Scale, Timer, Compass
 } from "lucide-react";
 import PremiumGate from "@/components/PremiumGate";
+import { useFreemiumQuota } from "@/lib/freemium";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 
 // ─── Types ───────────────────────────────────────────────────
 interface Stricture { type: string; severity: string; messageKey: string; }
@@ -33,7 +36,9 @@ interface Analysis {
 }
 interface Reading {
   section1: string; section2: string;
-  section3: string; section4: string; section5: string;
+  section3: string; section4: string;
+  section5: string; section6: string;
+  section7: string; section8: string;
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ChartData {
@@ -69,7 +74,13 @@ export default function HoraryPage() {
   const { user }        = useAuth();
 
   const [question,        setQuestion]        = useState("");
-  const [city,            setCity]            = useState("");
+  const [location,        setLocation]        = useState<LocationResult | null>(null);
+  const [locationDisplay, setLocationDisplay]  = useState("");
+  const [questionDatetime, setQuestionDatetime] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
   const [loading,         setLoading]         = useState(false);
   const [loadStep,        setLoadStep]        = useState(0);
   const [error,           setError]           = useState("");
@@ -85,16 +96,22 @@ export default function HoraryPage() {
   }, [loading]);
 
   function getCoordinates() {
-    if (city) {
-      const found = turkishCities.find(c => c.name === city);
-      if (found) return { lat: found.lat, lng: found.lng };
-    }
+    if (location) return { lat: location.lat, lng: location.lng };
     return { lat: 41.01, lng: 28.96 };
   }
+  const { isPremium, isBlocked, isPremiumOnly, consumeQuota } = useFreemiumQuota("horary");
+  const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (question.trim().length < 5) return;
+    if (!question.trim()) return;
+
+    if (!isPremium) {
+      if (isPremiumOnly) { setPremiumVariant("premium_required"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
     setLoading(true); setLoadStep(0); setError("");
     setChartData(null); setAnalysis(null); setReading(null); setSelectedPlanet(null);
     const coords = getCoordinates();
@@ -102,7 +119,7 @@ export default function HoraryPage() {
       const res  = await fetch("/api/horary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, latitude: coords.lat, longitude: coords.lng, language, userId: user?.id }),
+        body: JSON.stringify({ question, latitude: coords.lat, longitude: coords.lng, language, userId: user?.id, datetime: questionDatetime }),
       });
       const data = await res.json();
       if (data.success) {
@@ -114,13 +131,16 @@ export default function HoraryPage() {
 
   function handleReset() {
     setChartData(null); setAnalysis(null); setReading(null);
-    setQuestion(""); setCity(""); setSelectedPlanet(null);
+    setQuestion(""); setLocation(null); setLocationDisplay(""); setSelectedPlanet(null);
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    setQuestionDatetime(now.toISOString().slice(0, 16));
   }
 
   // ─── Render ────────────────────────────────────────────────
   return (
-    <PremiumGate featureName="Horary Astrolojisi">
     <div className="min-h-screen text-white" style={{ fontFamily:"'EB Garamond', serif", background:"#06090f" }}>
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName="Horary Astrolojisi" variant={premiumVariant} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
         .horary-field { background:rgba(201,168,76,0.04); border:1px solid rgba(201,168,76,0.18); transition:border-color .2s; }
@@ -201,14 +221,35 @@ export default function HoraryPage() {
 
               {/* Location */}
               <div className="mb-5">
-                <CosmicSelect
-                  label={t("horary.form.location_label")}
-                  options={[
-                    { value:"", label:"— İstanbul (varsayılan) —" },
-                    ...turkishCities.map(c => ({ value:c.name, label:c.name })),
-                  ]}
-                  value={city} onChange={e => setCity(e.target.value)}
+                <label className="block text-xs mb-2 tracking-widest uppercase"
+                  style={{ color:"#c9a84c", fontFamily:"'Cinzel',serif" }}>
+                  {t("horary.form.location_label")}
+                </label>
+                <LocationSearch
+                  value={locationDisplay}
+                  onChange={(loc) => {
+                    setLocation(loc);
+                    setLocationDisplay(loc?.displayName || "");
+                  }}
+                  inputClassName="horary-field !bg-[rgba(201,168,76,0.04)] !border-[rgba(201,168,76,0.18)] focus-within:!border-[rgba(201,168,76,0.45)] !text-white placeholder-gray-600"
                 />
+              </div>
+
+              {/* DateTime */}
+              <div className="mb-5">
+                <label className="block text-xs mb-2 tracking-widest uppercase"
+                  style={{ color:"#c9a84c", fontFamily:"'Cinzel',serif" }}>
+                  {t("horary.form.datetime_label")}
+                </label>
+                <div className="horary-field rounded-xl overflow-hidden">
+                  <input
+                    type="datetime-local"
+                    value={questionDatetime}
+                    onChange={e => setQuestionDatetime(e.target.value)}
+                    className="w-full bg-transparent px-4 py-3 text-white focus:outline-none"
+                    style={{ fontFamily:"'EB Garamond',serif", fontSize:"1.05rem", colorScheme: "dark" }}
+                  />
+                </div>
               </div>
 
               {/* Note */}
@@ -216,16 +257,17 @@ export default function HoraryPage() {
               {error && <p className="text-red-400 text-sm text-center mb-4">{error}</p>}
 
               {/* Submit */}
-              <motion.button type="submit"
+              <GlassButton
+                type="submit"
+                fullWidth
                 disabled={question.trim().length < 5}
-                whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
-                className="w-full py-4 rounded-xl font-semibold text-lg disabled:opacity-30 disabled:cursor-not-allowed relative overflow-hidden"
-                style={{ background:"linear-gradient(135deg,#c9a84c,#b87333)", color:"#06090f", fontFamily:"'Cinzel',serif" }}>
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  {t("horary.form.submit")}
-                </span>
-              </motion.button>
+                className="hover:border-amber-500/50"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-200" />
+                  <span className="text-amber-200">{t("horary.form.submit")}</span>
+                </div>
+              </GlassButton>
             </motion.form>
           )}
 
@@ -444,11 +486,14 @@ export default function HoraryPage() {
                 </div>
 
                 {([
-                  { key:"section1", title:t("horary.result.section1_title"), icon:Telescope,     accent:false },
+                  { key:"section1", title:t("horary.result.section1_title"), icon:Shield,         accent:false },
                   { key:"section2", title:t("horary.result.section2_title"), icon:Star,           accent:false },
-                  { key:"section3", title:t("horary.result.section3_title"), icon:Sparkles,       accent:false },
-                  { key:"section4", title:t("horary.result.section4_title"), icon:MessageCircle,  accent:true  },
-                  { key:"section5", title:t("horary.result.section5_title"), icon:Clock,          accent:false },
+                  { key:"section3", title:t("horary.result.section3_title"), icon:Telescope,      accent:false },
+                  { key:"section4", title:t("horary.result.section4_title"), icon:Moon,           accent:false },
+                  { key:"section5", title:t("horary.result.section5_title"), icon:Handshake,      accent:false },
+                  { key:"section6", title:t("horary.result.section6_title"), icon:Scale,          accent:true  },
+                  { key:"section7", title:t("horary.result.section7_title"), icon:Timer,          accent:false },
+                  { key:"section8", title:t("horary.result.section8_title"), icon:Compass,        accent:false },
                 ] as const).map(({ key, title, icon:Icon, accent }, i) => (
                   <motion.div key={key}
                     initial={{ opacity:0, x:-16 }} animate={{ opacity:1, x:0 }}
@@ -485,7 +530,6 @@ export default function HoraryPage() {
         </AnimatePresence>
       </div>
     </div>
-    </PremiumGate>
   );
 }
 

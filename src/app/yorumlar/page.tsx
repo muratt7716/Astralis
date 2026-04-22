@@ -5,10 +5,10 @@ import { zodiacSigns } from "@/data/zodiac";
 import ZodiacCard from "@/components/ZodiacCard";
 import {
   Sparkles,
-  Calendar,
-  CalendarDays,
-  CalendarRange,
-  BarChart3,
+  Sun,
+  Moon,
+  Telescope,
+  Globe,
   ChevronRight
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
@@ -20,36 +20,36 @@ export default function YorumlarPage() {
     {
       id: "daily",
       label: t("horoscope.daily"),
-      icon: Calendar,
+      icon: Sun,
       desc: t("horoscope.daily.desc"),
-      color: "from-purple-950/40 to-violet-950/40",
+      color: "from-purple-950/20 to-black",
       accent: "border-purple-500/20",
       iconColor: "#a78bfa"
     },
     {
       id: "weekly",
       label: t("horoscope.weekly"),
-      icon: CalendarDays,
+      icon: Moon,
       desc: t("horoscope.weekly.desc"),
-      color: "from-pink-950/40 to-rose-950/40",
+      color: "from-pink-950/20 to-black",
       accent: "border-pink-500/20",
       iconColor: "#f472b6"
     },
     {
       id: "monthly",
       label: t("horoscope.monthly"),
-      icon: CalendarRange,
+      icon: Telescope,
       desc: t("horoscope.monthly.desc"),
-      color: "from-amber-950/40 to-orange-950/40",
+      color: "from-amber-950/20 to-black",
       accent: "border-amber-500/20",
       iconColor: "#fbbf24"
     },
     {
       id: "yearly",
       label: t("horoscope.yearly"),
-      icon: BarChart3,
+      icon: Globe,
       desc: t("horoscope.yearly.desc"),
-      color: "from-emerald-950/40 to-teal-950/40",
+      color: "from-emerald-950/20 to-black",
       accent: "border-emerald-500/20",
       iconColor: "#34d399"
     },
@@ -92,25 +92,28 @@ export default function YorumlarPage() {
                 fade-in-up border-opacity-30
               `} style={{ animationDelay: `${idx * 0.1}s` }}>
                 {/* HUD Decorative Elements */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-white/10 transition-colors duration-700" />
-                <div className="absolute -left-1 -top-1 w-8 h-8 border-t border-l border-white/10 rounded-tl-xl" />
-                <div className="absolute -right-1 -bottom-1 w-8 h-8 border-b border-r border-white/10 rounded-br-xl" />
+                <div className="absolute top-0 right-0 w-48 h-48 bg-white/[0.02] blur-3xl rounded-full -mr-24 -mt-24 group-hover:bg-white/[0.05] transition-colors duration-700" />
+                
+                {/* UI-UX Pro Max refined corners */}
+                <div className="absolute -left-px -top-px w-6 h-6 border-t border-l border-white/20 rounded-tl-2xl mix-blend-overlay" />
+                <div className="absolute -right-px -bottom-px w-6 h-6 border-b border-r border-white/20 rounded-br-2xl mix-blend-overlay" />
 
                 {/* Icon HUD Frame */}
-                <div className="relative mb-5 sm:mb-8 group-hover:scale-110 transition-transform duration-500">
-                  <div className={`absolute -inset-3 rounded-full blur-md opacity-20 transition-opacity duration-500 group-hover:opacity-40`} style={{ backgroundColor: period.iconColor }} />
-                  <div className={`relative w-20 h-20 rounded-full bg-black/40 border ${period.accent} flex items-center justify-center backdrop-blur-xl shadow-2xl overflow-hidden`}>
-                    <period.icon className="size-10" style={{ color: period.iconColor }} />
-                    <div className="absolute inset-0 border border-white/5 rounded-full" />
-                    {/* Rotating Ring */}
-                    <div className="absolute inset-1 border border-dashed border-white/10 rounded-full animate-[spin_20s_linear_infinite] opacity-50" />
+                <div className="relative mb-6 sm:mb-10 group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-500 ease-out">
+                  <div className={`absolute -inset-4 rounded-full blur-xl opacity-20 transition-opacity duration-500 group-hover:opacity-50`} style={{ backgroundColor: period.iconColor }} />
+                  <div className={`relative w-24 h-24 rounded-full bg-black/60 border ${period.accent} shadow-[inset_0_2px_20px_rgba(255,255,255,0.05)] flex items-center justify-center backdrop-blur-2xl overflow-hidden`}>
+                    <period.icon className="size-11" style={{ color: period.iconColor }} />
+                    <div className="absolute inset-0 border border-white/10 rounded-full" />
+                    {/* Rotating Rings */}
+                    <div className="absolute inset-2 border border-dotted border-white/20 rounded-full animate-[spin_30s_linear_infinite] opacity-30" />
+                    <div className="absolute -inset-2 border border-white/[0.02] rounded-full animate-[spin_15s_reverse_linear_infinite]" />
                   </div>
                 </div>
 
-                <h2 className="text-2xl font-bold text-white mb-3 tracking-tight">{period.label}</h2>
-                <p className="text-gray-400 text-sm leading-relaxed mb-8 flex-1">{period.desc}</p>
+                <h2 className="text-2xl font-serif font-bold text-white mb-4 tracking-wide group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">{period.label}</h2>
+                <p className="text-white/40 text-sm leading-relaxed mb-10 flex-1 font-light group-hover:text-white/60 transition-colors">{period.desc}</p>
 
-                <div className="mt-auto px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-500 flex items-center gap-2">
+                <div className="mt-auto px-6 py-3 rounded-full bg-black/40 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/50 group-hover:text-white group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-500 flex items-center gap-2 transform group-hover:translate-y-px shadow-lg group-hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                   {t("horoscope.explore")}
                   <ChevronRight className="size-3" />
                 </div>

@@ -11,6 +11,12 @@ interface ActivityFeedProps {
 const ITEMS_PER_PAGE = 5;
 
 const ACTION_META: Record<string, { label: string; iconName: string; accent: string; bg: string }> = {
+  horary: {
+    label: "Horary (Saat Astrolojisi)",
+    iconName: "horary",
+    accent: "text-amber-400",
+    bg: "bg-amber-500/10 border-amber-500/20",
+  },
   sphere: {
     label: "Kristal Küre Analizi",
     iconName: "kristal",
@@ -79,7 +85,7 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
       </div>
 
       {/* Activity List */}
-      <div className="rounded-[1.75rem] border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent overflow-hidden">
+      <div className="rounded-[2.5rem] border border-white/[0.08] bg-gradient-to-br from-white/[0.03] to-transparent overflow-hidden shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
         {pagedActivities.length > 0 ? (
           <div className="divide-y divide-white/[0.04]">
             {pagedActivities.map((act) => {
@@ -101,7 +107,7 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
                   {/* Content */}
                   <div className="relative z-10 flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h4 className="text-[13px] font-semibold text-white/90 tracking-wide truncate group-hover/item:text-white transition-colors">
+                      <h4 className="text-[14px] font-serif font-bold text-white/90 tracking-wide truncate group-hover/item:text-white transition-colors">
                         {meta.label}
                       </h4>
                     </div>
@@ -173,120 +179,150 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
   );
 }
 
-import { motion } from "framer-motion";
-import { X, MessageSquare, Sparkles, Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, MessageSquare, Sparkles, Eye, Info, Database } from "lucide-react";
 
 export function ActivityDetailModal({ activity, onClose }: { activity: any; onClose: () => void }) {
   if (!activity) return null;
   const meta = ACTION_META[activity.action_type] || DEFAULT_META;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-[#050508]/90 backdrop-blur-xl"
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="relative w-full max-w-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/10 rounded-[2rem] p-7 md:p-9 shadow-2xl overflow-hidden isolate"
-      >
-        <div className="absolute -top-20 -right-20 w-48 h-48 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
+  // Render generic metadata elegantly if it's not a known structure like tarot
+  const renderGenericMetadata = () => {
+    if (!activity.metadata) return null;
+    const { question, full_result, answer, ...rest } = activity.metadata;
+    const entries = Object.entries(rest).filter(([_, v]) => v != null && typeof v !== 'object');
+    
+    if (entries.length === 0) return null;
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-7 relative z-10">
-          <div className="flex items-center gap-4">
-            <CosmicIcon name={meta.iconName as any} size={40} />
-            <div>
-              <h3 className="text-base font-bold text-white tracking-tight">{meta.label}</h3>
-              <p className="text-[10px] text-white/25 font-mono mt-0.5 uppercase tracking-widest">
-                {new Date(activity.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-              </p>
+    return (
+      <div className="space-y-3 mt-6 pt-6 border-t border-white/[0.04]">
+        <p className="text-[10px] text-white/30 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+          <Database className="w-3.5 h-3.5" /> Analiz Detayları
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {entries.map(([key, value]) => (
+            <div key={key} className="bg-white/[0.02] border border-white/[0.04] p-3.5 rounded-2xl hover:bg-white/[0.04] transition-colors">
+              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-1 font-medium">{key.replace(/_/g, ' ')}</p>
+              <p className="text-sm text-white/90 font-serif">{String(value)}</p>
             </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white/40 hover:text-white"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          ))}
         </div>
+      </div>
+    );
+  };
 
-        {/* Body */}
-        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar relative z-10">
-          {activity.metadata?.question && (
-            <div className="space-y-2">
-              <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest flex items-center gap-2">
-                <MessageSquare className="w-3 h-3" /> Soru / Niyet
-              </p>
-              <div className="bg-white/[0.02] border border-white/[0.06] p-4 rounded-xl italic text-white/50 text-sm leading-relaxed">
-                &ldquo;{activity.metadata.question}&rdquo;
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-[#020308]/90 backdrop-blur-2xl"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="relative w-full max-w-2xl bg-white/[0.02] border border-white/[0.08] rounded-[2.5rem] p-7 md:p-10 shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden isolate max-h-[90vh] flex flex-col"
+        >
+          {/* Decorative Orbs */}
+          <div className="absolute -top-32 -right-32 w-80 h-80 bg-purple-500/20 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+          {/* Header */}
+          <div className="flex items-start justify-between mb-8 relative z-10 shrink-0">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shadow-lg">
+                <CosmicIcon name={meta.iconName as any} size={28} />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-serif font-semibold text-white tracking-tight">{meta.label}</h3>
+                <p className="text-[10px] text-white/30 font-sans mt-1 uppercase tracking-[0.2em]">
+                  {new Date(activity.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </p>
               </div>
             </div>
-          )}
+            <button
+              onClick={onClose}
+              className="p-3 rounded-full bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.1] hover:text-white transition-all text-white/50 active:scale-95"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          {activity.metadata?.full_result ? (
-            <div className="space-y-5">
-              {activity.metadata.full_result.cards?.map((c: any, i: number) => (
-                <div key={i} className="space-y-2">
-                  <p className="text-[9px] text-indigo-400/40 uppercase font-bold tracking-widest flex items-center gap-2">
-                    <Eye className="w-3 h-3" />
-                    {c.position || c.name || "Mistik Sezgi"}
+          {/* Body */}
+          <div className="space-y-8 overflow-y-auto pr-2 pb-4 pt-1 custom-scrollbar relative z-10 flex-1">
+            {activity.metadata?.question && (
+              <div className="space-y-3">
+                <p className="text-[10px] text-purple-400 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5" /> Soru / Niyet
+                </p>
+                <div className="bg-gradient-to-r from-purple-500/[0.04] to-transparent border-l-2 border-purple-500/40 p-5 rounded-r-2xl italic text-white/80 text-[15px] font-serif leading-relaxed shadow-sm">
+                  &ldquo;{activity.metadata.question}&rdquo;
+                </div>
+              </div>
+            )}
+
+            {activity.metadata?.full_result ? (
+              <div className="space-y-6">
+                {activity.metadata.full_result.cards?.map((c: any, i: number) => (
+                  <div key={i} className="space-y-3">
+                    <p className="text-[10px] text-indigo-400 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+                      <Eye className="w-3.5 h-3.5" />
+                      {c.position || c.name || "Mistik Sezgi"}
+                    </p>
+                    <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-5 rounded-2xl text-white/80 text-[15px] font-serif leading-relaxed">
+                      {c.interpretation}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="space-y-3">
+                  <p className="text-[10px] text-amber-400 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {activity.action_type === "sphere" ? "Genel Bakış" : "Sentez"}
                   </p>
-                  <div className="bg-indigo-500/[0.03] border border-indigo-500/10 p-4 rounded-xl text-white/75 text-sm leading-relaxed italic">
-                    {c.interpretation}
+                  <div className="bg-white/[0.02] border border-white/[0.06] p-6 rounded-[2rem] text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap font-sans">
+                    {activity.metadata.full_result.synthesis || activity.metadata.full_result.content}
                   </div>
                 </div>
-              ))}
 
-              <div className="space-y-2">
-                <p className="text-[9px] text-purple-400/40 uppercase font-bold tracking-widest flex items-center gap-2">
-                  <Sparkles className="w-3 h-3" />
-                  {activity.action_type === "sphere" ? "Genel Bakış" : "Sentez"}
+                {activity.metadata.full_result.advice && (
+                  <div className="bg-gradient-to-r from-amber-500/[0.05] to-transparent border border-amber-500/10 p-5 rounded-2xl flex items-start gap-4 shadow-sm">
+                    <div className="p-2 rounded-full bg-amber-500/10 shrink-0">
+                       <Sparkles className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <p className="text-white/70 text-[14px] font-serif italic leading-relaxed pt-1.5">{activity.metadata.full_result.advice}</p>
+                  </div>
+                )}
+              </div>
+            ) : activity.metadata?.answer ? (
+              <div className="space-y-3">
+                <p className="text-[10px] text-amber-400 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5" /> Mistik Yanıt
                 </p>
-                <div className="bg-purple-500/[0.04] border border-purple-500/10 p-5 rounded-2xl text-white/85 text-sm leading-relaxed whitespace-pre-wrap">
-                  {activity.metadata.full_result.synthesis || activity.metadata.full_result.content}
+                <div className="bg-white/[0.02] border border-white/[0.06] p-6 rounded-[2rem] text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap font-sans">
+                  {activity.metadata.answer}
                 </div>
               </div>
-
-              {activity.metadata.full_result.advice && (
-                <div className="bg-white/[0.02] border border-white/[0.05] p-3.5 rounded-xl flex items-start gap-3">
-                  <Sparkles className="w-3.5 h-3.5 text-purple-400/40 mt-0.5" />
-                  <p className="text-white/40 text-[11px] italic leading-relaxed">{activity.metadata.full_result.advice}</p>
-                </div>
-              )}
-            </div>
-          ) : activity.metadata?.answer ? (
-            <div className="space-y-2">
-              <p className="text-[9px] text-purple-400/40 uppercase font-bold tracking-widest flex items-center gap-2">
-                <Sparkles className="w-3 h-3" /> Mistik Yanıt
-              </p>
-              <div className="bg-purple-500/[0.02] border border-purple-500/10 p-5 rounded-2xl text-white/85 text-sm leading-relaxed whitespace-pre-wrap">
-                {activity.metadata.answer}
+            ) : activity.description ? (
+              <div className="space-y-3">
+                <p className="text-[10px] text-white/30 uppercase font-bold tracking-[0.2em] flex items-center gap-2">
+                  <Info className="w-3.5 h-3.5" /> Açıklama
+                </p>
+                <p className="text-white/70 text-[15px] leading-relaxed bg-white/[0.02] p-5 rounded-2xl border border-white/[0.04]">
+                  {activity.description}
+                </p>
               </div>
-            </div>
-          ) : activity.description ? (
-            <div className="space-y-2">
-              <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest">Açıklama</p>
-              <p className="text-white/50 text-sm leading-relaxed">{activity.description}</p>
-            </div>
-          ) : null}
-        </div>
+            ) : null}
 
-        {/* Footer */}
-        <div className="mt-8 flex justify-end relative z-10">
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/[0.08] text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-white/40 hover:text-white/70"
-          >
-            Kapat
-          </button>
-        </div>
-      </motion.div>
-    </div>
+            {renderGenericMetadata()}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 }

@@ -56,9 +56,24 @@ function julianDay(date: Date): number {
   return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d0 + h / 24 + B - 1524.5;
 }
 
-function obliquity(jd: number): number {
+function obliquityMean(jd: number): number {
   const T = (jd - 2451545) / 36525;
-  return 23.4393 - 0.013 * T;
+  return 23.439291111 - 0.0130042 * T - 0.00000016 * T * T + 0.000000504 * T * T * T;
+}
+
+function nutation(jd: number): { dPsi: number; dEps: number } {
+  const T = (jd - 2451545) / 36525;
+  const omega = mod(125.04452 - 1934.136261 * T, 360);
+  const Ls = mod(280.4665 + 36000.7698 * T, 360);
+  const Lm = mod(218.3165 + 481267.8813 * T, 360);
+  const oR = toRad(omega), lsR = toRad(2 * Ls), lmR = toRad(2 * Lm);
+  const dPsi = (-17.20 * Math.sin(oR) - 1.32 * Math.sin(lsR) - 0.23 * Math.sin(lmR) + 0.21 * Math.sin(2 * oR)) / 3600;
+  const dEps = (9.20 * Math.cos(oR) + 0.57 * Math.cos(lsR) + 0.10 * Math.cos(lmR) - 0.09 * Math.cos(2 * oR)) / 3600;
+  return { dPsi, dEps };
+}
+
+function obliquityTrue(jd: number): number {
+  return obliquityMean(jd) + nutation(jd).dEps;
 }
 
 function sunLong(jd: number): number {
@@ -134,7 +149,10 @@ function ramc(jd: number, geoLng: number): number {
   const T = (jd - 2451545) / 36525;
   const gmst = 280.46061837 + 360.98564736629*(jd - 2451545)
              + 0.000387933*T*T - T**3/38710000;
-  return mod(gmst + geoLng, 360);
+  const { dPsi } = nutation(jd);
+  const eps = obliquityTrue(jd);
+  const eqEq = dPsi * Math.cos(toRad(eps));
+  return mod(gmst + eqEq + geoLng, 360);
 }
 
 function mcLong(ramcDeg: number, eps: number): number {
@@ -220,7 +238,7 @@ const TRAD_RULERS: Record<string, string> = {
 // ─── Main export ─────────────────────────────────────────────
 export function computeHoraryChart(lat: number, lng: number, now: Date = new Date()): HoraryChart {
   const jd  = julianDay(now);
-  const eps = obliquity(jd);
+  const eps = obliquityTrue(jd);
   const r   = ramc(jd, lng);
   const longs = allPlanetLongs(jd);
   const sunL  = longs.sun;

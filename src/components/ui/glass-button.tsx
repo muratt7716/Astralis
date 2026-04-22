@@ -56,13 +56,13 @@ const GlassButton = React.forwardRef<HTMLButtonElement, GlassButtonProps>(
     return (
       <div
         className={cn(
-          "glass-button-wrap cursor-pointer rounded-full relative group",
-          fullWidth && "w-full flex",
+          "glass-button-wrap cursor-pointer rounded-full relative group transition-all duration-300",
+          fullWidth ? "w-full block" : "inline-block",
           className
         )}
       >
         <button
-          className={cn("glass-button overflow-hidden", glassButtonVariants({ size, variant }), fullWidth && "w-full")}
+          className={cn("glass-button overflow-hidden block", glassButtonVariants({ size, variant }), fullWidth && "w-full")}
           ref={ref}
           {...props}
         >

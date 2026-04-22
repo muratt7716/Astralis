@@ -1,7 +1,8 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, MapPin, Heart, Sparkles, Globe, Save, LogOut, Loader2 } from "lucide-react";
+import { X, User, Heart, Sparkles, Globe, Save, LogOut, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import LocationSearch from "@/components/ui/LocationSearch";
 import { SectionLabel } from "./ProfileUI";
 import { useTranslation } from "@/lib/i18n";
 import { RELATIONSHIP_KEYS, LIFE_FOCUS_KEYS, LANGUAGES } from "./ProfileConstants";
@@ -43,8 +44,10 @@ export function SettingsDrawer({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 w-full max-w-md bg-[#0a0a0f] border-l border-white/10 z-[160] shadow-2xl overflow-y-auto"
+            className="fixed inset-y-0 right-0 w-full max-w-md bg-[#020205]/90 backdrop-blur-3xl border-l border-white/5 z-[160] shadow-2xl overflow-y-auto isolate"
           >
+            {/* Background elements inside drawer */}
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-purple-500/10 blur-[120px] rounded-full pointer-events-none" />
             <div className="p-8">
               <div className="flex items-center justify-between mb-10">
                 <h2 className="text-xl font-serif font-bold text-white">{t("profile.settings")}</h2>
@@ -98,15 +101,10 @@ export function SettingsDrawer({
                 {/* Birth city */}
                 <div className="space-y-2">
                   <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium ml-1">{t("profile.label_birth_city")}</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15" />
-                    <Input
-                      value={formData.birth_city}
-                      onChange={e => setFormData({ ...formData, birth_city: e.target.value })}
-                      className="bg-white/[0.04] border-white/[0.06] h-12 pl-11 rounded-xl text-sm"
-                      placeholder={t("profile.placeholder_city")}
-                    />
-                  </div>
+                  <LocationSearch
+                    value={formData.birth_city}
+                    onChange={(loc) => setFormData({ ...formData, birth_city: loc?.displayName || "" })}
+                  />
                 </div>
 
                 <SectionLabel>{t("profile.section_context")}</SectionLabel>

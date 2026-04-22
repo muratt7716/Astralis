@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { question, latitude, longitude, language = "tr", userId } = body;
+    const { question, latitude, longitude, language = "tr", userId, datetime } = body;
 
     const lang: SupportedLanguage = SUPPORTED_LANGS.includes(language) ? language : "tr";
 
@@ -27,15 +27,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Konum bilgisi eksik." }, { status: 400 });
     }
 
-    // 1. Compute chart for this exact moment
-    const now   = new Date();
-    const chart = computeHoraryChart(latitude, longitude, now);
+    // 1. Compute chart for the given datetime or current moment
+    const questionDate = datetime ? new Date(datetime) : new Date();
+    const chart = computeHoraryChart(latitude, longitude, questionDate);
 
     // 2. Apply Lilly rules
     const analysis = analyzeHoraryChart(chart, question);
 
     // 3. Build prompt and call Gemini
-    const prompt = buildHoraryPrompt(question, chart, analysis, lang);
+    const prompt = buildHoraryPrompt(question, chart, analysis, lang, typeof datetime === "string" ? datetime : undefined);
     const aiText  = await callGeminiWithFallback(prompt);
 
     // 4. Parse JSON response
@@ -53,12 +53,22 @@ export async function POST(request: NextRequest) {
     // 5. Optional logging
     if (userId) {
       (async () => {
+        // Prepare full reading text instead of just section4 truncations
+        let fullReadingText = "";
+        try {
+          fullReadingText = Object.values(reading)
+            .filter((v): v is string => typeof v === "string")
+            .join("\n\n");
+        } catch (e) {
+          fullReadingText = JSON.stringify(reading);
+        }
+
         try {
           await supabaseAdmin.from("interaction_logs").insert({
             user_id:     userId,
             action_type: "horary",
             description: "Horary açılımı yapıldı.",
-            metadata:    { question, answer: reading.section4?.slice(0, 200) },
+            metadata:    { question, answer: fullReadingText },
           });
         } catch (e) {
           console.error("Supabase log error:", e);

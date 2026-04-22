@@ -54,6 +54,21 @@ export type QuestionCategory =
   | "relationship" | "career" | "money" | "health"
   | "property" | "travel" | "legal" | "child" | "lost" | "general";
 
+export interface Reception {
+  type: "mutual_domicile" | "mutual_exaltation" | "mixed" | "one_way" | "none";
+  planet1Id: string;
+  planet2Id: string;
+  detail: string; // English description for AI
+}
+
+export interface MoonAspect {
+  planetId: string;
+  planetName: string;
+  aspectType: AspectType;
+  orb: number;
+  applying: boolean;
+}
+
 export interface HoraryAnalysis {
   strictures: Stricture[];
   questionCategory: QuestionCategory;
@@ -63,6 +78,9 @@ export interface HoraryAnalysis {
   quesited: Significator;
   keyAspect: KeyAspect | null;
   timing: TimingEstimate | null;
+  reception: Reception;
+  moonLastAspect: MoonAspect | null;
+  moonNextAspect: MoonAspect | null;
 }
 
 // ─── Essential dignity tables (Lilly / Ptolemaic) ────────────
@@ -307,6 +325,83 @@ export function estimateTiming(aspect: KeyAspect, faster: HoraryPlanet): TimingE
   return { value, unit };
 }
 
+// ─── Reception detection ─────────────────────────────────────
+function detectReception(sig1: HoraryPlanet, sig2: HoraryPlanet): Reception {
+  const DOM: Record<string, string[]> = {
+    sun:["aslan"], moon:["yengec"], mercury:["ikizler","basak"],
+    venus:["boga","terazi"], mars:["koc","akrep"],
+    jupiter:["yay","balik"], saturn:["oglak","kova"],
+  };
+  const EXA: Record<string, string> = {
+    sun:"koc", moon:"boga", mercury:"basak", venus:"balik",
+    mars:"oglak", jupiter:"yengec", saturn:"terazi",
+  };
+  const p1InP2Dom = DOM[sig2.id]?.includes(sig1.signId) || false;
+  const p2InP1Dom = DOM[sig1.id]?.includes(sig2.signId) || false;
+  const p1InP2Exa = EXA[sig2.id] === sig1.signId;
+  const p2InP1Exa = EXA[sig1.id] === sig2.signId;
+
+  if (p1InP2Dom && p2InP1Dom)
+    return { type: "mutual_domicile", planet1Id: sig1.id, planet2Id: sig2.id,
+      detail: `${sig1.name} is in ${sig2.name}'s domicile and vice versa — powerful mutual reception, the two are deeply connected and willing to cooperate` };
+  if (p1InP2Exa && p2InP1Exa)
+    return { type: "mutual_exaltation", planet1Id: sig1.id, planet2Id: sig2.id,
+      detail: `${sig1.name} and ${sig2.name} are in each other's exaltation — mutual reception by exaltation, strong admiration and cooperation` };
+  if ((p1InP2Dom && p2InP1Exa) || (p1InP2Exa && p2InP1Dom))
+    return { type: "mixed", planet1Id: sig1.id, planet2Id: sig2.id,
+      detail: `Mixed reception between ${sig1.name} and ${sig2.name} (domicile/exaltation) — cooperation exists but not perfectly balanced` };
+  if (p1InP2Dom || p1InP2Exa)
+    return { type: "one_way", planet1Id: sig1.id, planet2Id: sig2.id,
+      detail: `${sig1.name} is received by ${sig2.name} (in its ${p1InP2Dom ? 'domicile' : 'exaltation'}) — ${sig2.name} has power/willingness to help but not vice versa` };
+  if (p2InP1Dom || p2InP1Exa)
+    return { type: "one_way", planet1Id: sig2.id, planet2Id: sig1.id,
+      detail: `${sig2.name} is received by ${sig1.name} (in its ${p2InP1Dom ? 'domicile' : 'exaltation'}) — ${sig1.name} has power/willingness to help but not vice versa` };
+
+  return { type: "none", planet1Id: sig1.id, planet2Id: sig2.id,
+    detail: "No reception between significators — neither is in the other's dignity, cooperation or willingness is not indicated" };
+}
+
+// ─── Moon's last and next aspects ────────────────────────────
+const PLANET_NAMES: Record<string, string> = {
+  sun:"Sun", moon:"Moon", mercury:"Mercury", venus:"Venus",
+  mars:"Mars", jupiter:"Jupiter", saturn:"Saturn",
+};
+
+function findMoonAspects(moon: HoraryPlanet, planets: HoraryPlanet[]): { last: MoonAspect | null; next: MoonAspect | null } {
+  let bestLast: MoonAspect | null = null;
+  let bestLastOrb = 999;
+  let bestNext: MoonAspect | null = null;
+  let bestNextOrb = 999;
+
+  for (const planet of planets) {
+    if (planet.id === "moon") continue;
+    for (const angle of ASPECT_ANGLES) {
+      const diff = mod360(planet.longitude - moon.longitude);
+      const toExact = Math.min(diff, 360 - diff);
+      const orb = Math.abs(toExact - angle);
+      if (orb > (PLANET_ORBS[planet.id] || 8)) continue;
+
+      // Check if applying or separating
+      const futMoonLong = mod360(moon.longitude + moon.dailyMotion * 0.1);
+      const futDiff = mod360(planet.longitude - futMoonLong);
+      const futToExact = Math.min(futDiff, 360 - futDiff);
+      const futOrb = Math.abs(futToExact - angle);
+      const isApplying = futOrb < orb;
+
+      const aspectType = ASPECT_NAMES[angle] || "conjunction";
+
+      if (isApplying && orb < bestNextOrb) {
+        bestNext = { planetId: planet.id, planetName: PLANET_NAMES[planet.id] || planet.id, aspectType, orb: Math.round(orb * 10) / 10, applying: true };
+        bestNextOrb = orb;
+      } else if (!isApplying && orb < bestLastOrb) {
+        bestLast = { planetId: planet.id, planetName: PLANET_NAMES[planet.id] || planet.id, aspectType, orb: Math.round(orb * 10) / 10, applying: false };
+        bestLastOrb = orb;
+      }
+    }
+  }
+  return { last: bestLast, next: bestNext };
+}
+
 // ─── Main analysis function ──────────────────────────────────
 export function analyzeHoraryChart(chart: HoraryChart, question: string): HoraryAnalysis {
   const strictures    = checkStrictures(chart);
@@ -343,5 +438,11 @@ export function analyzeHoraryChart(chart: HoraryChart, question: string): Horary
   const faster = (querentPlanet.dailyMotion >= quesitedPlanet.dailyMotion) ? querentPlanet : quesitedPlanet;
   const timing  = keyAspect ? estimateTiming(keyAspect, faster) : null;
 
-  return { strictures, questionCategory: cat, questionHouse: qHouse, querent, moon, quesited, keyAspect, timing };
+  // NEW: Reception analysis
+  const reception = detectReception(querentPlanet, quesitedPlanet);
+
+  // NEW: Moon's last and next aspects
+  const { last: moonLastAspect, next: moonNextAspect } = findMoonAspects(moon, chart.planets);
+
+  return { strictures, questionCategory: cat, questionHouse: qHouse, querent, moon, quesited, keyAspect, timing, reception, moonLastAspect, moonNextAspect };
 }

@@ -15,6 +15,7 @@ import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 import FreemiumBadge from "@/components/FreemiumBadge";
 import { useFreemiumQuota } from "@/lib/freemium";
+import { GlassButton } from "@/components/ui/glass-button";
 import { AlertTriangle, Info, TrendingUp, Heart, Brain, Dumbbell, Sparkles, Eye, Palette, Waves, Activity } from "lucide-react";
 
 function BiyoritimContent() {
@@ -293,12 +294,13 @@ function BiyoritimContent() {
              )}
           </div>
 
-          <button
+          <GlassButton
             type="submit"
-            className="w-full mt-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-black uppercase tracking-widest hover:scale-[1.02] transition-all duration-300 shadow-[0_0_30px_rgba(168,85,247,0.4)]"
+            fullWidth
+            className="mt-8 hover:border-purple-500/50"
           >
             {t("bio.submit")}
-          </button>
+          </GlassButton>
         </form>
 
         {/* Results Sections */}

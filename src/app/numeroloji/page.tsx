@@ -9,13 +9,21 @@ import { calculateNeuroMatrix } from '@/lib/numerology/advancedAlgorithms';
 import { getPythagoreanCore } from '@/lib/numerology/pythagoras';
 import { translations, SupportedLanguage } from '@/lib/i18n-shared';
 import CosmicIcon from '@/components/Cosmic/CosmicIcon';
+import { GlassButton } from "@/components/ui/glass-button";
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { useFreemiumQuota } from "@/lib/freemium";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
 
 export default function NumerologyPage() {
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
   const [isCalculated, setIsCalculated] = useState(false);
   const [lang, setLang] = useState<SupportedLanguage>('tr');
+
+  const { isPremium, isBlocked, isPremiumOnly, consumeQuota } = useFreemiumQuota("numeroloji");
+  const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   useEffect(() => {
     const match = document.cookie.match(/(^| )falci-lang=([^;]+)/);
@@ -36,6 +44,12 @@ export default function NumerologyPage() {
     e.preventDefault();
     if (!fullName || !dob) return;
     
+    if (!isPremium) {
+      if (isPremiumOnly) { setPremiumVariant("premium_required"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
+
     const core = getPythagoreanCore(fullName, dob);
     setCoreNumbers(core);
     setIsCalculated(true);
@@ -43,6 +57,7 @@ export default function NumerologyPage() {
 
   return (
     <div className="min-h-screen bg-transparent text-white pt-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t('num.hero.title')} variant={premiumVariant} />
       {/* Mystical Background effects */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-900/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-900/10 rounded-full blur-[100px] pointer-events-none"></div>
@@ -53,9 +68,10 @@ export default function NumerologyPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 mb-4 pb-2">
             {t('num.hero.title')}
           </h1>
-          <p className="text-lg text-purple-200/70 max-w-2xl mx-auto">
+          <p className="text-lg text-purple-200/70 max-w-2xl mx-auto mb-4">
             {t('num.hero.sub')}
           </p>
+          <FreemiumBadge toolKey="numeroloji" />
         </div>
 
         {!isCalculated ? (
@@ -83,12 +99,15 @@ export default function NumerologyPage() {
                   className="w-full px-4 py-3 bg-black/40 border border-purple-500/30 rounded-xl focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-500 transition-all outline-none"
                 />
               </div>
-              <button
-                type="submit"
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg transition-all shadow-[0_0_20px_rgba(219,39,119,0.4)] transform hover:scale-[1.02]"
-              >
-                {t('num.form.submit')}
-              </button>
+              <div className="pt-2">
+                <GlassButton
+                  type="submit"
+                  fullWidth
+                  className="hover:border-purple-500/50"
+                >
+                  {t('num.form.submit')}
+                </GlassButton>
+              </div>
             </form>
           </div>
         ) : (

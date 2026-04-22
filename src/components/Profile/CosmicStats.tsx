@@ -47,7 +47,7 @@ export function CosmicStats({ zodiacSign, normalizePlanetId }: CosmicStatsProps)
       </div>
 
       {/* Planet Hero Card */}
-      <div className="group relative rounded-[1.75rem] border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-5 md:p-6 overflow-hidden isolate">
+      <div className="group relative rounded-[2.5rem] border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-6 md:p-8 overflow-hidden isolate shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
         <div className="absolute -top-16 -right-16 w-40 h-40 bg-purple-500/[0.06] blur-[60px] rounded-full group-hover:bg-purple-500/[0.12] transition-all duration-1000 pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/[0.04] blur-[50px] rounded-full pointer-events-none" />
 
@@ -74,7 +74,7 @@ export function CosmicStats({ zodiacSign, normalizePlanetId }: CosmicStatsProps)
           {/* Planet info */}
           <div className="flex-1 min-w-0">
             <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold mb-1">{t("astrology.label.planet")}</p>
-            <h3 className="text-xl md:text-2xl font-extrabold text-white tracking-tight leading-tight mb-2">
+            <h3 className="text-2xl md:text-3xl font-serif font-bold text-white tracking-tight leading-tight mb-2">
               {t(zodiacSign.rulingPlanetKey)}
             </h3>
             <div className="flex items-center gap-1.5">
@@ -127,7 +127,7 @@ export function CosmicStats({ zodiacSign, normalizePlanetId }: CosmicStatsProps)
       </div>
 
       {/* Compatibility Bar */}
-      <div className="rounded-2xl border border-indigo-500/[0.08] bg-indigo-500/[0.03] p-4 md:p-5 hover:bg-indigo-500/[0.06] transition-all duration-500">
+      <div className="rounded-[2rem] border border-indigo-500/[0.08] bg-indigo-500/[0.03] p-5 hover:bg-indigo-500/[0.06] transition-all duration-500">
         <p className="text-[8px] text-indigo-400/40 uppercase tracking-[0.2em] font-bold mb-3">{t("nav.compatibility")}</p>
         <div className="flex items-center gap-2 flex-wrap">
           {zodiacSign.compatibility.slice(0, 4).map((id: string) => (

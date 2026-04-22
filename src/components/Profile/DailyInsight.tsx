@@ -16,9 +16,9 @@ export function DailyInsight({ horoscopeData, fetchingHoroscope, dir }: DailyIns
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.02] p-8 relative overflow-hidden flex flex-col justify-between min-h-[350px]">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[120px] rounded-full -mr-20 -mt-20 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/5 blur-[100px] rounded-full -ml-10 -mb-10 pointer-events-none" />
+    <div className="rounded-[2.5rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl p-8 md:p-10 relative overflow-hidden flex flex-col justify-between min-h-[350px]">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[120px] rounded-full -mr-20 -mt-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 blur-[100px] rounded-full -ml-10 -mb-10 pointer-events-none" />
 
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-10">
@@ -36,7 +36,7 @@ export function DailyInsight({ horoscopeData, fetchingHoroscope, dir }: DailyIns
 
         <div className="max-w-2xl">
           <h2 className={cn(
-            "text-3xl md:text-4xl font-sans font-bold tracking-tight leading-tight mb-6 transition-all duration-1000",
+            "text-3xl md:text-5xl font-serif font-bold tracking-tight leading-tight mb-6 transition-all duration-1000",
             fetchingHoroscope ? "opacity-20 blur-md" : "opacity-100"
           )}>
             {horoscopeData?.title || t("profile.daily_preparing")}

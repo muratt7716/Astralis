@@ -44,6 +44,16 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "daily_horoscope" JSONB DEF
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS "is_premium" BOOLEAN DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS birth_chart_summary JSONB DEFAULT NULL;
 
+-- Premium / Lemon Squeezy Alanları
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS subscription_type TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMPTZ;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS lemon_squeezy_customer_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS lemon_squeezy_subscription_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS lemon_squeezy_order_id TEXT;
+
+COMMENT ON COLUMN public.profiles.subscription_type IS 'monthly | lifetime | NULL';
+COMMENT ON COLUMN public.profiles.subscription_end_date IS 'monthly abonelik bitiş tarihi; lifetime için NULL';
+
 
 -- ========================================================
 -- 2. CONVERSATIONS (Sohbet Oturumları)

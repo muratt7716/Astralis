@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { turkishCities } from "@/data/cities";
 import { countries } from "@/data/countries";
 import type { BirthChart } from "@/lib/astrology";
 import { useTranslation } from "@/lib/i18n";
 import BirthChartWheel from "@/components/BirthChartWheel";
-import CosmicInput from "@/components/Cosmic/CosmicInput";
 import CosmicSelect from "@/components/Cosmic/CosmicSelect";
+import LocationSearch, { type LocationResult } from "@/components/ui/LocationSearch";
 import { GlassButton } from "@/components/ui/glass-button";
 import CosmicLoader from "@/components/Cosmic/CosmicLoader";
 import NextImage from "next/image";
@@ -18,6 +17,9 @@ import ZodiacIcon from "@/components/Cosmic/ZodiacIcon";
 import { useEffect } from "react";
 import { getCurrentProfile, useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
+import { useFreemiumQuota } from "@/lib/freemium";
+import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
+import FreemiumBadge from "@/components/FreemiumBadge";
 import {
   Sparkles,
   Calendar,
@@ -75,8 +77,7 @@ export default function DogumHaritasiPage() {
   const [minute, setMinute] = useState("");
   const [country, setCountry] = useState("TR");
   const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
-  const [manualCity, setManualCity] = useState("");
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [result, setResult] = useState<BirthChart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -94,6 +95,9 @@ export default function DogumHaritasiPage() {
   const [planetInterpretations, setPlanetInterpretations] = useState<Record<string, string> | null>(null);
 
   const { user, profile } = useAuth();
+  const { isPremium, isBlocked, isPremiumOnly, consumeQuota } = useFreemiumQuota("dogum-haritasi");
+  const [showPremium, setShowPremium] = useState(false);
+  const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
 
   // Auto-fill form from profile data when logged in
   useEffect(() => {
@@ -123,22 +127,13 @@ export default function DogumHaritasiPage() {
     }
 
     if (profile.birth_city) {
-      // Check if it's a known Turkish city
-      const found = turkishCities.find(c => c.name === profile.birth_city);
-      if (found) {
-        setCity(profile.birth_city);
-      } else {
-        setManualCity(profile.birth_city);
-      }
+      setCity(profile.birth_city);
     }
   }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Tab-switching auto-load removed; interpretations are prefetched on calculate.
 
-  const isTurkey = country === "TR";
   const selectedCountry = useMemo(() => countries.find(c => c.code === country), [country]);
-  const selectedCity = useMemo(() => turkishCities.find(c => c.name === city), [city]);
-  const districts = useMemo(() => selectedCity?.districts || [], [selectedCity]);
 
   const filteredAspects = useMemo(() => {
     if (!result) return [];
@@ -148,9 +143,15 @@ export default function DogumHaritasiPage() {
 
   const handleCalculate = async () => {
     if (!day || !month || !year) { setError(t("error.date")); return; }
+    
+    if (!isPremium) {
+      if (isPremiumOnly) { setPremiumVariant("premium_required"); setShowPremium(true); return; }
+      if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
+      consumeQuota();
+    }
+
     if (!hour || minute === "") { setError(t("error.time")); return; }
-    if (isTurkey && !city) { setError(t("error.city")); return; }
-    if (!isTurkey && !manualCity) { setError(t("error.city")); return; }
+    if (!city && !locationCoords) { setError(t("error.city")); return; }
 
     setLoading(true); setError(""); setResult(null);
     setAspectInterpretations(null);
@@ -159,15 +160,14 @@ export default function DogumHaritasiPage() {
     setChartInterpretation(null);
     setInterpretError("");
     try {
-      const cityData = isTurkey ? turkishCities.find(c => c.name === city) : null;
       const response = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           year: parseInt(year), month: parseInt(month), day: parseInt(day),
           hour: parseInt(hour), minute: parseInt(minute),
-          latitude: cityData?.lat || 39.9334,
-          longitude: cityData?.lng || 32.8597,
+          latitude: locationCoords?.lat || 39.9334,
+          longitude: locationCoords?.lng || 32.8597,
           utcOffset: selectedCountry?.utcOffset ?? 3,
         }),
       });
@@ -191,24 +191,35 @@ export default function DogumHaritasiPage() {
             .finally(() => clearTimeout(timer));
         };
 
-        // Wait for all AI interpretations before showing results (hard 55s ceiling)
-        const hardTimeout = new Promise<void>(resolve => setTimeout(resolve, 55000));
-        await Promise.race([
-          Promise.all([
-            fetchWithTimeout("/api/birth-chart/aspects-interpret", { chart: chartData, language: lang })
-              .then(d => { if (d.success) setAspectInterpretations(d.data); }),
-            fetchWithTimeout("/api/birth-chart/houses-interpret", { chart: chartData, language: lang })
-              .then(d => { if (d.success) setHouseInterpretations(d.data); }),
-            fetchWithTimeout("/api/birth-chart/interpret", { chart: chartData, language: lang })
-              .then(d => { if (d.success) setChartInterpretation(d.data); }),
-            fetchWithTimeout("/api/birth-chart/planets-interpret", { chart: chartData, language: lang })
-              .then(d => { if (d.success) setPlanetInterpretations(d.data); }),
-          ]),
-          hardTimeout,
-        ]);
+        // Wait for all AI interpretations before showing results
+        setAspectInterpretLoading(true);
+        setHouseInterpretLoading(true);
 
+        const aiPromises = [
+          fetchWithTimeout("/api/birth-chart/aspects-interpret", { chart: chartData, language: lang })
+            .then(d => { if (d.success) setAspectInterpretations(d.data); })
+            .finally(() => setAspectInterpretLoading(false)),
+          fetchWithTimeout("/api/birth-chart/houses-interpret", { chart: chartData, language: lang })
+            .then(d => { if (d.success) setHouseInterpretations(d.data); })
+            .finally(() => setHouseInterpretLoading(false)),
+          fetchWithTimeout("/api/birth-chart/interpret", { chart: chartData, language: lang })
+            .then(d => { if (d.success) setChartInterpretation(d.data); }),
+          fetchWithTimeout("/api/birth-chart/planets-interpret", { chart: chartData, language: lang })
+            .then(d => { if (d.success) setPlanetInterpretations(d.data); })
+        ];
+
+        // 45 second hard cap fallback so we don't hold the user hostage forever, though Vercel / Gemini usually finishes in 10-20s.
+        const hardTimeout = new Promise<void>(resolve => setTimeout(resolve, 45000));
+        await Promise.race([Promise.allSettled(aiPromises), hardTimeout]);
+
+        // After everything is calculated, close loading and show results
         setResult(chartData);
         setActiveTab("overview");
+        setLoading(false); // Make sure loader vanishes before scrolling!
+        
+        setTimeout(() => {
+          document.getElementById('chart-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
 
         if (user?.id) {
           syncBirthChart(chartData, user.id);
@@ -255,6 +266,7 @@ export default function DogumHaritasiPage() {
 
   return (
     <div className="cosmic-gradient min-h-screen">
+      <PremiumModal isOpen={showPremium} onClose={() => setShowPremium(false)} featureName={t("chart.title")} variant={premiumVariant} />
       {/* Header */}
       <section className="pt-32 pb-8 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -262,9 +274,10 @@ export default function DogumHaritasiPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text">{t("chart.title")}</span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-4">
             {t("chart.subtitle")}
           </p>
+          <FreemiumBadge toolKey="dogum-haritasi" />
         </div>
       </section>
 
@@ -416,53 +429,25 @@ export default function DogumHaritasiPage() {
               <CosmicSelect
                 label={t("chart.country")}
                 value={country}
-                onChange={(e) => { setCountry(e.target.value); setCity(""); setDistrict(""); setManualCity(""); }}
+                onChange={(e) => { setCountry(e.target.value); setCity(""); setLocationCoords(null); }}
                 options={countries.map(c => ({ value: c.code, label: c.name }))}
               />
             </div>
 
-            {/* City/District - for Turkey */}
-            {isTurkey ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <CosmicSelect
-                  label={t("chart.city")}
-                  value={city}
-                  onChange={(e) => { setCity(e.target.value); setDistrict(""); }}
-                  options={[
-                    { value: "", label: `${t("chart.city")}...` },
-                    ...turkishCities.map(c => ({ value: c.name, label: c.name }))
-                  ]}
-                />
-                <CosmicSelect
-                  label={`${t("chart.district")} (${t("chart.optional")})`}
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  disabled={districts.length === 0}
-                  options={[
-                    { value: "", label: districts.length === 0 ? "..." : `${t("chart.district")}...` },
-                    ...districts.map(d => ({ value: d, label: d }))
-                  ]}
-                />
-              </div>
-            ) : (
-              <div className="mb-6">
-                <CosmicInput
-                  label={t("chart.city")}
-                  value={manualCity}
-                  onChange={(e) => setManualCity(e.target.value)}
-                  placeholder={`${t("chart.city")}...`}
-                />
-              </div>
-            )}
+            {/* City Search (Global) */}
+            <div className="mb-6">
+              <LocationSearch
+                value={city}
+                onChange={(loc) => {
+                  setCity(loc?.displayName || "");
+                  setLocationCoords(loc ? { lat: loc.lat, lng: loc.lng } : null);
+                }}
+              />
+            </div>
 
-            {isTurkey && selectedCity && (
+            {locationCoords && (
               <div className="mb-6 p-3 rounded-lg bg-white/3 border border-white/5 text-gray-500 text-xs flex items-center gap-2">
-                <MapPin className="size-3 text-cyan-500" /> {t("chart.coordinates")}: {selectedCity.lat.toFixed(4)}°N, {selectedCity.lng.toFixed(4)}°E | {t("chart.timezone")}: UTC+{selectedCountry?.utcOffset}
-              </div>
-            )}
-            {!isTurkey && selectedCountry && (
-              <div className="mb-6 p-3 rounded-lg bg-white/3 border border-white/5 text-gray-500 text-xs flex items-center gap-2">
-                <Globe className="size-3 text-indigo-500" /> {selectedCountry.name} | {t("chart.timezone")}: UTC{selectedCountry.utcOffset >= 0 ? "+" : ""}{selectedCountry.utcOffset}
+                <MapPin className="size-3 text-cyan-500" /> {t("chart.coordinates")}: {locationCoords.lat.toFixed(4)}°N, {locationCoords.lng.toFixed(4)}°E | {t("chart.timezone")}: UTC{(selectedCountry?.utcOffset ?? 3) >= 0 ? "+" : ""}{selectedCountry?.utcOffset ?? 3}
               </div>
             )}
 
@@ -550,12 +535,12 @@ export default function DogumHaritasiPage() {
 
       {/* Results */}
       {isClient && result && (
-        <section className="pb-20 px-4">
+        <section id="chart-results-section" className="pb-20 px-4 pt-12 md:pt-4">
           <div className="max-w-5xl mx-auto space-y-6">
             {/* Birth Info */}
             <div className="text-center fade-in-up">
               <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
-                <MapPin className="size-3 text-cyan-500/50" /> {selectedCountry?.name}{isTurkey ? `, ${city}` : (manualCity ? `, ${manualCity}` : "")}{district ? ` / ${district}` : ""} — {day}/{month}/{year}, {hour?.toString().padStart(2, "0")}:{minute?.toString().padStart(2, "0")}
+                <MapPin className="size-3 text-cyan-500/50" /> {selectedCountry?.name}{city ? `, ${city}` : ""} — {day}/{month}/{year}, {hour?.toString().padStart(2, "0")}:{minute?.toString().padStart(2, "0")}
               </p>
             </div>
 
@@ -1371,7 +1356,7 @@ export default function DogumHaritasiPage() {
             <div className="text-center pt-4">
               <p className="text-gray-600 text-xs max-w-2xl mx-auto">
                 ⚠️ {t("chart.disclaimer")}
-                Coord: {selectedCity?.lat.toFixed(4)}°N, {selectedCity?.lng.toFixed(4)}°E
+                {locationCoords && <>Coord: {locationCoords.lat.toFixed(4)}°N, {locationCoords.lng.toFixed(4)}°E</>}
               </p>
             </div>
           </div>

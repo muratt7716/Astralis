@@ -25,20 +25,20 @@ interface Props {
 }
 
 // ─── Geometry constants ───────────────────────────────────────
-const SIZE = 620;
+const SIZE = 700;
 const CX   = SIZE / 2;
 const CY   = SIZE / 2;
 
-// Ring radii — zodiac band is 72 units wide for large readable glyphs
-const R_OUT   = 298;   // outer rim for tick ring
-const R_TIN   = 288;   // short tick inner
-const R_TLONG = 272;   // long tick inner (every 30°)
-const R_ZO    = 272;   // zodiac outer edge
-const R_ZI    = 200;   // zodiac inner edge  (72-unit band)
-const R_HN    = 184;   // house number label
-const R_CI    = 170;   // cusp inner endpoint
-const R_PL    = 145;   // planet orbit ring
-const R_IN    = 118;   // inner circle for aspect web
+// Ring radii — proportional from outside in
+const R_OUT   = 306;   // outer rim
+const R_TIN   = 296;   // short tick inner
+const R_TLONG = 280;   // long tick (every 30°)
+const R_ZO    = 280;   // zodiac outer edge
+const R_ZI    = 214;   // zodiac inner edge (66-unit band)
+const R_HN    = 196;   // house number label
+const R_CI    = 180;   // cusp inner endpoint
+const R_PL    = 154;   // planet orbit ring
+const R_IN    = 120;   // inner circle for aspect web
 
 // ─── Zodiac – Unicode + element colours ──────────────────────
 const ZODIAC = [
@@ -60,25 +60,20 @@ const SIGN_INDEX: Record<string,number> = Object.fromEntries(ZODIAC.map((s,i) =>
 
 // Element palette: bg (slice fill) / rim (border) / sym (glyph colour)
 const EL: Record<string,{bg:string;rim:string;sym:string}> = {
-  fire:  { bg:"#2a0902", rim:"#7a2010", sym:"#f28050" },
-  earth: { bg:"#0a1f04", rim:"#2e5a14", sym:"#90d040" },
-  air:   { bg:"#03101f", rim:"#0e3a5a", sym:"#50cce8" },
-  water: { bg:"#040c24", rim:"#0e2258", sym:"#5080e0" },
+  fire:  { bg:"#1a0800", rim:"#7a2010", sym:"#f08050" },
+  earth: { bg:"#081a04", rim:"#2e5a14", sym:"#88cc40" },
+  air:   { bg:"#020e1c", rim:"#0e3a5a", sym:"#48c8e0" },
+  water: { bg:"#030a20", rim:"#0e2258", sym:"#4878d8" },
 };
 
-// ─── Aspects — bold, glowing, distinct colours ───────────────
+// ─── Aspects — distinct line styles ──────────────────────────
 const ASPECTS = [
-  { name:"conjunction", angle:0,   orb:8, color:"#f0dc80", w:2.8, dash:"",     opacity:0.90 },
-  { name:"opposition",  angle:180, orb:8, color:"#e84040", w:2.5, dash:"",     opacity:0.85 },
-  { name:"trine",       angle:120, orb:8, color:"#30d080", w:2.2, dash:"",     opacity:0.82 },
-  { name:"square",      angle:90,  orb:7, color:"#e87020", w:2.4, dash:"8 5",  opacity:0.82 },
-  { name:"sextile",     angle:60,  orb:6, color:"#40b8f0", w:1.9, dash:"4 5",  opacity:0.78 },
+  { name:"conjunction", angle:0,   orb:8, color:"#f0dc80", w:2.5, dash:"",     opacity:0.90, label:"☌" },
+  { name:"opposition",  angle:180, orb:8, color:"#e84040", w:2.2, dash:"",     opacity:0.85, label:"☍" },
+  { name:"trine",       angle:120, orb:8, color:"#30d080", w:2.0, dash:"",     opacity:0.82, label:"△" },
+  { name:"square",      angle:90,  orb:7, color:"#e87020", w:2.2, dash:"7 4",  opacity:0.82, label:"□" },
+  { name:"sextile",     angle:60,  orb:6, color:"#40b8f0", w:1.8, dash:"4 4",  opacity:0.78, label:"⚹" },
 ];
-
-// ─── Planet glyph override (SVG-safe chars) ──────────────────
-const P_GLYPH: Record<string,string> = {
-  sun:"☉", moon:"☽", mercury:"☿", venus:"♀", mars:"♂", jupiter:"♃", saturn:"♄",
-};
 
 // ─── Helpers ─────────────────────────────────────────────────
 function toXY(long: number, asc: number, r: number) {
@@ -113,7 +108,7 @@ export default function HoraryChartWheel({
     const placed: (typeof sorted[0] & { r: number })[] = [];
     for (const p of sorted) {
       let r = R_PL;
-      if (placed.some(q => Math.abs(q.f - p.f) < 10 && q.r === r)) r = R_PL - 26;
+      if (placed.some(q => Math.abs(q.f - p.f) < 10 && q.r === r)) r = R_PL - 28;
       placed.push({ ...p, r });
     }
     return placed.map(p => ({
@@ -121,13 +116,12 @@ export default function HoraryChartWheel({
       pos: toXY(p.f, asc, p.r),
       isQ: p.id === querentPlanetId,
       isS: p.id === quesitedPlanetId,
-      glyph: P_GLYPH[p.id] ?? p.emoji,
     }));
   }, [planets, asc, querentPlanetId, quesitedPlanetId]);
 
   // ── Aspect web ────────────────────────────────────────────
   const aspectLines = useMemo(() => {
-    type Line = { x1:number;y1:number;x2:number;y2:number;color:string;w:number;dash:string;opacity:number;name:string };
+    type Line = { x1:number;y1:number;x2:number;y2:number;color:string;w:number;dash:string;opacity:number;name:string;label:string };
     const out: Line[] = [];
     for (let i = 0; i < dots.length; i++) {
       for (let j = i+1; j < dots.length; j++) {
@@ -136,7 +130,6 @@ export default function HoraryChartWheel({
         if (diff > 180) diff = 360 - diff;
         for (const asp of ASPECTS) {
           if (Math.abs(diff - asp.angle) <= asp.orb) {
-            // Project to inner-circle radius
             const scale_a = R_IN / a.r, scale_b = R_IN / b.r;
             out.push({
               x1: CX + (a.pos.x - CX) * scale_a,
@@ -180,278 +173,328 @@ export default function HoraryChartWheel({
 
   // ─────────────────────────────────────────────────────────
   return (
-    <svg viewBox={`0 0 ${SIZE} ${SIZE}`}
-      className="w-full max-w-[600px] mx-auto select-none"
-      style={{ fontFamily:"'Cinzel', serif" }}>
+    <div className="w-full">
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`}
+        className="w-full max-w-[700px] mx-auto select-none"
+        style={{ fontFamily:"'Cinzel', serif" }}>
 
-      <defs>
-        {/* Font for zodiac glyphs — Noto Sans Symbols 2 has beautifully drawn ♈–♓ */}
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap');`}</style>
+        <defs>
+          <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap');`}</style>
 
-        {/* Backgrounds */}
-        <radialGradient id="bgG" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor="#0e1830" />
-          <stop offset="100%" stopColor="#05080e" />
-        </radialGradient>
-        <radialGradient id="inG" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor="#0a1224" />
-          <stop offset="100%" stopColor="#050a14" />
-        </radialGradient>
+          {/* Backgrounds */}
+          <radialGradient id="hwBg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="#0e1830" />
+            <stop offset="100%" stopColor="#040810" />
+          </radialGradient>
+          <radialGradient id="hwIn" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="#0a1224" />
+            <stop offset="100%" stopColor="#040810" />
+          </radialGradient>
 
-        {/* Glow filters */}
-        <filter id="gA" x="-120%" y="-120%" width="340%" height="340%">
-          <feGaussianBlur stdDeviation="4" result="b" />
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="gP" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur stdDeviation="5" result="b" />
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="gLabel" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="2" result="b" />
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
+          {/* Glow filters */}
+          <filter id="hwGA" x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="3.5" result="b" />
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="hwGP" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="6" result="b" />
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="hwGL" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2" result="b" />
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="hwShadow">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#000" floodOpacity="0.5"/>
+          </filter>
 
-        {/* Per-planet clip circles (for photo images) */}
-        {dots.map(p => {
-          const r = p.isQ || p.isS ? 17 : 14;
+          {/* Per-planet clip circles */}
+          {dots.map(p => {
+            const r = p.isQ || p.isS ? 20 : 16;
+            return (
+              <clipPath key={`cp-${p.id}`} id={`cp-${p.id}`}>
+                <circle cx={p.pos.x} cy={p.pos.y} r={r} />
+              </clipPath>
+            );
+          })}
+        </defs>
+
+        {/* ── 1. Background disc ── */}
+        <circle cx={CX} cy={CY} r={R_OUT + 8} fill="url(#hwBg)" />
+
+        {/* ── 2. Degree tick ring ── */}
+        {ticks.map((t, i) => (
+          <line key={i}
+            x1={t.p1.x} y1={t.p1.y} x2={t.p2.x} y2={t.p2.y}
+            stroke={t.isLong ? "#c9a84c" : "#283848"}
+            strokeWidth={t.isLong ? 1.5 : 0.7}
+            opacity={t.isLong ? 0.9 : 0.45}
+          />
+        ))}
+        <circle cx={CX} cy={CY} r={R_OUT} fill="none" stroke="#1e2e42" strokeWidth="0.6" />
+
+        {/* ── 3. Zodiac band — element-coloured slices with Unicode glyphs ── */}
+        {ZODIAC.map((sign, i) => {
+          const el   = EL[sign.el];
+          const midL = i * 30 + 15;
+          const mid  = toXY(midL, asc, (R_ZO + R_ZI) / 2);
           return (
-            <clipPath key={`cp-${p.id}`} id={`cp-${p.id}`}>
-              <circle cx={p.pos.x} cy={p.pos.y} r={r} />
-            </clipPath>
+            <g key={sign.id} style={{ pointerEvents:"none" }}>
+              <path d={slicePath(i, asc)} fill={el.bg} stroke={el.rim} strokeWidth="0.6" opacity="0.95" />
+              <text
+                x={mid.x} y={mid.y}
+                textAnchor="middle" dominantBaseline="central"
+                fontSize="24"
+                fontFamily="'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', serif"
+                fill={el.sym}
+                opacity="0.92"
+                filter="url(#hwGL)"
+              >{sign.sym}</text>
+            </g>
           );
         })}
 
-        {/* Per-planet radial gradient body */}
-        {dots.map(p => {
-          const c0 = p.isQ ? "#c9a84c" : p.isS ? "#c090ff" : "#203858";
-          const c1 = p.isQ ? "#6a4a10" : p.isS ? "#6030a0" : "#0c1828";
-          return (
-            <radialGradient key={`rg-${p.id}`} id={`rg-${p.id}`} cx="35%" cy="30%" r="65%">
-              <stop offset="0%"   stopColor={c0} stopOpacity="0.9" />
-              <stop offset="100%" stopColor={c1} stopOpacity="1"   />
-            </radialGradient>
-          );
-        })}
-      </defs>
+        {/* Zodiac ring borders */}
+        <circle cx={CX} cy={CY} r={R_ZO} fill="none" stroke="#304050" strokeWidth="1"   />
+        <circle cx={CX} cy={CY} r={R_ZI} fill="none" stroke="#304050" strokeWidth="0.8" />
 
-      {/* ── 1. Background disc ── */}
-      <circle cx={CX} cy={CY} r={R_OUT + 8} fill="url(#bgG)" />
+        {/* ── 4. Inner chart field ── */}
+        <circle cx={CX} cy={CY} r={R_ZI} fill="url(#hwIn)" />
 
-      {/* ── 2. Degree tick ring ── */}
-      {ticks.map((t, i) => (
-        <line key={i}
-          x1={t.p1.x} y1={t.p1.y} x2={t.p2.x} y2={t.p2.y}
-          stroke={t.isLong ? "#c9a84c" : "#283848"}
-          strokeWidth={t.isLong ? 1.5 : 0.7}
-          opacity={t.isLong ? 0.9 : 0.5}
-        />
-      ))}
-      <circle cx={CX} cy={CY} r={R_OUT} fill="none" stroke="#1e2e42" strokeWidth="0.6" />
+        {/* ── 5. Aspect web inside inner circle ── */}
+        <circle cx={CX} cy={CY} r={R_IN} fill="#040910" stroke="#182030" strokeWidth="0.6" />
 
-      {/* ── 3. Zodiac band — element-coloured slices with Unicode glyphs ── */}
-      {ZODIAC.map((sign, i) => {
-        const el   = EL[sign.el];
-        const midL = i * 30 + 15;
-        const mid  = toXY(midL, asc, (R_ZO + R_ZI) / 2);
-        return (
-          <g key={sign.id} style={{ pointerEvents:"none" }}>
-            <path d={slicePath(i, asc)} fill={el.bg} stroke={el.rim} strokeWidth="0.6" opacity="0.95" />
-            {/* Large Unicode glyph — Noto Sans Symbols 2 renders ♈–♓ beautifully */}
-            <text
-              x={mid.x} y={mid.y}
-              textAnchor="middle" dominantBaseline="central"
-              fontSize="26"
-              fontFamily="'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', 'Symbola', serif"
-              fill={el.sym}
-              opacity="0.95"
-              filter="url(#gLabel)"
-            >{sign.sym}</text>
-          </g>
-        );
-      })}
-
-      {/* Zodiac ring borders */}
-      <circle cx={CX} cy={CY} r={R_ZO} fill="none" stroke="#304050" strokeWidth="1"   />
-      <circle cx={CX} cy={CY} r={R_ZI} fill="none" stroke="#304050" strokeWidth="0.8" />
-
-      {/* ── 4. Inner chart field ── */}
-      <circle cx={CX} cy={CY} r={R_ZI} fill="url(#inG)" />
-
-      {/* ── 5. Aspect web inside inner circle ── */}
-      <circle cx={CX} cy={CY} r={R_IN} fill="#050912" stroke="#182030" strokeWidth="0.6" />
-
-      {aspectLines.map((asp, i) => (
-        <g key={i} filter="url(#gA)">
-          <line
-            x1={asp.x1} y1={asp.y1} x2={asp.x2} y2={asp.y2}
-            stroke={asp.color} strokeWidth={asp.w}
-            strokeDasharray={asp.dash}
-            strokeLinecap="round"
-            opacity={asp.opacity}
-          />
-        </g>
-      ))}
-
-      {/* Aspect legend dots at center */}
-      {["#f0dc80","#e84040","#30d080","#e87020","#40b8f0"].map((c,i) => (
-        <circle key={i} cx={CX + (i-2)*6} cy={CY} r="1.8"
-          fill={c} opacity="0.6" />
-      ))}
-
-      <circle cx={CX} cy={CY} r={R_IN} fill="none" stroke="#1e304a" strokeWidth="0.8" />
-
-      {/* ── 6. House cusp lines ── */}
-      {houseData.map((h, i) => (
-        <g key={i}>
-          <line
-            x1={h.inner.x} y1={h.inner.y} x2={h.outer.x} y2={h.outer.y}
-            stroke={h.isAngle ? "#c9a84c" : "#1a2c3e"}
-            strokeWidth={h.isAngle ? 2.0 : 0.7}
-            opacity={h.isAngle ? 1.0 : 0.8}
-          />
-          <text x={h.numPos.x} y={h.numPos.y}
-            textAnchor="middle" dominantBaseline="central"
-            fontSize="9" fill={h.isAngle ? "#c9a84c" : "#3a5468"} opacity="0.95"
-            style={{ pointerEvents:"none" }}
-          >{h.label}</text>
-        </g>
-      ))}
-
-      {/* ── 7. Planets ── */}
-      {dots.map(p => {
-        const isSel  = selectedPlanetId === p.id;
-        const isHov  = hovered === p.id;
-        const isSig  = p.isQ || p.isS;
-        const accent = p.isQ ? "#f0c060" : p.isS ? "#c090ff" : "#6090b8";
-        const r      = isSig ? 17 : 14;
-
-        return (
-          <g key={p.id}
-            style={{ cursor: onPlanetClick ? "pointer" : "default" }}
-            onClick={() => handleClick(p)}
-            onMouseEnter={() => setHovered(p.id)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            {/* Outer glow ring for selected */}
-            {isSel && (
-              <circle cx={p.pos.x} cy={p.pos.y} r={r + 14}
-                fill="none" stroke={accent} strokeWidth="1.5" opacity="0.2"
-                filter="url(#gP)"
-              />
-            )}
-
-            {/* Animated pulse ring for significators */}
-            {isSig && (
-              <circle cx={p.pos.x} cy={p.pos.y} r={r + 6}
-                fill="none" stroke={accent} strokeWidth={isSel ? 2 : 1.5}
-                opacity={isSel ? 0.7 : 0.4}
-              >
-                <animate attributeName="r"       values={`${r+5};${r+10};${r+5}`} dur="3s" repeatCount="indefinite" />
-                <animate attributeName="opacity"  values="0.5;0.1;0.5"              dur="3s" repeatCount="indefinite" />
-              </circle>
-            )}
-
-            {/* Combust dashed ring */}
-            {p.combust && !p.cazimi && (
-              <circle cx={p.pos.x} cy={p.pos.y} r={r + 4}
-                fill="none" stroke="#ef4444" strokeWidth="1.5"
-                strokeDasharray="3 3" opacity="0.65"
-              />
-            )}
-
-            {/* Cazimi gold ring */}
-            {p.cazimi && (
-              <circle cx={p.pos.x} cy={p.pos.y} r={r + 4}
-                fill="none" stroke="#ffd700" strokeWidth="2" opacity="0.8"
-              />
-            )}
-
-            {/* Planet body circle */}
-            <circle cx={p.pos.x} cy={p.pos.y} r={r}
-              fill={`url(#rg-${p.id})`}
-              stroke={isSel || isHov ? accent : isSig ? accent : "#203040"}
-              strokeWidth={isSel ? 2.5 : isSig ? 2 : 1}
+        {aspectLines.map((asp, i) => (
+          <g key={i} filter="url(#hwGA)">
+            <line
+              x1={asp.x1} y1={asp.y1} x2={asp.x2} y2={asp.y2}
+              stroke={asp.color} strokeWidth={asp.w}
+              strokeDasharray={asp.dash}
+              strokeLinecap="round"
+              opacity={asp.opacity}
             />
-
-            {/* Planet photo image */}
-            {planetImages[p.id] && (
-              <>
-                <image
-                  href={planetImages[p.id]}
-                  x={p.pos.x - r} y={p.pos.y - r}
-                  width={r * 2} height={r * 2}
-                  clipPath={`url(#cp-${p.id})`}
-                  preserveAspectRatio="xMidYMid slice"
-                  opacity="0.72"
-                />
-                {/* Dim overlay so glyph stays readable */}
-                <circle cx={p.pos.x} cy={p.pos.y} r={r}
-                  fill={isSig ? "rgba(8,10,18,0.3)" : "rgba(4,7,14,0.52)"}
-                  clipPath={`url(#cp-${p.id})`}
-                />
-              </>
-            )}
-
-            {/* Planet glyph — large & crisp */}
-            <text x={p.pos.x} y={p.pos.y + 0.5}
+            {/* Aspect glyph at midpoint */}
+            <text
+              x={(asp.x1 + asp.x2) / 2}
+              y={(asp.y1 + asp.y2) / 2}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={isSig ? "13" : "11"}
-              fontFamily="'Noto Sans Symbols 2', 'Segoe UI Symbol', 'Apple Symbols', serif"
-              fill={isSig ? accent : isHov ? "#a0c8e0" : "#6898b8"}
-              fontWeight="bold"
+              fontSize="9" fill={asp.color} opacity="0.7"
+              fontFamily="'Noto Sans Symbols 2', serif"
               style={{ pointerEvents:"none" }}
-            >{p.glyph}</text>
-
-            {/* Retrograde marker */}
-            {p.retrograde && (
-              <text x={p.pos.x + r + 2} y={p.pos.y - r + 2}
-                fontSize="8" fill="#f97316" fontWeight="bold"
-                style={{ pointerEvents:"none" }}
-              >ℛ</text>
-            )}
-
-            {/* Hover tooltip: name + degree */}
-            {isHov && (
-              <g>
-                <rect
-                  x={p.pos.x + r + 4} y={p.pos.y - 12}
-                  width="60" height="18" rx="4"
-                  fill="#060e1e" stroke={accent} strokeWidth="0.8" opacity="0.95"
-                />
-                <text x={p.pos.x + r + 7} y={p.pos.y - 0.5}
-                  fontSize="8.5" fill={accent}
-                  fontFamily="'JetBrains Mono', monospace"
-                  style={{ pointerEvents:"none" }}
-                >
-                  {p.signDegree.toFixed(1)}°{p.signId.slice(0,3).toUpperCase()}
-                </text>
-              </g>
-            )}
+            >{asp.label}</text>
           </g>
-        );
-      })}
+        ))}
 
-      {/* ── 8. Angle labels ASC / DSC / MC / IC ── */}
-      {[
-        { long: asc,             label:"ASC" },
-        { long: asc + 180,       label:"DSC" },
-        { long: mcLongitude,     label:"MC"  },
-        { long: mcLongitude+180, label:"IC"  },
-      ].map(({ long, label }) => {
-        const pos = toXY(long, asc, R_OUT + 16);
-        return (
-          <text key={label} x={pos.x} y={pos.y}
-            textAnchor="middle" dominantBaseline="central"
-            fontSize="10" fill="#c9a84c" fontWeight="bold"
-            filter="url(#gLabel)"
-          >{label}</text>
-        );
-      })}
+        <circle cx={CX} cy={CY} r={R_IN} fill="none" stroke="#1e304a" strokeWidth="0.8" />
 
-      {/* ── 9. Centre point ── */}
-      <circle cx={CX} cy={CY} r="6" fill="#c9a84c" opacity="0.35" />
-      <circle cx={CX} cy={CY} r="2.5" fill="#e8d080" opacity="0.85" />
-    </svg>
+        {/* ── 6. House cusp lines ── */}
+        {houseData.map((h, i) => (
+          <g key={i}>
+            <line
+              x1={h.inner.x} y1={h.inner.y} x2={h.outer.x} y2={h.outer.y}
+              stroke={h.isAngle ? "#c9a84c" : "#1a2c3e"}
+              strokeWidth={h.isAngle ? 2.0 : 0.7}
+              opacity={h.isAngle ? 1.0 : 0.7}
+            />
+            <text x={h.numPos.x} y={h.numPos.y}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize="9.5" fill={h.isAngle ? "#c9a84c" : "#3a5468"} opacity="0.9"
+              fontWeight={h.isAngle ? "bold" : "normal"}
+              style={{ pointerEvents:"none", fontFamily:"'Cinzel', serif" }}
+            >{h.label}</text>
+          </g>
+        ))}
+
+        {/* ── 7. Planets — photo-first, no glyph overlay ── */}
+        {dots.map(p => {
+          const isSel  = selectedPlanetId === p.id;
+          const isHov  = hovered === p.id;
+          const isSig  = p.isQ || p.isS;
+          const accent = p.isQ ? "#f0c060" : p.isS ? "#c090ff" : "#6090b8";
+          const r      = isSig ? 20 : 16;
+          const hasImg = !!planetImages[p.id];
+
+          return (
+            <g key={p.id}
+              style={{ cursor: onPlanetClick ? "pointer" : "default", transition: "opacity 0.2s" }}
+              onClick={() => handleClick(p)}
+              onMouseEnter={() => setHovered(p.id)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* Selection glow ring */}
+              {isSel && (
+                <circle cx={p.pos.x} cy={p.pos.y} r={r + 12}
+                  fill="none" stroke={accent} strokeWidth="1.5" opacity="0.25"
+                  filter="url(#hwGP)"
+                />
+              )}
+
+              {/* Animated pulse ring for significators */}
+              {isSig && (
+                <circle cx={p.pos.x} cy={p.pos.y} r={r + 6}
+                  fill="none" stroke={accent} strokeWidth={isSel ? 2 : 1.5}
+                  opacity={isSel ? 0.6 : 0.35}
+                >
+                  <animate attributeName="r"       values={`${r+4};${r+10};${r+4}`} dur="3.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity"  values="0.4;0.08;0.4"            dur="3.5s" repeatCount="indefinite" />
+                </circle>
+              )}
+
+              {/* Combust dashed ring */}
+              {p.combust && !p.cazimi && (
+                <circle cx={p.pos.x} cy={p.pos.y} r={r + 4}
+                  fill="none" stroke="#ef4444" strokeWidth="1.5"
+                  strokeDasharray="3 3" opacity="0.6"
+                />
+              )}
+
+              {/* Cazimi gold ring */}
+              {p.cazimi && (
+                <circle cx={p.pos.x} cy={p.pos.y} r={r + 4}
+                  fill="none" stroke="#ffd700" strokeWidth="2" opacity="0.75"
+                />
+              )}
+
+              {/* Planet body — image fills the full circle, vibrant & clear */}
+              {hasImg ? (
+                <>
+                  {/* Background circle for border */}
+                  <circle cx={p.pos.x} cy={p.pos.y} r={r}
+                    fill="#0a1020"
+                    stroke={isSel || isHov ? accent : isSig ? accent : "#283848"}
+                    strokeWidth={isSel ? 2.5 : isSig ? 2 : 1.2}
+                    filter="url(#hwShadow)"
+                  />
+                  {/* Planet photo — full opacity, vivid */}
+                  <image
+                    href={planetImages[p.id]}
+                    x={p.pos.x - r} y={p.pos.y - r}
+                    width={r * 2} height={r * 2}
+                    clipPath={`url(#cp-${p.id})`}
+                    preserveAspectRatio="xMidYMid slice"
+                    opacity={isSel || isHov ? 1 : 0.88}
+                  />
+                  {/* Border ring on top of image */}
+                  <circle cx={p.pos.x} cy={p.pos.y} r={r}
+                    fill="none"
+                    stroke={isSel || isHov ? accent : isSig ? accent : "#283848"}
+                    strokeWidth={isSel ? 2.5 : isSig ? 2 : 1.2}
+                  />
+                </>
+              ) : (
+                /* Fallback: glyph-based planet (no image available) */
+                <>
+                  <circle cx={p.pos.x} cy={p.pos.y} r={r}
+                    fill="#0e1828"
+                    stroke={isSel || isHov ? accent : isSig ? accent : "#283848"}
+                    strokeWidth={isSel ? 2.5 : isSig ? 2 : 1.2}
+                  />
+                  <text x={p.pos.x} y={p.pos.y + 0.5}
+                    textAnchor="middle" dominantBaseline="central"
+                    fontSize={isSig ? "16" : "13"}
+                    fontFamily="'Noto Sans Symbols 2', 'Segoe UI Symbol', serif"
+                    fill={isSig ? accent : "#6898b8"}
+                    style={{ pointerEvents:"none" }}
+                  >{p.emoji}</text>
+                </>
+              )}
+
+              {/* Planet name label below — always visible */}
+              <text x={p.pos.x} y={p.pos.y + r + 10}
+                textAnchor="middle" dominantBaseline="central"
+                fontSize="7.5"
+                fill={isSig ? accent : "#6a8ca0"}
+                fontWeight={isSig ? "bold" : "normal"}
+                opacity={isHov || isSel ? 1 : 0.8}
+                style={{ pointerEvents:"none", fontFamily:"'JetBrains Mono', monospace" }}
+              >
+                {p.signDegree.toFixed(0)}° {p.signId.slice(0,3).toUpperCase()}
+              </text>
+
+              {/* Retrograde marker */}
+              {p.retrograde && (
+                <text x={p.pos.x + r + 2} y={p.pos.y - r + 2}
+                  fontSize="9" fill="#f97316" fontWeight="bold"
+                  style={{ pointerEvents:"none" }}
+                >ℛ</text>
+              )}
+
+              {/* Significator role badge */}
+              {isSig && (
+                <g>
+                  <rect
+                    x={p.pos.x - 7} y={p.pos.y - r - 12}
+                    width="14" height="10" rx="3"
+                    fill={p.isQ ? "#c9a84c" : "#9060e0"} opacity="0.9"
+                  />
+                  <text x={p.pos.x} y={p.pos.y - r - 6.5}
+                    textAnchor="middle" dominantBaseline="central"
+                    fontSize="6.5" fill="#fff" fontWeight="bold"
+                    style={{ pointerEvents:"none", fontFamily:"'JetBrains Mono', monospace" }}
+                  >{p.isQ ? "Q" : "S"}</text>
+                </g>
+              )}
+
+              {/* Hover tooltip */}
+              {isHov && (
+                <g>
+                  <rect
+                    x={p.pos.x + r + 6} y={p.pos.y - 14}
+                    width="72" height="22" rx="5"
+                    fill="#060e1e" stroke={accent} strokeWidth="0.8" opacity="0.95"
+                  />
+                  <text x={p.pos.x + r + 10} y={p.pos.y - 2}
+                    fontSize="9" fill={accent}
+                    fontFamily="'JetBrains Mono', monospace"
+                    style={{ pointerEvents:"none" }}
+                  >
+                    {p.name} {p.signDegree.toFixed(1)}°
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {/* ── 8. Angle labels ASC / DSC / MC / IC ── */}
+        {[
+          { long: asc,             label:"ASC" },
+          { long: asc + 180,       label:"DSC" },
+          { long: mcLongitude,     label:"MC"  },
+          { long: mcLongitude+180, label:"IC"  },
+        ].map(({ long, label }) => {
+          const pos = toXY(long, asc, R_OUT + 18);
+          return (
+            <text key={label} x={pos.x} y={pos.y}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize="11" fill="#c9a84c" fontWeight="bold"
+              filter="url(#hwGL)"
+              style={{ fontFamily:"'Cinzel', serif" }}
+            >{label}</text>
+          );
+        })}
+
+        {/* ── 9. Centre point ── */}
+        <circle cx={CX} cy={CY} r="5" fill="#c9a84c" opacity="0.3" />
+        <circle cx={CX} cy={CY} r="2" fill="#e8d080" opacity="0.8" />
+      </svg>
+
+      {/* ── Aspect Legend ── */}
+      <div className="flex flex-wrap justify-center gap-3 mt-3 px-2"
+        style={{ fontFamily:"'JetBrains Mono', monospace" }}>
+        {ASPECTS.map(asp => (
+          <div key={asp.name} className="flex items-center gap-1.5">
+            <span className="inline-block w-4 h-0.5 rounded-full" style={{
+              background: asp.color,
+              borderStyle: asp.dash ? "dashed" : "solid",
+              opacity: asp.opacity,
+            }} />
+            <span className="text-xs" style={{ color: asp.color, opacity: 0.8, fontSize: "0.65rem" }}>
+              {asp.label} {asp.name.charAt(0).toUpperCase() + asp.name.slice(1)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

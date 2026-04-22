@@ -1,10 +1,10 @@
 "use client";
 
-import { Crown, Lock, X, Clock, Zap, Infinity, Sparkles } from "lucide-react";
+import { Crown, Lock, X, Clock, Zap, Infinity, Sparkles, LayoutList } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
-import { getMsUntilMidnight, formatResetTime } from "@/lib/freemium";
+import { getMsUntilMidnight, formatResetTime, getAllToolQuotas } from "@/lib/freemium";
 
 export type PremiumModalVariant = "premium_required" | "quota_exceeded";
 
@@ -50,6 +50,7 @@ export default function PremiumModal({
   const router = useRouter();
   const { t } = useTranslation();
   const isQuota = variant === "quota_exceeded";
+  const [quotas, setQuotas] = useState<any[]>([]);
 
   // Escape key closes modal
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -59,19 +60,22 @@ export default function PremiumModal({
   useEffect(() => {
     if (!isOpen) return;
     document.addEventListener("keydown", handleKeyDown);
+    if (isQuota) {
+      setQuotas(getAllToolQuotas());
+    }
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, handleKeyDown]);
+  }, [isOpen, handleKeyDown, isQuota]);
 
   if (!isOpen) return null;
 
   const title = isQuota
-    ? "Günlük Hakkınızı Kullandınız"
+    ? "Günlük Hakkı Doldurdun"
     : featureName
     ? t("premium.gate.title_feature").replace("{featureName}", featureName)
     : t("premium.gate.title_default");
 
   const desc = isQuota
-    ? "Her gün 1 ücretsiz kullanım hakkınız var. Gece yarısı otomatik yenilenir — ya da Premium'a geçerek sınırsız kullanın."
+    ? "Sitemizdeki her aracın sana özel günlük 1 kullanım hakkı vardır. Gece yarısı limitin sıfırlanana dek diğer araçları ücretsiz kullanabilir veya Premium alarak limiti kaldırabilirsin."
     : t("premium.gate.desc");
 
   return (
@@ -123,7 +127,7 @@ export default function PremiumModal({
                 : "bg-purple-500/[0.08] border-purple-500/20"
             }`}>
               {isQuota
-                ? <Clock className="w-7 h-7 text-amber-400" />
+                ? <LayoutList className="w-7 h-7 text-amber-400" />
                 : <Lock className="w-7 h-7 text-purple-400" />
               }
             </div>
@@ -138,9 +142,28 @@ export default function PremiumModal({
           </h2>
 
           {/* Description */}
-          <p className="text-white/40 text-sm leading-relaxed mb-6">
+          <p className="text-white/40 text-[13px] leading-relaxed mb-6">
             {desc}
           </p>
+
+          {/* Quota Feature List */}
+          {isQuota && quotas.length > 0 && (
+            <div className="mb-6 bg-black/40 rounded-xl border border-white/5 p-3 max-h-[160px] overflow-y-auto custom-scrollbar text-left space-y-1.5 shadow-inner">
+              {quotas.map(q => (
+                <div key={q.id} className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${q.isPremiumOnly ? 'bg-purple-900/10 border-purple-500/10' : (q.used ? 'bg-white/5 border-transparent opacity-60' : 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]')}`}>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${q.isPremiumOnly ? 'bg-purple-500' : (q.used ? 'bg-amber-500' : 'bg-emerald-400 animate-pulse')}`} />
+                    <span className={`text-[13px] font-medium ${q.isPremiumOnly ? 'text-purple-300/80 font-bold' : (q.used ? 'text-white/40' : 'text-emerald-50')}`}>
+                      {q.label} {q.isPremiumOnly && <Crown className="inline w-3 h-3 ml-1 text-purple-400/70" />}
+                    </span>
+                  </div>
+                  <div className={`text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full ${q.isPremiumOnly ? 'bg-purple-500/20 text-purple-400' : (q.used ? 'bg-white/10 text-white/30' : 'bg-emerald-500/20 text-emerald-400')}`}>
+                    {q.isPremiumOnly ? 'SADECE PRO' : (q.used ? '0/1' : '1/1')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Countdown (quota exceeded) */}
           {isQuota && <ResetCountdown />}
@@ -185,6 +208,20 @@ export default function PremiumModal({
         @keyframes premiumModalIn {
           from { opacity: 0; transform: scale(0.94) translateY(8px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
         }
       `}</style>
     </div>
