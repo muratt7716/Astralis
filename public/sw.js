@@ -1,7 +1,6 @@
 // public/sw.js
-const CACHE_NAME = 'astralis-v3';
+const CACHE_NAME = 'astralis-v5'; // Versiyonu yükselttik
 
-// Key assets to pre-cache
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.webmanifest',
@@ -9,21 +8,23 @@ const PRECACHE_ASSETS = [
   '/icon-512.png'
 ];
 
+// 1. Kurulum: Assetleri tek tek ekle ki biri fail ederse hepsi yanmasın
 self.addEventListener('install', (event) => {
-  console.log('[SW] Install');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Not: cache.addAll çok katıdır. Biri bile 404 verirse SW kurulmaz.
-      return cache.addAll(PRECACHE_ASSETS).catch(err => {
-        console.error('[SW] Pre-cache failed:', err);
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const asset of PRECACHE_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn(`[SW] ${asset} önbelleğe alınamadı:`, err);
+        }
+      }
     })
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -36,42 +37,58 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Robust Fetch Handler
+// 2. Fetch Stratejisi
 self.addEventListener('fetch', (event) => {
-  // 1. Navigation requests (Sayfa geçişleri ve ilk açılış)
+  if (event.request.method !== 'GET') return;
+
+  // Sayfa Navigasyonu (Network-First + Fallback)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .catch(() => {
-          // ÇÖZÜM: Promise'i doğru şekilde çözüyoruz
-          return caches.match('/').then((cachedResponse) => {
-            return cachedResponse || caches.match(event.request);
-          });
+        .then((res) => {
+          // İnternet varsa sayfayı al ve cache'i güncelle (Background update)
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put('/', clone));
+          return res;
+        })
+        .catch(async () => {
+          // İnternet yoksa önce cache'deki '/' dizinine bak
+          const cache = await caches.open(CACHE_NAME);
+          const cachedResponse = await cache.match('/', { ignoreSearch: true });
+          if (cachedResponse) return cachedResponse;
+
+          // Cache'de de yoksa asla null dönme, bir offline Response objesi fırlat
+          return new Response(
+            '<html><body style="background:#0d0415;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;">' +
+            '<div><h1>Çevrimdışı</h1><p>Şu an internete bağlanılamıyor.</p><button onclick="window.location.reload()">Tekrar Dene</button></div>' +
+            '</body></html>',
+            {
+              status: 200,
+              headers: { 'Content-Type': 'text/html' }
+            }
+          );
         })
     );
     return;
   }
 
-  // 2. Static Assets (Icons, Images, Scripts, Styles)
+  // Statik Dosyalar (Cache-First)
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
 
       return fetch(event.request).then((networkResponse) => {
-        // Sadece başarılı ve GET olan istekleri cache'e al
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-          // Chrome eklentilerinden gelen istekleri (chrome-extension://) cache'lemeyi engelle (Hata sebebidir)
-          if (!event.request.url.startsWith('http')) return networkResponse;
+        if (!networkResponse || networkResponse.status !== 200) return networkResponse;
 
+        // Sadece kendi origin'imizdeki dosyaları ve http isteklerini cache'le
+        if (event.request.url.startsWith('http')) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
         return networkResponse;
       }).catch(() => {
-        // Çevrimdışı durumunda aset bulunamazsa sessizce geç
-        return null;
+        // Asset bulunamazsa tarayıcıyı çökertmemek için boş response dön
+        return new Response('', { status: 408 });
       });
     })
   );

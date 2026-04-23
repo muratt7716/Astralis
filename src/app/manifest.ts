@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
- 
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Astralis | Yıldızların Rehberliği',
@@ -7,6 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Astroloji, Burçlar ve Mistik Kehanetler',
     id: '/',
     start_url: '/',
+    scope: '/', // Uygulamanın etki alanı
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#0d0415',
