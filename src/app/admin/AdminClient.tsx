@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { grantPremium, revokePremium } from "./actions";
 import { Crown, Search, ShieldCheck, ShieldX, User, Calendar, Loader2, CheckCircle, XCircle, Infinity, Repeat } from "lucide-react";
 
@@ -24,6 +25,7 @@ function formatDate(iso: string | null) {
 }
 
 function UserCard({ user }: { user: UserRow }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
 
@@ -32,6 +34,7 @@ function UserCard({ user }: { user: UserRow }) {
       try {
         await action();
         setFeedback("success");
+        router.refresh();
         setTimeout(() => setFeedback(null), 2000);
       } catch {
         setFeedback("error");

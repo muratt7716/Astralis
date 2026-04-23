@@ -73,7 +73,7 @@ export function ProfileHero({
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/20 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)] group hover:shadow-[0_0_30px_rgba(245,158,11,0.25)] transition-all">
                 <Crown className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-bold text-amber-300/90 tracking-widest uppercase">
-                  {isLifetime ? "Pro • Sınırsız" : `Pro • ${remainingDays ?? 0} Gün`}
+                  {isLifetime ? t("profile.pro_unlimited") : t("profile.pro_days", { days: `${remainingDays ?? 0}` })}
                 </span>
               </div>
             )}
@@ -90,7 +90,7 @@ export function ProfileHero({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[8px] font-bold text-purple-400/50 uppercase tracking-[0.2em] leading-none">{t("profile.sun_sign") || "Güneş"}</span>
-                    <span className="text-[11px] font-bold text-purple-300 leading-tight">{zodiacSign.name}</span>
+                    <span className="text-[11px] font-bold text-purple-300 leading-tight">{t(`zodiac.${zodiacSign.id}`)}</span>
                   </div>
                 </div>
               )}
@@ -103,7 +103,7 @@ export function ProfileHero({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[8px] font-bold text-orange-400/50 uppercase tracking-[0.2em] leading-none">{t("profile.rising_sign") || "Yükselen"}</span>
-                    <span className="text-[11px] font-bold text-orange-300 leading-tight">{risingSignName}</span>
+                    <span className="text-[11px] font-bold text-orange-300 leading-tight">{t(`zodiac.${risingSignId}`)}</span>
                   </div>
                 </div>
               )}
@@ -116,7 +116,7 @@ export function ProfileHero({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[8px] font-bold text-blue-400/50 uppercase tracking-[0.2em] leading-none">{t("profile.moon_sign") || "Ay"}</span>
-                    <span className="text-[11px] font-bold text-blue-300 leading-tight">{moonSignName}</span>
+                    <span className="text-[11px] font-bold text-blue-300 leading-tight">{t(`zodiac.${moonSignId}`)}</span>
                   </div>
                 </div>
               )}
@@ -137,9 +137,9 @@ export function ProfileHero({
             {zodiacSign && (
               <>
                 <span className="w-px h-3 bg-white/10" />
-                <span className="flex items-center gap-1"><CosmicIcon name={(zodiacSign.elementKey?.split(".").pop() || "earth") as any} size={14} /> {zodiacSign.element}</span>
+                <span className="flex items-center gap-1"><CosmicIcon name={(zodiacSign.elementKey?.split(".").pop() || "earth") as any} size={14} /> {t(zodiacSign.elementKey)}</span>
                 <span className="text-white/15">·</span>
-                <span>{zodiacSign.rulingPlanet}</span>
+                <span>{t(zodiacSign.rulingPlanetKey)}</span>
               </>
             )}
           </div>

@@ -131,9 +131,9 @@ export default function ProfilePage() {
   const moonSignName = birthChart?.moonSign?.name || profile?.moon_sign || null;
   const moonSignId = birthChart?.moonSign?.id || null;
 
-  const activeGuide = useMemo(() => 
-    GUIDES.find(g => g.id === (profile?.selected_guide_id || "melisa")) || GUIDES[0], 
-  [profile?.selected_guide_id]);
+  const activeGuide = useMemo(() =>
+    GUIDES.find(g => g.id === (profile?.selected_guide_id || "melisa")) || GUIDES[0],
+    [profile?.selected_guide_id]);
 
   if (!profile && authLoading) {
     return <div className="min-h-screen bg-[#050508] flex items-center justify-center text-white/20">Loading...</div>;
@@ -148,7 +148,7 @@ export default function ProfilePage() {
       // Optimistic preview
       setSelectedAvatar(file);
       setPreviewUrl(URL.createObjectURL(file));
-      
+
       try {
         const optimized = await compressImage(file);
         const avatarUrl = await uploadAvatar(optimized);
@@ -222,20 +222,20 @@ export default function ProfilePage() {
           />
 
           <div className="lg:col-span-8 space-y-6">
-            <DailyInsight 
-              horoscopeData={horoscopeData} 
-              fetchingHoroscope={fetchingHoroscope} 
-              dir={dir} 
+            <DailyInsight
+              horoscopeData={horoscopeData}
+              fetchingHoroscope={fetchingHoroscope}
+              dir={dir}
             />
-            
-            <CosmicStats 
-              zodiacSign={zodiacSign} 
-              normalizePlanetId={normalizePlanetId} 
+
+            <CosmicStats
+              zodiacSign={zodiacSign}
+              normalizePlanetId={normalizePlanetId}
             />
-            
-            <ActivityFeed 
-              activities={activities} 
-              onSelectActivity={setSelectedActivity} 
+
+            <ActivityFeed
+              activities={activities}
+              onSelectActivity={setSelectedActivity}
             />
           </div>
         </div>
@@ -251,15 +251,15 @@ export default function ProfilePage() {
         onSignOut={signOut}
       />
 
-      <ActivityDetailModal 
-        activity={selectedActivity} 
-        onClose={() => setSelectedActivity(null)} 
+      <ActivityDetailModal
+        activity={selectedActivity}
+        onClose={() => setSelectedActivity(null)}
       />
 
-      <Toast 
-        message={toastMsg} 
-        visible={toastVisible} 
-        onClose={() => setToastVisible(false)} 
+      <Toast
+        message={toastMsg}
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
       />
     </div>
   );

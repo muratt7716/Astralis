@@ -10,12 +10,20 @@ import { ArrowLeft, Send, Lock, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import PremiumModal from "@/components/PremiumModal";
 import { getMistikMessageCount, incrementMistikMessageCount, FREE_MISTIK_MESSAGES } from "@/lib/freemium";
+import BirthChartWheel from "@/components/BirthChartWheel";
+import SynastryMatrix from "@/components/Cosmic/SynastryMatrix";
+import { BiorhythmChart } from "@/components/BiorhythmChart";
+import { calculateBirthChart } from "@/lib/astrology";
+import { useTranslation } from "@/lib/i18n";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: string;
+  metadata?: {
+    visual?: string;
+  };
 }
 
 const WARMTH_LABELS: Record<string, string> = {
@@ -31,6 +39,7 @@ export default function ChatPage() {
   const guide = GUIDES.find(g => g.id === guideId) || GUIDES[0];
 
   const { user, profile, loading: authLoading } = useAuth();
+  const { language } = useTranslation();
   const isPremium = profile?.is_premium ?? false;
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -89,7 +98,13 @@ export default function ChatPage() {
         if (data.warmthLevel) setWarmthLevel(data.warmthLevel);
         if (data.distinctDays !== undefined) setDistinctDays(data.distinctDays);
         if (data.messages?.length > 0) {
-          setMessages(data.messages);
+          setMessages(data.messages.map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            createdAt: m.created_at,
+            metadata: m.metadata || {}
+          })));
         }
       } catch (err) {
         console.error("[ChatPage] History load error:", err);
@@ -142,7 +157,7 @@ export default function ChatPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ guideId, message: userMessage, conversationId }),
+        body: JSON.stringify({ guideId, message: userMessage, conversationId, language }),
       });
 
       if (res.status === 402) {
@@ -159,7 +174,13 @@ export default function ChatPage() {
       setMessages(prev => [
         ...prev.filter(m => m.id !== tempId),
         { id: `user-${Date.now()}`, role: "user", content: userMessage, createdAt: new Date().toISOString() },
-        { id: `assistant-${Date.now()}`, role: "assistant", content: data.message, createdAt: new Date().toISOString() },
+        { 
+          id: `assistant-${Date.now()}`, 
+          role: "assistant", 
+          content: data.message, 
+          createdAt: new Date().toISOString(),
+          metadata: data.visual ? { visual: data.visual } : undefined
+        },
       ]);
 
       if (data.conversationId) setConversationId(data.conversationId);
@@ -371,6 +392,39 @@ export default function ChatPage() {
                     />
                   )}
                   <p className="relative whitespace-pre-wrap">{msg.content}</p>
+
+                  {/* Visual Components */}
+                  {msg.metadata?.visual && (
+                    <div className="mt-4 pt-4 border-t border-white/10 w-full overflow-hidden">
+                      {msg.metadata.visual === "birth_chart" && profile?.birth_date && (
+                        <div className="scale-90 origin-top -mx-4">
+                           {/* Simplified construction from profile data for speed, 
+                               or full calculation if we want precision */}
+                           <BirthChartWheel chart={calculateBirthChart(
+                             new Date(profile.birth_date).getFullYear(),
+                             new Date(profile.birth_date).getMonth() + 1,
+                             new Date(profile.birth_date).getDate(),
+                             profile.birth_hour || 12,
+                             profile.birth_minute || 0,
+                             profile.latitude || 41.0,
+                             profile.longitude || 28.9
+                           )} />
+                        </div>
+                      )}
+                      {msg.metadata.visual === "biorhythm" && profile?.birth_date && (
+                        <BiorhythmChart 
+                          birthDate={profile.birth_date} 
+                          targetDate={new Date().toISOString().split("T")[0]} 
+                        />
+                      )}
+                      {msg.metadata.visual === "compatibility" && (
+                        <div className="scale-75 origin-top -mx-8 -my-20">
+                          <SynastryMatrix />
+                        </div>
+                      )}
+                      {/* For others like crystal_sphere we could add placeholders or simple icons */}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -471,9 +525,8 @@ export default function ChatPage() {
                 {Array.from({ length: FREE_MISTIK_MESSAGES }).map((_, i) => (
                   <div
                     key={i}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      i < freeMessagesUsed ? "bg-white/20" : "bg-white/50"
-                    }`}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${i < freeMessagesUsed ? "bg-white/20" : "bg-white/50"
+                      }`}
                   />
                 ))}
                 <span className="ml-1">{FREE_MISTIK_MESSAGES - freeMessagesUsed} ücretsiz mesaj kaldı</span>

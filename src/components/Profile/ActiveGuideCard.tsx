@@ -48,17 +48,17 @@ export function ActiveGuideCard({
               </Avatar>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-3xl font-serif font-bold text-white leading-tight">{activeGuide.name}</h3>
-              <p className={cn("text-[11px] font-bold uppercase tracking-[0.2em] mt-1", activeGuide.accent)}>{activeGuide.role}</p>
+              <h3 className="text-3xl font-serif font-bold text-white leading-tight">{t(`guide.${activeGuide.id}.name`) || activeGuide.name}</h3>
+              <p className={cn("text-[11px] font-bold uppercase tracking-[0.2em] mt-1", activeGuide.accent)}>{t(`guide.${activeGuide.id}.card_title`) || activeGuide.role}</p>
             </div>
           </div>
 
-          <p className="text-white/40 text-[13px] leading-relaxed mb-6 italic">"{activeGuide.bio}"</p>
+          <p className="text-white/40 text-[13px] leading-relaxed mb-6 italic">"{t(`guide.${activeGuide.id}.card_bio`) || activeGuide.bio}"</p>
 
           <div className="flex flex-wrap gap-2 mb-8">
-            {activeGuide.traits.map((trait: string) => (
-              <span key={trait} className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] shrink-0">{trait}</span>
-            ))}
+            <span className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] shrink-0">{t(`guide.${activeGuide.id}.trait1`) || activeGuide.traits[0]}</span>
+            <span className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] shrink-0">{t(`guide.${activeGuide.id}.trait2`) || activeGuide.traits[1]}</span>
+            <span className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.05] text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] shrink-0">{t(`guide.${activeGuide.id}.trait3`) || activeGuide.traits[2]}</span>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -82,19 +82,26 @@ export function ActiveGuideCard({
       <div className="rounded-[2.5rem] border border-white/[0.08] bg-white/[0.02] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl p-8">
         <SectionLabel>{t("profile.tools")}</SectionLabel>
         <div className="grid grid-cols-1 gap-2.5">
-          {ALL_TOOLS.map(tool => (
-            <button
-              key={tool.id}
-              onClick={() => router.push(tool.href)}
-              className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.06] hover:border-white/10 transition-all group text-left"
-            >
-              <div className={cn("shrink-0 transition-transform group-hover:scale-110 duration-500", tool.color)}>
-                <CosmicIcon name={tool.iconName as any} size={20} />
-              </div>
-              <span className="text-[11px] font-bold text-white/40 group-hover:text-white/70 transition-colors tracking-widest uppercase">{tool.name}</span>
-              <ChevronRight className="w-3.5 h-3.5 ml-auto text-white/10 group-hover:text-white/30 transition-all group-hover:translate-x-1" />
-            </button>
-          ))}
+          {ALL_TOOLS.map(tool => {
+            const toolKey = tool.id === "astrology" ? "nav.birthchart" :
+                            tool.id === "dream" ? "nav.ruya_analizi" :
+                            tool.id === "bio" ? "nav.biyoritim" :
+                            tool.id === "sphere" ? "fortune.kristal.title" :
+                            tool.id === "numerology" ? "nav.numeroloji" : "";
+            return (
+              <button
+                key={tool.id}
+                onClick={() => router.push(tool.href)}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.06] hover:border-white/10 transition-all group text-left"
+              >
+                <div className={cn("shrink-0 transition-transform group-hover:scale-110 duration-500", tool.color)}>
+                  <CosmicIcon name={tool.iconName as any} size={20} />
+                </div>
+                <span className="text-[11px] font-bold text-white/40 group-hover:text-white/70 transition-colors tracking-widest uppercase">{t(toolKey) || tool.name}</span>
+                <ChevronRight className="w-3.5 h-3.5 ml-auto text-white/10 group-hover:text-white/30 transition-all group-hover:translate-x-1" />
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>

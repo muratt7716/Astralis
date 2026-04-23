@@ -48,7 +48,7 @@ const GUIDES = [
     name: "Umut",
     title: "Şaman",
     image: "/avatars/umut.png",
-    quote: "Bazen en iyi ilaç, acı bir kahkadır.",
+    quote: "Bazen en iyi ilaç, acı bir kahkahadır.",
     bio: "Size en dürüst aynayı tutan modern bir dosttur. Hayatın ciddiyetini bazen esprileriyle dağıtırken, bazen de en acı gerçekleri yüzünüze çarpar.",
     traits: ["Dürüst", "Esprili", "Samimi"],
     icon: Zap,
@@ -299,17 +299,17 @@ export default function MistikRehberPage() {
                 </div>
 
                 {/* Alt bilgi */}
-                <div className="absolute bottom-0 inset-x-0 p-6 lg:p-8">
-                  <div className={cn("text-[9px] font-black uppercase tracking-[0.4em] mb-1.5", guide.accent)}>
+                <div className="absolute bottom-0 inset-x-0 p-5 sm:p-8">
+                  <div className={cn("text-[8px] sm:text-[9px] font-black uppercase tracking-[0.4em] mb-1", guide.accent)}>
                     {guideContent.title}
                   </div>
                   <h2
-                    className="text-4xl lg:text-5xl font-bold text-white leading-none mb-2"
+                    className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight mb-1"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
                     {guide.name}
                   </h2>
-                  <p className="text-white/40 text-[12px] italic font-light line-clamp-1">
+                  <p className="text-white/40 text-[11px] sm:text-[12px] italic font-light line-clamp-2 leading-snug">
                     &ldquo;{guideContent.quote}&rdquo;
                   </p>
                 </div>
@@ -341,7 +341,7 @@ export default function MistikRehberPage() {
                   {guideContent.title}
                 </div>
                 <h1
-                  className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-none mb-4"
+                  className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   {guide.name}

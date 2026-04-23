@@ -13,7 +13,7 @@ function parseGeminiJson(text: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { guideId, message, conversationId } = await req.json();
+    const { guideId, message, conversationId, language } = await req.json();
 
     if (!guideId || !message) {
       return new Response(JSON.stringify({ error: "guideId ve message zorunlu" }), { status: 400 });
@@ -111,15 +111,25 @@ export async function POST(req: NextRequest) {
       .limit(20);
     const chatHistory = (recentMessages || []).reverse();
 
+    // 7.5. Son 5 aktiviteyi çek
+    const { data: interactionLogs } = await supabaseAdmin
+      .from("interaction_logs")
+      .select("action, meta, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
     // 8. Sistem prompt oluştur
     const systemPrompt = buildSystemPrompt({
       guideId,
       warmthLevel,
+      language: language || "tr",
       profile: {
         ...profile,
         birth_chart_summary: (profile as any).birth_chart_summary ?? null,
       },
       memories: memories || [],
+      interactionLogs: interactionLogs || [],
       contextSummary,
     });
 
@@ -132,11 +142,15 @@ export async function POST(req: NextRequest) {
 
     const rawResponse = await callGeminiWithFallback(fullPrompt);
 
-    let parsed: { message: string; memories_to_save: Array<{ category: string; fact: string; importance: number; tags: string[] }> };
+    let parsed: { 
+      message: string; 
+      visual?: string;
+      memories_to_save: Array<{ category: string; fact: string; importance: number; tags?: string[] }> 
+    };
     try {
       parsed = parseGeminiJson(rawResponse);
     } catch {
-      parsed = { message: rawResponse, memories_to_save: [] };
+      parsed = { message: rawResponse, visual: undefined, memories_to_save: [] };
     }
 
     // 10. Kullanıcı mesajını kaydet
@@ -151,6 +165,7 @@ export async function POST(req: NextRequest) {
       conversation_id: activeConversationId,
       role: "assistant",
       content: parsed.message,
+      metadata: parsed.visual ? { visual: parsed.visual } : null
     });
 
     // 12. conversations.last_message_at güncelle
@@ -215,6 +230,7 @@ export async function POST(req: NextRequest) {
       JSON.stringify({
         success: true,
         message: parsed.message,
+        visual: parsed.visual,
         conversationId: activeConversationId,
         warmthLevel,
         distinctDays,

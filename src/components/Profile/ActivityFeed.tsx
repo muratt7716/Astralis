@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ChevronRight, Calendar, ChevronLeft, Clock } from "lucide-react";
+import { ChevronRight, Calendar, ChevronLeft, Clock, Trash2, Loader2, AlertCircle } from "lucide-react";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { useTranslation } from "@/lib/i18n";
+import { deleteActivity, clearAllActivities } from "@/app/profil/actions";
 
 interface ActivityFeedProps {
   activities: any[];
@@ -12,7 +13,7 @@ const ITEMS_PER_PAGE = 5;
 
 const ACTION_META: Record<string, { label: string; iconName: string; accent: string; bg: string }> = {
   horary: {
-    label: "Horary (Saat Astrolojisi)",
+    label: "Horary",
     iconName: "horary",
     accent: "text-amber-400",
     bg: "bg-amber-500/10 border-amber-500/20",
@@ -71,17 +72,83 @@ const DEFAULT_META = {
 export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps) {
   const { t } = useTranslation();
   const [page, setPage] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(activities.length / ITEMS_PER_PAGE));
   const pagedActivities = activities.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (deletingId) return;
+    setDeletingId(id);
+    try {
+      await deleteActivity(id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (isClearing) return;
+    setIsClearing(true);
+    try {
+      await clearAllActivities();
+      setShowConfirmClear(false);
+      setPage(0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Section Header */}
-      <div className="flex items-center gap-3 px-1">
-        <Clock className="w-4 h-4 text-purple-400/60" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/25">{t("profile.recent_activity")}</span>
-        <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-3">
+          <Clock className="w-4 h-4 text-purple-400/60" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/25">{t("profile.recent_activity")}</span>
+          <div className="w-16 h-px bg-gradient-to-r from-white/10 to-transparent" />
+        </div>
+
+        {activities.length > 0 && (
+          <div className="flex items-center gap-2">
+            {!showConfirmClear ? (
+              <button
+                onClick={() => setShowConfirmClear(true)}
+                className="group flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.06] hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-300"
+              >
+                <Trash2 className="w-3 h-3 text-white/20 group-hover:text-red-400 transition-colors" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-white/25 group-hover:text-red-400 transition-colors">{t("common.clear_all") || "Tümünü Temizle"}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-red-400/80 mr-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {t("common.are_you_sure") || "Emin misiniz?"}
+                </span>
+                <button
+                  disabled={isClearing}
+                  onClick={handleClearAll}
+                  className="px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 text-[9px] font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all disabled:opacity-50"
+                >
+                  {isClearing ? <Loader2 className="w-3 h-3 animate-spin" /> : (t("common.yes") || "Evet")}
+                </button>
+                <button
+                  disabled={isClearing}
+                  onClick={() => setShowConfirmClear(false)}
+                  className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-[9px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all"
+                >
+                  {t("common.no") || "Hayır"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Activity List */}
@@ -116,12 +183,30 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
                     </p>
                   </div>
 
-                  {/* Date + arrow */}
+                  {/* Date + arrow + delete */}
                   <div className="relative z-10 flex items-center gap-3 shrink-0">
                     <span className="hidden md:block text-[10px] text-white/15 font-mono tracking-wider">
                       {new Date(act.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-white/10 group-hover/item:text-white/40 group-hover/item:translate-x-0.5 transition-all duration-300" />
+                    
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => handleDelete(e, act.id)}
+                        disabled={deletingId === act.id}
+                        className="p-2 rounded-xl bg-white/0 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 group/trash opacity-0 group-hover/item:opacity-100 transition-all duration-300"
+                        title={t("common.delete") || "Sil"}
+                      >
+                        {deletingId === act.id ? (
+                          <Loader2 className="w-3.5 h-3.5 text-red-400 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5 text-white/15 group-hover/trash:text-red-400 transition-colors" />
+                        )}
+                      </button>
+                      
+                      <div className="p-2">
+                        <ChevronRight className="w-4 h-4 text-white/10 group-hover/item:text-white/40 group-hover/item:translate-x-0.5 transition-all duration-300" />
+                      </div>
+                    </div>
                   </div>
                 </button>
               );
@@ -153,11 +238,10 @@ export function ActivityFeed({ activities, onSelectActivity }: ActivityFeedProps
                 <button
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`w-7 h-7 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-                    i === page
+                  className={`w-7 h-7 rounded-lg text-[11px] font-bold transition-all duration-200 ${i === page
                       ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                       : "text-white/20 hover:text-white/50 hover:bg-white/[0.04]"
-                  }`}
+                    }`}
                 >
                   {i + 1}
                 </button>
@@ -191,7 +275,7 @@ export function ActivityDetailModal({ activity, onClose }: { activity: any; onCl
     if (!activity.metadata) return null;
     const { question, full_result, answer, ...rest } = activity.metadata;
     const entries = Object.entries(rest).filter(([_, v]) => v != null && typeof v !== 'object');
-    
+
     if (entries.length === 0) return null;
 
     return (
@@ -289,11 +373,11 @@ export function ActivityDetailModal({ activity, onClose }: { activity: any; onCl
                     </div>
                   )
                 ))}
-                
+
                 {activity.metadata.full_result.advice && (
                   <div className="bg-gradient-to-r from-amber-500/[0.05] to-transparent border border-amber-500/10 p-5 rounded-2xl flex items-start gap-4 shadow-sm">
                     <div className="p-2 rounded-full bg-amber-500/10 shrink-0">
-                       <Sparkles className="w-4 h-4 text-amber-400" />
+                      <Sparkles className="w-4 h-4 text-amber-400" />
                     </div>
                     <p className="text-white/70 text-[14px] font-serif italic leading-relaxed pt-1.5">{activity.metadata.full_result.advice}</p>
                   </div>
@@ -326,7 +410,7 @@ export function ActivityDetailModal({ activity, onClose }: { activity: any; onCl
                 {activity.metadata.full_result.advice && (
                   <div className="bg-gradient-to-r from-amber-500/[0.05] to-transparent border border-amber-500/10 p-5 rounded-2xl flex items-start gap-4 shadow-sm">
                     <div className="p-2 rounded-full bg-amber-500/10 shrink-0">
-                       <Sparkles className="w-4 h-4 text-amber-400" />
+                      <Sparkles className="w-4 h-4 text-amber-400" />
                     </div>
                     <p className="text-white/70 text-[14px] font-serif italic leading-relaxed pt-1.5">{activity.metadata.full_result.advice}</p>
                   </div>

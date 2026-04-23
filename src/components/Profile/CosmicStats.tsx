@@ -133,7 +133,7 @@ export function CosmicStats({ zodiacSign, normalizePlanetId }: CosmicStatsProps)
           {zodiacSign.compatibility.slice(0, 4).map((id: string) => (
             <button
               key={id}
-              onClick={() => router.push(`/uyumluluk?sign1=${zodiacSign.id}&sign2=${id}`)}
+              onClick={() => router.push(`/burclar/${id}`)}
               className="group/c flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-indigo-500/10 hover:border-indigo-500/20 transition-all duration-300 hover:scale-105"
             >
               <ZodiacIcon signId={id} variant="classic" size={16} glowColor="#6366f1" className="text-white/30 group-hover/c:text-white transition-colors" />
