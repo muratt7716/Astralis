@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import PWAInstaller from "./PWAInstaller";
 
 // Bu versiyon sw.js içindeki CACHE_NAME ile eşleşmeli
-const CURRENT_CACHE = 'astralis-v9';
+const CURRENT_CACHE = 'astralis-v10';
 
 export default function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
