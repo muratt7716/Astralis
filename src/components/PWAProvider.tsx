@@ -5,25 +5,35 @@ import PWAInstaller from "./PWAInstaller";
 
 export default function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Sadece tarayıcı ortamında ve SW destekleniyorsa çalıştır
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-
-      const registerSW = async () => {
+      
+      const cleanAndRegister = async () => {
+        // 1. Önce cihazdaki tüm eski kayıtları zorla sil (Unregister)
         try {
-          const registration = await navigator.serviceWorker.register("/sw.js");
-          console.log("[PWA] ServiceWorker registered:", registration.scope);
-        } catch (error) {
-          console.error("[PWA] ServiceWorker registration failed:", error);
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+            console.log("[PWA] Eski SW silindi.");
+          }
+
+          // 2. Cache storage'ı tamamen boşalt
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+          console.log("[PWA] Cache temizlendi.");
+
+          // 3. Şimdi yeni sw.js'i kaydet (v6 parametresi ile cache kırma)
+          const reg = await navigator.serviceWorker.register("/sw.js?v=6");
+          console.log("[PWA] Yeni SW kaydedildi:", reg.scope);
+        } catch (err) {
+          console.error("[PWA] PWA Cleanup/Register hatası:", err);
         }
       };
 
-      // Performans ve Next.js Hydration uyumu için:
-      // Sayfa zaten tamamen yüklendiyse hemen kaydet, 
-      // yüklenmediyse 'load' eventini bekle ki sayfanın ilk açılış hızını kesmesin.
+      // Performans için load eventini bekle
       if (document.readyState === "complete") {
-        registerSW();
+        cleanAndRegister();
       } else {
-        window.addEventListener("load", registerSW);
+        window.addEventListener("load", cleanAndRegister);
       }
     }
   }, []);
