@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const withPWA = require("@ducanh2912/next-pwa").default;
+
 const nextConfig = {
   images: {
     unoptimized: true,
@@ -11,25 +13,6 @@ const nextConfig = {
       },
     ],
   },
-  async headers() {
-    return [
-      {
-        // Service Worker'ın doğru scope ile yüklenmesi için kritik başlıklar
-        source: '/sw.js',
-        headers: [
-          { key: 'Service-Worker-Allowed', value: '/' },
-          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
-        ],
-      },
-      {
-        // Manifest'in her zaman taze alınması
-        source: '/manifest.json',
-        headers: [
-          { key: 'Cache-Control', value: 'no-cache' },
-        ],
-      },
-    ];
-  },
   async redirects() {
     return [
       { source: '/fallar/iching', destination: '/iching', permanent: true },
@@ -40,4 +23,10 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withPWA({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: false,
+  disable: process.env.NODE_ENV === "development",
+})(nextConfig);

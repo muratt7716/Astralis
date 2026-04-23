@@ -79,7 +79,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // sw.js ve manifest.json middleware'den muaf tutuldu.
-  // Bu dosyaların Supabase auth kontrolünden geçmesi PWA kurulumunu kırıyordu.
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.json|icon-192.png|icon-512.png).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sw.js|workbox-.*|manifest.json|icon-192.png|icon-512.png).*)'],
 };
