@@ -6,34 +6,38 @@ import PWAInstaller from "./PWAInstaller";
 export default function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      
-      const cleanAndRegister = async () => {
-        // 1. Önce cihazdaki tüm eski kayıtları zorla sil (Unregister)
+      const registerSW = async () => {
         try {
+          // MOBİL İÇİN KRİTİK: Eski sistemden kalan ?v=6 gibi parametreli SW'leri temizle
           const registrations = await navigator.serviceWorker.getRegistrations();
-          for (let registration of registrations) {
-            await registration.unregister();
-            console.log("[PWA] Eski SW silindi.");
+          for (let reg of registrations) {
+            if (reg.active?.scriptURL.includes('?')) {
+              console.log("[PWA] Eski parametreli SW temizleniyor:", reg.active.scriptURL);
+              await reg.unregister();
+            }
           }
 
-          // 2. Cache storage'ı tamamen boşalt
-          const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(name => caches.delete(name)));
-          console.log("[PWA] Cache temizlendi.");
+          // Yeni temiz kayıt
+          const registration = await navigator.serviceWorker.register("/sw.js");
+          console.log("[PWA] Servis Çalışanı aktif:", registration.scope);
 
-          // 3. Şimdi yeni sw.js'i kaydet (v6 parametresi ile cache kırma)
-          const reg = await navigator.serviceWorker.register("/sw.js?v=6");
-          console.log("[PWA] Yeni SW kaydedildi:", reg.scope);
+          const updateSW = () => {
+             registration.update().catch(() => {}); // Hataları sessizce geç
+          };
+
+          window.addEventListener('focus', updateSW);
+          updateSW();
+
+          return () => window.removeEventListener('focus', updateSW);
         } catch (err) {
-          console.error("[PWA] PWA Cleanup/Register hatası:", err);
+          console.error("[PWA] Kayıt hatası:", err);
         }
       };
 
-      // Performans için load eventini bekle
       if (document.readyState === "complete") {
-        cleanAndRegister();
+        registerSW();
       } else {
-        window.addEventListener("load", cleanAndRegister);
+        window.addEventListener("load", registerSW);
       }
     }
   }, []);
