@@ -1,69 +1,78 @@
 // public/sw.js
-const CACHE_NAME = 'astralis-v2'; // Increment version
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'astralis-v3';
+
+// Key assets to pre-cache
+const PRECACHE_ASSETS = [
   '/',
   '/manifest.webmanifest',
   '/icon-192.png',
-  '/icon-512.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
+  console.log('[SW] Install');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Use addAll but don't fail the whole install if some assets fail to cache
-      return Promise.allSettled(
-        ASSETS_TO_CACHE.map(url => cache.add(url))
-      );
+      // Not: cache.addAll çok katıdır. Biri bile 404 verirse SW kurulmaz.
+      return cache.addAll(PRECACHE_ASSETS).catch(err => {
+        console.error('[SW] Pre-cache failed:', err);
+      });
     })
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activate');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
         })
       );
     })
   );
-  self.clients.claim();
+  return self.clients.claim();
 });
 
-// Network-first strategy for navigation and key assets to avoid "Reload page" stuckness
+// Robust Fetch Handler
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-
-  // For navigation requests (loading the app)
-  if (request.mode === 'navigate') {
+  // 1. Navigation requests (Sayfa geçişleri ve ilk açılış)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match('/');
-      })
+      fetch(event.request)
+        .catch(() => {
+          // ÇÖZÜM: Promise'i doğru şekilde çözüyoruz
+          return caches.match('/').then((cachedResponse) => {
+            return cachedResponse || caches.match(event.request);
+          });
+        })
     );
     return;
   }
 
-  // For other requests: Cache-first fallback to network
+  // 2. Static Assets (Icons, Images, Scripts, Styles)
   event.respondWith(
-    caches.match(request).then((response) => {
-      return response || fetch(request).then((fetchResponse) => {
-        // Optionally cache new successful responses
-        if (fetchResponse.status === 200) {
-          const responseToCache = fetchResponse.clone();
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then((networkResponse) => {
+        // Sadece başarılı ve GET olan istekleri cache'e al
+        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+          // Chrome eklentilerinden gelen istekleri (chrome-extension://) cache'lemeyi engelle (Hata sebebidir)
+          if (!event.request.url.startsWith('http')) return networkResponse;
+
+          const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
+            cache.put(event.request, responseToCache);
           });
         }
-        return fetchResponse;
+        return networkResponse;
+      }).catch(() => {
+        // Çevrimdışı durumunda aset bulunamazsa sessizce geç
+        return null;
       });
-    }).catch(() => {
-      // General fallback
-      return fetch(request);
     })
   );
 });
