@@ -1,35 +1,34 @@
-const CACHE_NAME = 'astralis-v8'; // Versiyon artırıldı
+const CACHE_NAME = 'astralis-v9';
 
 const PRECACHE_ASSETS = [
-  '/',
-  '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Önemli: Telefon kurulumunda hata almamak için assets'leri teker teker cache'le
       return Promise.allSettled(
         PRECACHE_ASSETS.map(asset => cache.add(asset))
       );
-    })
+    }).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
+    Promise.all([
+      // Eski cache'leri temizle
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        )
+      ),
+      // Hemen kontrol al (race condition olmadan)
+      self.clients.claim(),
+    ])
   );
-  return self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -37,44 +36,45 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // 1. Navigasyon (Sayfa geçişleri)
+  // Navigasyon istekleri: Network-first, offline'da cache fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+          // Sadece başarılı response'ları cache'le
+          if (networkResponse.ok) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
           return networkResponse;
         })
         .catch(async () => {
-          // Çevrimdışı/Hata durumunda ana sayfayı döndür
+          // Sadece gerçekten offline'dayken cache'e bak
           const cache = await caches.open(CACHE_NAME);
-          const cachedResponse = await cache.match('/', { ignoreSearch: true });
-          return cachedResponse || Response.error();
+          const cached = await cache.match('/', { ignoreSearch: true });
+          // Cache yoksa browser'ın kendi hata sayfasını göster (Response.error yerine)
+          if (cached) return cached;
+          // Minimal offline fallback - "retry" döngüsüne girmeden
+          return new Response(
+            '<html><body style="background:#0d0415;color:white;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:16px"><h2>Bağlantı kesildi</h2><p>İnternet bağlantını kontrol edip <a href="/" style="color:#a78bfa">yenile</a>.</p></body></html>',
+            { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+          );
         })
     );
     return;
   }
 
-  // 2. Statik Dosyalar & API (Cache-First or Network-First based on type)
+  // Statik dosyalar: Cache-first
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
-      // Cache'de varsa hemen ver
-      if (cachedResponse) return cachedResponse;
+    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+      if (cached) return cached;
 
-      // Yoksa ağa git
       return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200) return networkResponse;
-
-        // Kendi origin'imizdeki dosyaları runtime'da sakla
-        if (url.origin === self.location.origin) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+        if (networkResponse.ok && url.origin === self.location.origin) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return networkResponse;
-      }).catch(() => {
-        // Tamamen ulaşılamazsa (offline)
-        return new Response('', { status: 408 });
       });
     })
   );

@@ -3,42 +3,44 @@
 import React, { useEffect } from "react";
 import PWAInstaller from "./PWAInstaller";
 
+// Bu versiyon sw.js içindeki CACHE_NAME ile eşleşmeli
+const CURRENT_CACHE = 'astralis-v9';
+
 export default function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      const registerSW = async () => {
-        try {
-          // MOBİL İÇİN KRİTİK: Eski sistemden kalan ?v=6 gibi parametreli SW'leri temizle
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          for (let reg of registrations) {
-            if (reg.active?.scriptURL.includes('?')) {
-              console.log("[PWA] Eski parametreli SW temizleniyor:", reg.active.scriptURL);
-              await reg.unregister();
-            }
-          }
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-          // Yeni temiz kayıt
-          const registration = await navigator.serviceWorker.register("/sw.js");
-          console.log("[PWA] Servis Çalışanı aktif:", registration.scope);
+    const registerSW = async () => {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
 
-          const updateSW = () => {
-             registration.update().catch(() => {}); // Hataları sessizce geç
-          };
+        // Mevcut SW versiyonu doğru mu kontrol et
+        const hasCurrentVersion = await caches.has(CURRENT_CACHE);
 
-          window.addEventListener('focus', updateSW);
-          updateSW();
-
-          return () => window.removeEventListener('focus', updateSW);
-        } catch (err) {
-          console.error("[PWA] Kayıt hatası:", err);
+        if (!hasCurrentVersion && registrations.length > 0) {
+          // Eski/bozuk SW ve cache'leri tamamen temizle (kullanıcı müdahalesi gerekmez)
+          await Promise.all(registrations.map(r => r.unregister()));
+          const allCaches = await caches.keys();
+          await Promise.all(allCaches.map(key => caches.delete(key)));
         }
-      };
 
-      if (document.readyState === "complete") {
-        registerSW();
-      } else {
-        window.addEventListener("load", registerSW);
+        const registration = await navigator.serviceWorker.register("/sw.js");
+
+        // Sekme focus'a gelince güncelleme kontrolü
+        const checkUpdate = () => registration.update().catch(() => {});
+        window.addEventListener('focus', checkUpdate);
+        checkUpdate();
+
+        return () => window.removeEventListener('focus', checkUpdate);
+      } catch (err) {
+        console.error("[PWA] Kayıt hatası:", err);
       }
+    };
+
+    if (document.readyState === "complete") {
+      registerSW();
+    } else {
+      window.addEventListener("load", registerSW, { once: true });
     }
   }, []);
 
