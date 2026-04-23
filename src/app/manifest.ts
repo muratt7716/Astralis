@@ -1,3 +1,4 @@
+// manifest.ts
 import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -5,9 +6,9 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Astralis | Yıldızların Rehberliği',
     short_name: 'Astralis',
     description: 'Astroloji, Burçlar ve Mistik Kehanetler',
-    id: '/',
-    start_url: '/',
-    scope: '/', // Uygulamanın etki alanı
+    id: '/?pwa=true',       // GÜNCELLENDİ: Android önbelleğini kırmak için
+    start_url: '/?pwa=true', // GÜNCELLENDİ: Açılışta taze sayfa istemesi için
+    scope: '/',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#0d0415',
