@@ -1,9 +1,5 @@
 "use client";
 
-import { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-import { ParticleSphere } from "@/components/ui/cosmos-3d-orbit-gallery";
 import Link from "next/link";
 import { zodiacSigns } from "@/data/zodiac";
 import ZodiacCard from "@/components/ZodiacCard";
@@ -22,29 +18,9 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-black overflow-x-hidden">
-      {/* 3D Cosmic Background Layer - FIXED: DIRECT SIBLING OF UI */}
-      <div className="fixed inset-0 z-0 pointer-events-none lg:pointer-events-auto">
-        <Canvas camera={{ position: [-12, 1.5, 12], fov: 42 }}>
-          <ambientLight intensity={0.7} />
-          <pointLight position={[10, 10, 10]} intensity={2} />
-          <Suspense fallback={null}>
-            {/* SHIFTED DOWN for Clear Horizon */}
-            <group position={[0, -1, 0]}>
-              <ParticleSphere />
-            </group>
-          </Suspense>
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            enableRotate={true}
-            rotateSpeed={0.4}
-            dampingFactor={0.05}
-            enableDamping={true}
-          />
-        </Canvas>
-      </div>
+      {/* 3D arka plan GlobalBackground (layout) tarafından sağlanıyor */}
 
-      {/* Hero UI Layer - PUSHED HIGHER for Clear Horizon - ADJUSTED TOP */}
+      {/* Hero UI Layer */}
       <div className="relative z-10 pointer-events-none">
         <header className="absolute top-20 lg:top-28 left-0 right-0 z-20 px-6">
           <div className="max-w-4xl mx-auto text-center">
