@@ -3,7 +3,7 @@
   "short_name": "Astralis",
   "description": "Astroloji, Burçlar ve Mistik Kehanetler",
   "id": "https://www.astralislab.com/",
-  "start_url": "https://www.astralislab.com/pwa-test.html",
+  "start_url": "https://www.astralislab.com/",
   "scope": "https://www.astralislab.com/",
   "display": "standalone",
   "orientation": "portrait",
