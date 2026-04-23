@@ -11,6 +11,25 @@ const nextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Service Worker'ın doğru scope ile yüklenmesi için kritik başlıklar
+        source: '/sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
+      {
+        // Manifest'in her zaman taze alınması
+        source: '/manifest.json',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache' },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: '/fallar/iching', destination: '/iching', permanent: true },
