@@ -8,6 +8,7 @@ import HolisticSynthesis from '@/components/numerology/HolisticSynthesis';
 import { calculateNeuroMatrix } from '@/lib/numerology/advancedAlgorithms';
 import { getPythagoreanCore } from '@/lib/numerology/pythagoras';
 import { translations, SupportedLanguage } from '@/lib/i18n-shared';
+import { useAuth } from "@/lib/auth-helpers";
 import CosmicIcon from '@/components/Cosmic/CosmicIcon';
 import { GlassButton } from "@/components/ui/glass-button";
 import { ArrowLeft, Sparkles } from 'lucide-react';
@@ -18,6 +19,7 @@ import FreemiumBadge from "@/components/FreemiumBadge";
 export default function NumerologyPage() {
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
+  const { user } = useAuth();
   const [isCalculated, setIsCalculated] = useState(false);
   const [lang, setLang] = useState<SupportedLanguage>('tr');
 
@@ -131,6 +133,7 @@ export default function NumerologyPage() {
               coreNumbers={coreNumbers} 
               neuroMatrix={calculateNeuroMatrix(dob, fullName)} 
               lang={lang} 
+              userId={user?.id}
             />
           </div>
         )}

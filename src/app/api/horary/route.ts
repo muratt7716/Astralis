@@ -51,30 +51,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Optional logging
-    if (userId) {
-      (async () => {
-        // Prepare full reading text instead of just section4 truncations
-        let fullReadingText = "";
         try {
-          fullReadingText = Object.values(reading)
-            .filter((v): v is string => typeof v === "string")
-            .join("\n\n");
-        } catch (e) {
-          fullReadingText = JSON.stringify(reading);
-        }
-
-        try {
-          await supabaseAdmin.from("interaction_logs").insert({
-            user_id:     userId,
-            action_type: "horary",
-            description: "Horary açılımı yapıldı.",
-            metadata:    { question, answer: fullReadingText },
-          });
+          // Prepared reading text instead of just section4 truncations
+          let fullReadingText = "";
+          try {
+            fullReadingText = Object.values(reading)
+              .filter((v): v is string => typeof v === "string")
+              .join("\n\n");
+          } catch (e) {
+            fullReadingText = JSON.stringify(reading);
+          }
+          // The log will be moved below
         } catch (e) {
           console.error("Supabase log error:", e);
         }
-      })();
-    }
 
     // 6. Serialize chart for frontend (only what's needed)
     const chartData = {
@@ -93,7 +83,7 @@ export async function POST(request: NextRequest) {
       })),
     };
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       chartData,
       analysis: {
@@ -124,7 +114,42 @@ export async function POST(request: NextRequest) {
         keyAspect: analysis.keyAspect,
       },
       reading,
-    });
+    };
+
+    // Logging after everything is ready
+    if (userId) {
+      (async () => {
+        try {
+          let fullReadingText = "";
+          try {
+            fullReadingText = Object.values(reading)
+              .filter((v): v is string => typeof v === "string")
+              .join("\n\n");
+          } catch (e) {
+            fullReadingText = JSON.stringify(reading);
+          }
+
+          await supabaseAdmin.from("interaction_logs").insert({
+            user_id:     userId,
+            action_type: "horary",
+            description: "Horary açılımı yapıldı.",
+            metadata:    { 
+              question, 
+              answer: fullReadingText,
+              full_result: {
+                ...reading,
+                chartData,
+                analysis
+              }
+            },
+          });
+        } catch (e) {
+          console.error("Supabase log error:", e);
+        }
+      })();
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (err) {
     console.error("[horary] route error:", err);

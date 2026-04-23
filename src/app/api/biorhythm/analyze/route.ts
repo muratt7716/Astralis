@@ -129,6 +129,19 @@ DİL: ${language.toUpperCase()}. Yanıtı KESİNLİKLE belirtilen dilde (${langu
             user_id: userId,
             action_type: isSynergy ? "biorhythm_synergy_analyze" : "biorhythm_analyze",
             description: isSynergy ? "Sinerji biyoritimi analiz edildi." : "Biyoritim kombinasyon analizi yapıldı.",
+            metadata: {
+              targetDate,
+              isSynergy,
+              relationType,
+              full_result: {
+                ...analysis,
+                values: {
+                  physical, emotional, intellectual, intuitional, aesthetic, spiritual,
+                  partnerPhysical, partnerEmotional, partnerIntellectual,
+                  partnerIntuitional, partnerAesthetic, partnerSpiritual
+                }
+              }
+            }
           });
         } catch (e) {
           console.error("Supabase log error:", e);

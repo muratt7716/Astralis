@@ -22,11 +22,19 @@ export async function POST(req: NextRequest) {
     // 1. Auth — header'dan token al
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
+    
+    if (!token) {
+      console.error("[MistikRehberChat] No token provided in header");
+      return new Response(JSON.stringify({ error: "Unauthorized: No token" }), { status: 401 });
+    }
+
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
+      console.error("[MistikRehberChat] Auth error or user not found:", authError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const userId = user.id;
+    console.log(`[MistikRehberChat] User ${userId} is chatting with guide ${guideId}`);
 
     // 2. Profile çek
     const { data: profile } = await supabaseAdmin
@@ -140,7 +148,9 @@ export async function POST(req: NextRequest) {
 
     const fullPrompt = `${systemPrompt}\n\n## Konuşma Geçmişi\n${historyText}\n\nKullanıcı: ${message}`;
 
+    console.log("[MistikRehberChat] Calling Gemini...");
     const rawResponse = await callGeminiWithFallback(fullPrompt);
+    console.log("[MistikRehberChat] Gemini response received.");
 
     let parsed: { 
       message: string; 

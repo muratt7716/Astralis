@@ -53,7 +53,7 @@ export default function ProfilePage() {
     { revalidateOnFocus: false, revalidateIfStale: false }
   );
 
-  const { data: activityRes } = useSWR(
+  const { data: activityRes, mutate: mutateActivity } = useSWR(
     user?.id ? `/api/user/activity?userId=${user.id}&limit=5` : null,
     fetcher
   );
@@ -199,7 +199,7 @@ export default function ProfilePage() {
         <div className="absolute bottom-[-10%] right-[-50%] w-full h-full bg-purple-500/5 blur-[120px] rounded-full animate-pulse-slow delay-700" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 lg:px-12 pt-28 md:pt-32">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 lg:px-12 pt-32 md:pt-40">
         <ProfileHero
           profile={profile}
           zodiacSign={zodiacSign}
@@ -236,6 +236,7 @@ export default function ProfilePage() {
             <ActivityFeed
               activities={activities}
               onSelectActivity={setSelectedActivity}
+              mutate={mutateActivity}
             />
           </div>
         </div>

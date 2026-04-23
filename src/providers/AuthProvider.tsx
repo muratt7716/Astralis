@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 interface AuthContextType {
   user: any | null;
   profile: any | null;
+  session: any | null;
   loading: boolean;
   profileLoading: boolean;
   signOut: () => Promise<void>;
@@ -16,6 +17,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
+  session: null,
   loading: true,
   profileLoading: false,
   signOut: async () => {},
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
+  const [session, setSession] = useState<any | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -140,6 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (session?.user) {
+          setSession(session);
           setUser((prev: any) =>
             prev?.id === session.user.id ? prev : session.user
           );
@@ -152,6 +156,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await fetchProfile(session.user.id);
           }
         } else {
+          setSession(null);
           setUser(null);
           setProfile(null);
           if (typeof window !== "undefined") {
@@ -173,6 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      setSession(null);
       setUser(null);
       setProfile(null);
       setProfileCookie(false);
@@ -186,7 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, profileLoading, signOut, updateProfile, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, profileLoading, signOut, updateProfile, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

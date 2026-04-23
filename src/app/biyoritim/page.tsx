@@ -20,6 +20,7 @@ import { AlertTriangle, Info, TrendingUp, Heart, Brain, Dumbbell, Sparkles, Eye,
 
 function BiyoritimContent() {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("biyoritim");
   const [showPremium, setShowPremium] = useState(false);
   const [premiumVariant, setPremiumVariant] = useState<PremiumModalVariant>("premium_required");
@@ -130,6 +131,7 @@ function BiyoritimContent() {
             spiritual: summary.spiritual,
             criticalDays: summary.criticalDays,
             language,
+            userId: user?.id, // Pass userId for logging
             ...(showPartner && partnerSummary ? {
                 partnerPhysical: partnerSummary.physical,
                 partnerEmotional: partnerSummary.emotional,

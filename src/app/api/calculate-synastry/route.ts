@@ -86,6 +86,31 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    // Log to interaction_logs if userId is provided
+    const userId = body.userId;
+    if (userId) {
+      (async () => {
+        try {
+          const { supabaseAdmin } = await import("@/lib/supabase-admin");
+          await supabaseAdmin.from("interaction_logs").insert({
+            user_id: userId,
+            action_type: "synastry",
+            description: "Gelişmiş Sinastri uyum analizi yapıldı.",
+            metadata: {
+              person1: { name: person1.name },
+              person2: { name: person2.name },
+              full_result: {
+                ...interpretation,
+                synastryAspects: synastryAspects || []
+              }
+            }
+          });
+        } catch (e) {
+          console.error("Synastry logging error:", e);
+        }
+      })();
+    }
+
     return NextResponse.json({
       success: true,
       data: {

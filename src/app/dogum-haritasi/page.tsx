@@ -195,44 +195,35 @@ export default function DogumHaritasiPage() {
         setAspectInterpretLoading(true);
         setHouseInterpretLoading(true);
 
+        const interpretations: any = {};
         const aiPromises = [
           fetchWithTimeout("/api/birth-chart/aspects-interpret", { chart: chartData, language: lang })
-            .then(d => { if (d.success) setAspectInterpretations(d.data); })
+            .then(d => { if (d.success) { setAspectInterpretations(d.data); interpretations.aspects = d.data; } })
             .finally(() => setAspectInterpretLoading(false)),
           fetchWithTimeout("/api/birth-chart/houses-interpret", { chart: chartData, language: lang })
-            .then(d => { if (d.success) setHouseInterpretations(d.data); })
+            .then(d => { if (d.success) { setHouseInterpretations(d.data); interpretations.houses = d.data; } })
             .finally(() => setHouseInterpretLoading(false)),
           fetchWithTimeout("/api/birth-chart/interpret", { chart: chartData, language: lang })
-            .then(d => { if (d.success) setChartInterpretation(d.data); }),
+            .then(d => { if (d.success) { setChartInterpretation(d.data); interpretations.summary = d.data; } }),
           fetchWithTimeout("/api/birth-chart/planets-interpret", { chart: chartData, language: lang })
-            .then(d => { if (d.success) setPlanetInterpretations(d.data); })
+            .then(d => { if (d.success) { setPlanetInterpretations(d.data); interpretations.planets = d.data; } })
         ];
 
-        // 45 second hard cap fallback so we don't hold the user hostage forever, though Vercel / Gemini usually finishes in 10-20s.
+        // 45 second hard cap fallback
         const hardTimeout = new Promise<void>(resolve => setTimeout(resolve, 45000));
         await Promise.race([Promise.allSettled(aiPromises), hardTimeout]);
 
         // After everything is calculated, close loading and show results
         setResult(chartData);
         setActiveTab("overview");
-        setLoading(false); // Make sure loader vanishes before scrolling!
+        setLoading(false);
         
         setTimeout(() => {
           document.getElementById('chart-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 150);
 
         if (user?.id) {
-          syncBirthChart(chartData, user.id);
-        }
-
-        // Log Interaction
-        try {
-          const profile = await getCurrentProfile();
-          if (profile) {
-            logInteraction(profile.id, "astrology", t("log.birth_chart_cal"));
-          }
-        } catch (err) {
-          console.error("Log failed", err);
+          syncBirthChart(chartData, user.id, interpretations);
         }
       }
       else { setError(data.error || t("error.generic")); }
@@ -240,12 +231,12 @@ export default function DogumHaritasiPage() {
     finally { setLoading(false); }
   };
 
-  const syncBirthChart = useCallback(async (chart: BirthChart, userId: string) => {
+  const syncBirthChart = useCallback(async (chart: BirthChart, userId: string, interpretations?: any) => {
     try {
       await fetch("/api/birth-chart/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chart, userId }),
+        body: JSON.stringify({ chart, userId, interpretations }),
       });
     } catch (err) {
       console.error("Birth chart sync failed:", err);

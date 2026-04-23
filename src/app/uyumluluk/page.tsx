@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { countries } from "@/data/countries";
 import { useTranslation } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth-helpers";
 import { getZodiacById, zodiacSigns } from "@/data/zodiac";
 import CosmicSelect from "@/components/Cosmic/CosmicSelect";
 import LocationSearch from "@/components/ui/LocationSearch";
@@ -66,6 +67,7 @@ function UyumlulukContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, language } = useTranslation();
+  const { user } = useAuth();
 
   const { isPremium, isBlocked, consumeQuota } = useFreemiumQuota("uyumluluk");
   const [showPremium, setShowPremium] = useState(false);
@@ -146,7 +148,7 @@ function UyumlulukContent() {
       const res = await fetch(`/api/compatibility?lang=${language}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sign1, sign2 }),
+        body: JSON.stringify({ sign1, sign2, userId: user?.id }),
       });
 
       const data = await res.json();
@@ -205,7 +207,7 @@ function UyumlulukContent() {
       const res = await fetch("/api/calculate-synastry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ ...requestBody, userId: user?.id }),
       });
 
       const data = await res.json();

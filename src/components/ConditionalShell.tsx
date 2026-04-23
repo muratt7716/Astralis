@@ -18,7 +18,7 @@ export default function ConditionalShell({ children }: { children: React.ReactNo
   return (
     <>
       <Navbar />
-      <div className="relative z-10 flex flex-col min-h-screen">
+      <div className="relative flex flex-col min-h-screen">
         <main className="flex-grow">{children}</main>
         <Footer />
       </div>

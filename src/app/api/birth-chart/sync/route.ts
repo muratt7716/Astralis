@@ -7,7 +7,7 @@ const ALL_GUIDE_IDS = ["melisa", "aras", "umut", "hekate", "selin"];
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { chart, userId }: { chart: BirthChart; userId: string } = body;
+    const { chart, userId, interpretations }: { chart: BirthChart; userId: string; interpretations?: any } = body;
     if (!chart || !userId) return NextResponse.json({ error: "Eksik parametre." }, { status: 400 });
 
     const dominantPlanetInfo = chart.planetPositions.find((p) => p.planetId === chart.dominantPlanet);
@@ -52,6 +52,22 @@ export async function POST(request: NextRequest) {
     );
 
     if (memories.length > 0) await supabaseAdmin.from("memories").insert(memories);
+    
+    // Log to interaction_logs for the profile feed
+    await supabaseAdmin.from("interaction_logs").insert({
+      user_id: userId,
+      action_type: "birthchart",
+      description: "Doğum haritası hesaplandı ve senkronize edildi.",
+      metadata: {
+        sun: chart.sunSign.id,
+        moon: chart.moonSign.id,
+        asc: chart.risingSign.id,
+        full_result: {
+          ...chart,
+          interpretations: interpretations || {}
+        }
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -3,6 +3,7 @@ import "./globals.css";
 import GlobalBackground from "@/components/Cosmic/GlobalBackground";
 import Providers from "@/components/Providers";
 import ConditionalShell from "@/components/ConditionalShell";
+import PWAProvider from "@/components/PWAProvider";
 
 import { cookies } from "next/headers";
 import { translations, SupportedLanguage, languages } from "@/lib/i18n-shared";
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `Astralis | ${t("hero.title.1")} ${t("hero.title.2")}`,
     description: t("hero.subtitle"),
     keywords: "astrology, zodiac, horoscopes, tarot, birth chart, coffee fortune, astroloji, burçlar, günlük burç yorumu, doğum haritası, fal",
-    manifest: '/manifest.json',
+    manifest: '/manifest.webmanifest',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
@@ -54,9 +55,11 @@ export default async function RootLayout({
       <body className="bg-[#070714] text-white font-sans min-h-screen antialiased overflow-x-hidden">
         <Providers>
           <GlobalBackground />
-          <ConditionalShell>
-            {children}
-          </ConditionalShell>
+          <PWAProvider>
+            <ConditionalShell>
+              {children}
+            </ConditionalShell>
+          </PWAProvider>
         </Providers>
       </body>
     </html>

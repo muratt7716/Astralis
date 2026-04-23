@@ -86,6 +86,13 @@ KESİNLİKLE markdown \`\`\`json karakterleri KOYMA! Sadece aşağıdaki formatt
             user_id: userId,
             action_type: "numerology_synthesis_analyze",
             description: "Numeroloji klinik ve ezoterik sentezi yapıldı.",
+            metadata: { 
+              fullName, 
+              dob, 
+              coreNumbers, 
+              neuroMatrix,
+              full_result: analysis 
+            }
           });
         } catch (e) {
           console.error("Supabase log error:", e);

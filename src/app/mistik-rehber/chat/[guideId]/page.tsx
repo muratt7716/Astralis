@@ -38,7 +38,7 @@ export default function ChatPage() {
   const guideId = params.guideId as string;
   const guide = GUIDES.find(g => g.id === guideId) || GUIDES[0];
 
-  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
+  const { user, session, profile, loading: authLoading, refreshProfile } = useAuth();
   const { language } = useTranslation();
   const isPremium = profile?.is_premium ?? false;
 
@@ -74,13 +74,11 @@ export default function ChatPage() {
     let cancelled = false;
 
     (async () => {
+      console.log("[ChatPage] Starting history load for guide:", guideId);
       setLoadingHistory(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token || "";
-
-        // Force a profile refresh to ensure metadata conditions (birth_date etc) are met on PC
-        refreshProfile?.();
+        console.log("[ChatPage] Session token check:", token ? "FOUND" : "MISSING");
 
         const res = await fetch(`/api/mistik-rehber/history?guideId=${guideId}`, {
           headers: { "Authorization": `Bearer ${token}` },
@@ -97,6 +95,7 @@ export default function ChatPage() {
         const data = await res.json();
         if (cancelled) return;
 
+        console.log("[ChatPage] History data received. ConversationId:", data.conversationId);
         if (data.conversationId) setConversationId(data.conversationId);
         if (data.warmthLevel) setWarmthLevel(data.warmthLevel);
         if (data.distinctDays !== undefined) setDistinctDays(data.distinctDays);
@@ -112,7 +111,10 @@ export default function ChatPage() {
       } catch (err) {
         console.error("[ChatPage] History load error:", err);
       } finally {
-        if (!cancelled) setLoadingHistory(false);
+        if (!cancelled) {
+          console.log("[ChatPage] History load finished.");
+          setLoadingHistory(false);
+        }
       }
     })();
 
@@ -151,8 +153,11 @@ export default function ChatPage() {
     }]);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || "";
+      const token = session?.access_token;
+      if (!token) {
+        console.warn("[ChatPage] No session token found in AuthContext.");
+        throw new Error("AUTH_SESSION_MISSING");
+      }
 
       const res = await fetch("/api/mistik-rehber/chat", {
         method: "POST",
@@ -170,7 +175,11 @@ export default function ChatPage() {
         return;
       }
 
-      if (!res.ok) throw new Error("API hatası");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("[ChatPage] API error:", res.status, errData);
+        throw new Error(errData.error || "API_ERROR");
+      }
 
       const data = await res.json();
 
@@ -189,13 +198,24 @@ export default function ChatPage() {
       if (data.conversationId) setConversationId(data.conversationId);
       if (data.warmthLevel) setWarmthLevel(data.warmthLevel);
       if (data.distinctDays !== undefined) setDistinctDays(data.distinctDays);
-    } catch {
+    } catch (err: any) {
+      console.error("[ChatPage] Send error details:", err);
+      // Remove temp message so it doesn't look like it's stuck
       setMessages(prev => prev.filter(m => m.id !== tempId));
+      // Return the message to input so user doesn't lose it
+      setInput(userMessage);
+      
+      // Critical user feedback
+      const errorMsg = err.message === "AUTH_SESSION_MISSING" 
+        ? "Oturum doğrulanırken bir sorun oluştu. Lütfen sayfayı yenilemeyi deneyin."
+        : "Mesaj gönderilemedi. Lütfen bağlantınızı kontrol edip tekrar deneyin.";
+      
+      alert(errorMsg); // Temporary but effective feedback
     } finally {
       setSending(false);
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 10);
     }
-  }, [input, sending, user, guideId, conversationId, isPremium, freeMessagesUsed]);
+  }, [input, sending, user, session, guideId, conversationId, isPremium, freeMessagesUsed, language]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -207,7 +227,7 @@ export default function ChatPage() {
   // Only block on auth loading — history loads in background
   if (authLoading) {
     return (
-      <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center gap-6">
+      <div className="fixed inset-0 z-[100] bg-[#050505] flex flex-col items-center justify-center gap-6">
         <div
           className="absolute inset-0 opacity-30"
           style={{ background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${guide.glow}, transparent)` }}
@@ -235,7 +255,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#050505] flex flex-col text-white overflow-hidden">
+    <div className="fixed inset-0 z-[60] bg-[#050505] flex flex-col text-white overflow-hidden">
       <PremiumModal
         isOpen={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}

@@ -84,15 +84,16 @@ CRITICAL RULES:
 
     if (userId) {
       try {
-        await supabaseAdmin.from("interaction_logs").insert({
-          user_id: userId,
-          action_type: "dream",
-          description: "Rüya analizi gerçekleştirildi.",
-          metadata: {
-            question: dream,
-            answer: analysis.synthesis || "Analiz tamamlandı."
-          }
-        });
+          await supabaseAdmin.from("interaction_logs").insert({
+            user_id: userId,
+            action_type: "dream",
+            description: "Rüya analizi gerçekleştirildi.",
+            metadata: {
+              question: dream,
+              answer: analysis.synthesis || "Analiz tamamlandı.",
+              full_result: analysis
+            }
+          });
       } catch (logErr) {
         console.error("Post-dream logging failed:", logErr);
       }
