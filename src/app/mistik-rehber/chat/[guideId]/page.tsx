@@ -38,7 +38,7 @@ export default function ChatPage() {
   const guideId = params.guideId as string;
   const guide = GUIDES.find(g => g.id === guideId) || GUIDES[0];
 
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const { language } = useTranslation();
   const isPremium = profile?.is_premium ?? false;
 
@@ -78,6 +78,9 @@ export default function ChatPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token || "";
+
+        // Force a profile refresh to ensure metadata conditions (birth_date etc) are met on PC
+        refreshProfile?.();
 
         const res = await fetch(`/api/mistik-rehber/history?guideId=${guideId}`, {
           headers: { "Authorization": `Bearer ${token}` },
@@ -395,9 +398,9 @@ export default function ChatPage() {
 
                   {/* Visual Components */}
                   {msg.metadata?.visual && (
-                    <div className="mt-4 pt-4 border-t border-white/10 w-full overflow-hidden">
+                    <div className="mt-4 pt-4 border-t border-white/10 w-full overflow-visible">
                       {msg.metadata.visual === "birth_chart" && profile?.birth_date && (
-                        <div className="scale-90 origin-top -mx-4">
+                        <div className="scale-90 md:scale-100 origin-top -mx-4 flex justify-center">
                            {/* Simplified construction from profile data for speed, 
                                or full calculation if we want precision */}
                            <BirthChartWheel chart={calculateBirthChart(

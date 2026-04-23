@@ -131,11 +131,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const safetyTimer = setTimeout(() => setLoading(false), 8000);
 
     // Single source of truth: onAuthStateChange handles everything
-    // getSession() is NOT called separately to avoid double-auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === "TOKEN_REFRESHED") {
-          // Token silently refreshed — no state changes needed
           clearTimeout(safetyTimer);
           setLoading(false);
           return;
@@ -145,8 +143,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser((prev: any) =>
             prev?.id === session.user.id ? prev : session.user
           );
-          // Only fetch profile on meaningful events
-          if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          
+          // ALWAYS fetch profile on mount or meaningful changes
+          // INITIAL_SESSION fires on component mount
+          if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "USER_UPDATED") {
+            // Bypass the "fetchingProfileFor" ref if we REALLY want a fresh one
+            fetchingProfileFor.current = null; 
             await fetchProfile(session.user.id);
           }
         } else {
