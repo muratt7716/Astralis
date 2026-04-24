@@ -2,7 +2,7 @@
 import { NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { buildSystemPrompt, buildSummaryPrompt, getWarmthLevel } from "@/lib/guide-prompts";
-import { callGeminiWithFallback } from "@/lib/gemini";
+import { callGeminiWithFallback, callGeminiStream } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -153,112 +153,137 @@ export async function POST(req: NextRequest) {
       contextSummary,
     });
 
-    // 9. Gemini'ye gönder
+    // 9. Prompt oluştur
     const historyText = chatHistory
       .map(m => `${m.role === "user" ? "Kullanıcı" : "Rehber"}: ${m.content}`)
       .join("\n");
-
     const fullPrompt = `${systemPrompt}\n\n## Konuşma Geçmişi\n${historyText}\n\nKullanıcı: ${message}`;
 
-    console.log("[MistikRehberChat] Calling Gemini...");
-    const rawResponse = await callGeminiWithFallback(fullPrompt);
-    console.log("[MistikRehberChat] Gemini response received.");
+    // 10. SSE Stream başlat
+    const encoder = new TextEncoder();
 
-    let parsed: { 
-      message: string; 
-      visual?: string;
-      memories_to_save: Array<{ category: string; fact: string; importance: number; tags?: string[] }> 
-    };
-    try {
-      parsed = parseGeminiJson(rawResponse);
-    } catch {
-      parsed = { message: rawResponse, visual: undefined, memories_to_save: [] };
-    }
+    const stream = new ReadableStream({
+      async start(controller) {
+        let fullText = "";
 
-    // 10. Kullanıcı mesajını kaydet
-    await supabaseAdmin.from("messages").insert({
-      conversation_id: activeConversationId,
-      role: "user",
-      content: message,
-    });
-
-    // 11. Rehber yanıtını kaydet
-    await supabaseAdmin.from("messages").insert({
-      conversation_id: activeConversationId,
-      role: "assistant",
-      content: parsed.message,
-      metadata: parsed.visual ? { visual: parsed.visual } : null
-    });
-
-    // 12. conversations.last_message_at güncelle
-    await supabaseAdmin
-      .from("conversations")
-      .update({ last_message_at: new Date().toISOString() })
-      .eq("id", activeConversationId);
-
-    // 13. Hafızaları kaydet
-    if (parsed.memories_to_save?.length > 0) {
-      for (const mem of parsed.memories_to_save) {
-        await supabaseAdmin.from("memories").upsert({
-          user_id: userId,
-          guide_id: guideId,
-          category: mem.category,
-          fact: mem.fact,
-          importance: mem.importance || 1,
-          tags: mem.tags || [],
-          last_referenced_at: new Date().toISOString(),
-        }, {
-          onConflict: "user_id,guide_id,fact",
-          ignoreDuplicates: true,
-        });
-      }
-    }
-
-    // 14. Her 20 mesajda özet güncelle (arka planda)
-    const { count: msgCount } = await supabaseAdmin
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .eq("conversation_id", activeConversationId);
-
-    if (msgCount && msgCount % 20 === 0) {
-      (async () => {
         try {
-          const { data: allMsgs } = await supabaseAdmin
-            .from("messages")
-            .select("role, content")
-            .eq("conversation_id", activeConversationId)
-            .order("created_at", { ascending: true })
-            .limit(20);
-
-          const summaryPrompt = buildSummaryPrompt({
-            messages: allMsgs || [],
-            previousSummary: contextSummary,
-          });
-
-          const summaryRaw = await callGeminiWithFallback(summaryPrompt);
-          const summaryJson = parseGeminiJson(summaryRaw);
-
-          await supabaseAdmin
-            .from("conversations")
-            .update({ context_summary: summaryJson })
-            .eq("id", activeConversationId);
-        } catch (e) {
-          console.error("[Summary] Failed to update:", e);
+          const geminiStream = await callGeminiStream(fullPrompt);
+          for await (const delta of geminiStream) {
+            fullText += delta;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+          }
+        } catch (streamError) {
+          console.error("[MistikRehberChat] Stream failed:", streamError);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "STREAM_FAILED" })}\n\n`));
+          controller.close();
+          return;
         }
-      })();
-    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: parsed.message,
-        visual: parsed.visual,
-        conversationId: activeConversationId,
-        warmthLevel,
-        distinctDays,
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+        // JSON parse — prompt her zaman JSON döndürüyor
+        let parsed: { message: string; visual?: string | null; memories_to_save: Array<{ category: string; fact: string; importance: number; tags?: string[] }> } = {
+          message: fullText,
+          visual: null,
+          memories_to_save: [],
+        };
+        try {
+          parsed = parseGeminiJson(fullText);
+        } catch {
+          parsed.message = fullText;
+        }
+
+        // DB yazmaları paralel — stream bittikten sonra
+        await Promise.all([
+          supabaseAdmin.from("messages").insert({
+            conversation_id: activeConversationId,
+            role: "user",
+            content: message,
+          }),
+          supabaseAdmin.from("messages").insert({
+            conversation_id: activeConversationId,
+            role: "assistant",
+            content: parsed.message,
+            metadata: parsed.visual ? { visual: parsed.visual } : null,
+          }),
+          supabaseAdmin
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", activeConversationId),
+        ]);
+
+        // Anıları kaydet
+        if (parsed.memories_to_save?.length > 0) {
+          await Promise.all(
+            parsed.memories_to_save.map(mem =>
+              supabaseAdmin.from("memories").upsert(
+                {
+                  user_id: userId,
+                  guide_id: guideId,
+                  category: mem.category,
+                  fact: mem.fact,
+                  importance: mem.importance || 1,
+                  tags: mem.tags || [],
+                  last_referenced_at: new Date().toISOString(),
+                },
+                { onConflict: "user_id,guide_id,fact", ignoreDuplicates: true }
+              )
+            )
+          );
+        }
+
+        // Her 20 mesajda özet güncelle (arka planda — stream'i bloklamaz)
+        const { count: msgCount } = await supabaseAdmin
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("conversation_id", activeConversationId);
+
+        if (msgCount && msgCount % 20 === 0) {
+          (async () => {
+            try {
+              const { data: allMsgs } = await supabaseAdmin
+                .from("messages")
+                .select("role, content")
+                .eq("conversation_id", activeConversationId)
+                .order("created_at", { ascending: true })
+                .limit(20);
+              const summaryRaw = await callGeminiWithFallback(
+                buildSummaryPrompt({ messages: allMsgs || [], previousSummary: contextSummary })
+              );
+              const summaryJson = parseGeminiJson(summaryRaw);
+              await supabaseAdmin
+                .from("conversations")
+                .update({ context_summary: summaryJson })
+                .eq("id", activeConversationId);
+            } catch (e) {
+              console.error("[Summary] Failed:", e);
+            }
+          })();
+        }
+
+        // Done event — client bu event'i alınca side effect'leri uygular
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              done: true,
+              conversationId: activeConversationId,
+              warmthLevel,
+              distinctDays,
+              visual: parsed.visual ?? null,
+            })}\n\n`
+          )
+        );
+
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (err) {
     console.error("[MistikRehberChat] Error:", err);
     return new Response(JSON.stringify({ error: "Sunucu hatası" }), { status: 500 });
