@@ -3,6 +3,11 @@
 -- Supabase SQL Editor'de bu dosyayı tek seferde çalıştır
 -- ########################################################
 
+-- ========================================================
+-- FAZ 3: pgvector Eklentisi (embedding sütunundan önce)
+-- ========================================================
+CREATE EXTENSION IF NOT EXISTS vector;
+
 
 -- ========================================================
 -- 1. PROFILES (Kullanıcı Kozmik ve Kişisel Profili)
@@ -67,6 +72,11 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   last_message_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- FAZ 4: Persona drift profili (her kullanıcı×rehber ikilisine özel ton kalibrasyonu)
+ALTER TABLE public.conversations
+  ADD COLUMN IF NOT EXISTS drift_profile JSONB
+  DEFAULT '{"tone_depth": 0.5, "humor_frequency": 0.5, "challenge_level": 0.3}'::jsonb;
+
 
 -- ========================================================
 -- 3. MESSAGES (Sohbet Geçmişi)
@@ -98,6 +108,10 @@ CREATE TABLE IF NOT EXISTS public.memories (
 
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS guide_id TEXT NOT NULL DEFAULT 'melisa';
 
+-- FAZ 3: Semantic memory — embedding kolonu ve importance float'a çeviri
+ALTER TABLE public.memories ALTER COLUMN importance TYPE float4;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS embedding vector(768);
+
 
 -- ========================================================
 -- 5. INTERACTION_LOGS (Kullanıcı Davranış Analizi)
@@ -114,6 +128,20 @@ CREATE TABLE IF NOT EXISTS public.interaction_logs (
 ALTER TABLE public.interaction_logs ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
 
 
+-- ========================================================
+-- 6. CONVERSATION_TOPICS (FAZ 4 — Konuşma Graf)
+-- ========================================================
+CREATE TABLE IF NOT EXISTS public.conversation_topics (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  guide_id TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  message_count INTEGER NOT NULL DEFAULT 1,
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, guide_id, topic)
+);
+
+
 -- ########################################################
 -- GÜVENLİK AYARLARI (RLS) — GÜNCEL & EKSİKSİZ
 -- ########################################################
@@ -123,6 +151,7 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.interaction_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversation_topics ENABLE ROW LEVEL SECURITY;
 
 
 -- ── PROFILES ──────────────────────────────────────────────
@@ -271,6 +300,22 @@ CREATE POLICY "Logs: service role full access"
   WITH CHECK (true);
 
 
+-- ── CONVERSATION_TOPICS ───────────────────────────────────
+DROP POLICY IF EXISTS "Topics: select own" ON public.conversation_topics;
+DROP POLICY IF EXISTS "Topics: service role full access" ON public.conversation_topics;
+
+CREATE POLICY "Topics: select own"
+  ON public.conversation_topics FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Topics: service role full access"
+  ON public.conversation_topics FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+
 -- ########################################################
 -- PERFORMANS İNDEXLERİ
 -- ########################################################
@@ -287,6 +332,15 @@ CREATE INDEX IF NOT EXISTS idx_memories_user_guide
 CREATE INDEX IF NOT EXISTS idx_interaction_logs_user
   ON public.interaction_logs(user_id, created_at DESC);
 
+-- FAZ 3: pgvector IVFFlat kosinüs benzerliği indexi
+CREATE INDEX IF NOT EXISTS memories_embedding_idx
+  ON public.memories USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 100);
+
+-- FAZ 4: Conversation topics lookup
+CREATE INDEX IF NOT EXISTS conversation_topics_user_guide_idx
+  ON public.conversation_topics (user_id, guide_id);
+
 
 -- ########################################################
 -- KISITLAMALAR (CONSTRAINTS)
@@ -298,6 +352,65 @@ ALTER TABLE public.memories
 ALTER TABLE public.memories
   ADD CONSTRAINT memories_user_guide_fact_unique
   UNIQUE (user_id, guide_id, fact);
+
+
+-- ########################################################
+-- RPC FONKSİYONLARI (FAZ 3 + FAZ 4)
+-- ########################################################
+
+-- FAZ 3: Semantic benzerlik araması (pgvector kosinüs mesafesi)
+CREATE OR REPLACE FUNCTION search_memories_by_embedding(
+  p_user_id uuid,
+  p_guide_id text,
+  p_embedding vector(768),
+  p_limit int DEFAULT 5
+)
+RETURNS TABLE(category text, fact text, importance float4)
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT category, fact, importance
+  FROM memories
+  WHERE user_id = p_user_id
+    AND guide_id = p_guide_id
+    AND embedding IS NOT NULL
+  ORDER BY embedding <=> p_embedding
+  LIMIT p_limit;
+$$;
+
+-- FAZ 3: Memory decay — eski anıların önemi düşer, yeni referanslar önemi artırır
+CREATE OR REPLACE FUNCTION decay_old_memories(
+  p_threshold_date timestamptz,
+  p_boost_date timestamptz
+)
+RETURNS void
+LANGUAGE sql
+AS $$
+  UPDATE memories
+    SET importance = GREATEST(1, importance - 0.5)
+    WHERE last_referenced_at < p_threshold_date;
+
+  UPDATE memories
+    SET importance = LEAST(5, importance + 0.2)
+    WHERE last_referenced_at > p_boost_date;
+$$;
+
+-- FAZ 4: Konuşma konusu upsert (count increment)
+CREATE OR REPLACE FUNCTION upsert_conversation_topic(
+  p_user_id uuid,
+  p_guide_id text,
+  p_topic text
+)
+RETURNS void
+LANGUAGE sql
+AS $$
+  INSERT INTO conversation_topics (user_id, guide_id, topic, message_count, last_seen_at)
+  VALUES (p_user_id, p_guide_id, p_topic, 1, now())
+  ON CONFLICT (user_id, guide_id, topic)
+  DO UPDATE SET
+    message_count = conversation_topics.message_count + 1,
+    last_seen_at = now();
+$$;
 
 
 -- ########################################################
@@ -335,7 +448,7 @@ CREATE TRIGGER on_auth_user_created
 
 
 -- ########################################################
--- 6. PWA_INSTALLS (Uygulama Yükleme Takibi)
+-- 7. PWA_INSTALLS (Uygulama Yükleme Takibi)
 -- Supabase SQL Editor'de ayrı çalıştırabilirsin.
 -- ########################################################
 
