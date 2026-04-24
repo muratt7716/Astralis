@@ -3,7 +3,6 @@ import "./globals.css";
 import GlobalBackground from "@/components/Cosmic/GlobalBackground";
 import Providers from "@/components/Providers";
 import ConditionalShell from "@/components/ConditionalShell";
-import PWAProvider from "@/components/PWAProvider";
 import PWAInstaller from "@/components/PWAInstaller";
 
 import { cookies } from "next/headers";
@@ -56,11 +55,9 @@ export default async function RootLayout({
       <body className="bg-[#070714] text-white font-sans min-h-screen antialiased overflow-x-hidden">
         <Providers>
           <GlobalBackground />
-          <PWAProvider>
-            <ConditionalShell>
-              {children}
-            </ConditionalShell>
-          </PWAProvider>
+          <ConditionalShell>
+            {children}
+          </ConditionalShell>
           <PWAInstaller />
         </Providers>
       </body>
