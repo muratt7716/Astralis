@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { calculateBaseCompatibilityScore } from "./astrology/compatibility-logic";
 
 // 1. Çevre değişkeninden JSON'ı ayrıştır
@@ -34,10 +34,43 @@ const languageNames: Record<SupportedLanguage, string> = {
   fr: "Français",
 };
 
+// JSON schema type — schema nesnesi olduğu sürece @google/genai bunu kabul eder
+export type GeminiSchema = Record<string, any>;
+
 /**
- * Helper to call Gemini with a fallback model if the primary fails.
+ * Companion chat yanıtı için zorunlu JSON şeması.
+ * Structured Output ile API seviyesinde kilitleniyor — parseGeminiJson artık
+ * fallback olarak çalışır, birincil güvence bu şema.
  */
-export async function callGeminiWithFallback(prompt: string): Promise<string> {
+export const CHAT_RESPONSE_SCHEMA: GeminiSchema = {
+  type: Type.OBJECT,
+  properties: {
+    message: { type: Type.STRING },
+    visual: { type: Type.STRING, nullable: true },
+    memories_to_save: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          category: { type: Type.STRING },
+          fact: { type: Type.STRING },
+          importance: { type: Type.INTEGER },
+        },
+        required: ["category", "fact", "importance"],
+      },
+    },
+  },
+  required: ["message", "memories_to_save"],
+};
+
+/**
+ * Tek seferlik (non-streaming) Gemini çağrısı.
+ * schema verilirse API seviyesinde JSON şeması kilitlenir.
+ */
+export async function callGeminiWithFallback(
+  prompt: string,
+  schema?: GeminiSchema
+): Promise<string> {
   const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
   let lastError: any;
 
@@ -46,16 +79,54 @@ export async function callGeminiWithFallback(prompt: string): Promise<string> {
       const result = await ai.models.generateContent({
         model: modelName,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
+        ...(schema && {
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: schema,
+          },
+        }),
       });
       return result.text?.trim() || "";
     } catch (error) {
-      console.warn(`Gemini API failed with model ${modelName}. Trying next...`, error);
+      console.warn(`Gemini model ${modelName} failed, trying next...`, error);
       lastError = error;
     }
   }
 
-  console.error("All Gemini API models failed.", lastError);
-  throw new Error("All AI models failed to respond.");
+  throw new Error(`All Gemini models failed: ${lastError?.message}`);
+}
+
+/**
+ * Streaming Gemini çağrısı — her chunk'ı yield eder.
+ * Chat route'u bu fonksiyonu kullanarak SSE stream oluşturur.
+ * NOT: Structured Output schema ile streaming birlikte kullanılmıyor çünkü
+ * JSON token'larını client'ta parse etmek karmaşıklığı artırır. Bunun yerine
+ * backend tam metni biriktirip parseGeminiJson ile parse eder.
+ */
+export async function callGeminiStream(prompt: string): Promise<AsyncIterable<string>> {
+  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
+  let lastError: any;
+
+  for (const modelName of models) {
+    try {
+      const streamResult = await ai.models.generateContentStream({
+        model: modelName,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+
+      return (async function* () {
+        for await (const chunk of streamResult) {
+          const text = chunk.text ?? "";
+          if (text) yield text;
+        }
+      })();
+    } catch (error) {
+      console.warn(`Gemini stream model ${modelName} failed, trying next...`, error);
+      lastError = error;
+    }
+  }
+
+  throw new Error(`All Gemini stream models failed: ${lastError?.message}`);
 }
 
 /**
