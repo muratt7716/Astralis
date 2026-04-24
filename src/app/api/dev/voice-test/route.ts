@@ -52,7 +52,23 @@ const LIVE_MODELS = [
   "gemini-2.0-flash-live-001",
 ];
 
-const VOICES = ["Kore", "Aoede", "Puck", "Charon", "Fenrir", "Zephyr"];
+const VOICES = [
+  // Umut (yaşlı şaman) adayları
+  "Algenib",      // gravelly — çakıllı, yaşlı ses
+  "Gacrux",       // mature — olgun, otoriter
+  "Sadaltager",   // knowledgeable — bilge, derin
+  // Kadın rehber adayları (Melisa, Selin, Hekate)
+  "Kore",         // deep feminine
+  "Aoede",        // warm feminine
+  "Laomedeia",    // feminine
+  "Erinome",      // feminine
+  "Autonoe",      // feminine
+  // Aras adayları
+  "Charon",       // dark, authoritative
+  "Orus",         // deep male
+  "Fenrir",       // strong masculine
+  "Umbriel",      // neutral
+];
 
 const GUIDE_PROMPTS: Record<string, string> = {
   melisa: "Sen Melisa'sın — sıcak, derin, mistik bir Türk falcı rehberi. Kısa ve samimi cevap ver.",

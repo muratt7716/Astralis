@@ -5,7 +5,36 @@
 
 import { useState, useRef } from "react";
 
-const VOICES = ["Kore", "Aoede", "Puck", "Charon", "Fenrir", "Zephyr"];
+const VOICE_GROUPS = [
+  {
+    label: "Umut (Yaşlı Şaman)",
+    voices: [
+      { name: "Algenib", desc: "gravelly / çakıllı" },
+      { name: "Gacrux", desc: "mature / olgun" },
+      { name: "Sadaltager", desc: "knowledgeable / bilge" },
+    ],
+  },
+  {
+    label: "Aras (Sakin Erkek)",
+    voices: [
+      { name: "Charon", desc: "dark / otoriter" },
+      { name: "Orus", desc: "deep / derin" },
+      { name: "Fenrir", desc: "strong / güçlü" },
+      { name: "Umbriel", desc: "neutral / nötr" },
+    ],
+  },
+  {
+    label: "Melisa / Selin / Hekate (Kadın)",
+    voices: [
+      { name: "Kore", desc: "deep feminine" },
+      { name: "Aoede", desc: "warm feminine" },
+      { name: "Laomedeia", desc: "feminine" },
+      { name: "Erinome", desc: "feminine" },
+      { name: "Autonoe", desc: "feminine" },
+    ],
+  },
+];
+const VOICES = VOICE_GROUPS.flatMap(g => g.voices.map(v => v.name));
 const GUIDES = [
   { id: "melisa", label: "Melisa" },
   { id: "aras", label: "Aras" },
@@ -76,29 +105,35 @@ export default function VoiceTestPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}>
 
-        {/* Voice selector */}
+        {/* Voice selector — grouped */}
         <div>
-          <label style={{ display: "block", marginBottom: "0.4rem", color: "#a78bfa" }}>Ses (Voice)</label>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            {VOICES.map(v => (
-              <button
-                key={v}
-                onClick={() => setVoice(v)}
-                style={{
-                  padding: "0.3rem 0.8rem",
-                  borderRadius: 6,
-                  border: "1px solid",
-                  borderColor: voice === v ? "#a78bfa" : "#333",
-                  background: voice === v ? "#2d1f6e" : "#1a1a2e",
-                  color: voice === v ? "#e2d9f3" : "#888",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                }}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
+          <label style={{ display: "block", marginBottom: "0.6rem", color: "#a78bfa" }}>Ses (Voice)</label>
+          {VOICE_GROUPS.map(group => (
+            <div key={group.label} style={{ marginBottom: "0.8rem" }}>
+              <div style={{ fontSize: "0.72rem", color: "#666", marginBottom: "0.3rem" }}>{group.label}</div>
+              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                {group.voices.map(v => (
+                  <button
+                    key={v.name}
+                    onClick={() => setVoice(v.name)}
+                    title={v.desc}
+                    style={{
+                      padding: "0.3rem 0.7rem",
+                      borderRadius: 6,
+                      border: "1px solid",
+                      borderColor: voice === v.name ? "#a78bfa" : "#333",
+                      background: voice === v.name ? "#2d1f6e" : "#1a1a2e",
+                      color: voice === v.name ? "#e2d9f3" : "#888",
+                      cursor: "pointer",
+                      fontSize: "0.82rem",
+                    }}
+                  >
+                    {v.name} <span style={{ fontSize: "0.68rem", opacity: 0.6 }}>({v.desc.split(" / ")[0]})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Guide selector */}
