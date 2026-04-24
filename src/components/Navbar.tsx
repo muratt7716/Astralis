@@ -39,10 +39,15 @@ export default function Navbar() {
   const shapeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  
+  const adminEmails = ['ismailmertbal@gmail.com', 'mmuratb77@gmail.com'];
+  const userEmail = user?.email?.toLowerCase() || (user as any)?.user_metadata?.email?.toLowerCase();
+  const isAdmin = userEmail && adminEmails.includes(userEmail);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
+
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -258,7 +263,7 @@ export default function Navbar() {
                       <CosmicIcon name="dream" size={16} className="shrink-0" /> {t("nav.user.mistik_guide")}
                     </Link>
                     {/* Admin Panel Shortcut */}
-                    {user && (user.email === 'ismailmertbal@gmail.com' || user.email === 'mmuratb77@gmail.com') && (
+                    {isAdmin && (
                       <Link
                         href="/admin"
                         onClick={() => setProfileMenuOpen(false)}
@@ -351,7 +356,7 @@ export default function Navbar() {
                     {t("nav.user.profile")}
                   </Link>
                   {/* Admin Panel Shortcut Mobile */}
-                  {user && (user.email === 'ismailmertbal@gmail.com' || user.email === 'mmuratb77@gmail.com') && (
+                  {isAdmin && (
                     <Link href="/admin" onClick={() => setIsOpen(false)} className="w-full text-center py-3 rounded-xl bg-purple-500/10 border border-purple-500/10 text-purple-300 text-xs font-bold uppercase tracking-widest">
                       {t("nav.user.admin")}
                     </Link>

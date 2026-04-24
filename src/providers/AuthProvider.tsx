@@ -21,10 +21,10 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   profileLoading: false,
-  signOut: async () => {},
-  updateProfile: async () => {},
-  refreshProfile: async () => {},
-  mergeProfile: () => {},
+  signOut: async () => { },
+  updateProfile: async () => { },
+  refreshProfile: async () => { },
+  mergeProfile: () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== "undefined") {
       const cached = localStorage.getItem("last-cosmic-profile");
       if (cached) {
-        try { setProfile(JSON.parse(cached)); } catch {}
+        try { setProfile(JSON.parse(cached)); } catch { }
       }
     }
 
