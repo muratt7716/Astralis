@@ -491,7 +491,7 @@ export const fr: TranslationDict = {
   "hero.cta.calc": "Trouver mon signe",
   "hero.cta.chart": "Thème Natal",
   "hero.cta.daily": "Horoscope Quotidien",
-  "hero.subtitle": "Illuminez votre vie avec les signes du zodiaque, les planètes et les énergies cosmiques. Découvrez votre thème natal personnel.",
+  "hero.subtitle": "Astralis - Plateforme de développement personnel, d'astrologie et de coaching de vie. Découvrez votre potentiel grâce au guidage cosmique.",
   "hero.title.1": "Guidé par",
   "hero.title.2": "les Étoiles",
   "home.cta.btn": "Explorer les horoscopes",

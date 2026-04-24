@@ -491,7 +491,7 @@ export const de: TranslationDict = {
   "hero.cta.calc": "Zeichen finden",
   "hero.cta.chart": "Geburtshoroskop",
   "hero.cta.daily": "Tageshoroskop",
-  "hero.subtitle": "Erleuchten Sie Ihr Leben mit Sternzeichen, Planeten und kosmischen Energien. Entdecken Sie Ihr persönliches Geburtshoroskop.",
+  "hero.subtitle": "Astralis - Plattform für persönliche Entwicklung, Astrologie und Life Coaching. Entdecken Sie Ihr Potenzial mit kosmischer Führung.",
   "hero.title.1": "Geführt von",
   "hero.title.2": "den Sternen",
   "home.cta.btn": "Horoskope entdecken",

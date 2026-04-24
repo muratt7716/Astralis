@@ -491,7 +491,7 @@ export const en: TranslationDict = {
   "hero.cta.calc": "Find Your Sign",
   "hero.cta.chart": "Birth Chart",
   "hero.cta.daily": "Daily Horoscope",
-  "hero.subtitle": "Illuminate your life with zodiac signs, planets, and cosmic energies. Discover your personal birth chart.",
+  "hero.subtitle": "Astralis - Personal development, astrology, and life coaching platform. Discover your potential with cosmic guidance.",
   "hero.title.1": "Guided by",
   "hero.title.2": "the Stars",
   "home.cta.btn": "Explore Horoscopes",

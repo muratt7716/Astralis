@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `Astralis | ${t("hero.title.1")} ${t("hero.title.2")}`,
     description: t("hero.subtitle"),
-    keywords: "astrology, zodiac, horoscopes, tarot, birth chart, coffee fortune, astroloji, burçlar, günlük burç yorumu, doğum haritası, fal",
+    keywords: "astrology, zodiac, horoscopes, birth chart, compatibility, numerology, biorhythm, dream analysis, personal development, coaching, meditation, wellness, astroloji, burçlar, doğum haritası, uyumluluk, kişisel gelişim",
     manifest: '/manifest.webmanifest',
     appleWebApp: {
       capable: true,
@@ -29,7 +29,8 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Astralis',
     },
     icons: {
-      apple: '/icon-192.png',
+      icon: '/favicon.png',
+      apple: '/favicon.png',
     },
   };
 }

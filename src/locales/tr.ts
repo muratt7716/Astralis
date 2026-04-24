@@ -497,7 +497,7 @@ export const tr: TranslationDict = {
   "hero.cta.calc": "Burcunu Hesapla",
   "hero.cta.chart": "Doğum Haritası",
   "hero.cta.daily": "Günlük Yorumlar",
-  "hero.subtitle": "Burçlar, gezegenler ve kozmik enerjilerle hayatınıza ışık tutun. Kişisel doğum haritanızı keşfedin.",
+  "hero.subtitle": "Astralis - Kişisel gelişim, astroloji ve yaşam koçluğu platformu. Potansiyelinizi kozmik rehberlikle keşfedin.",
   "hero.title.1": "Yıldızların",
   "hero.title.2": "Rehberliğinde",
   "home.cta.btn": "Yorumları Keşfet",
