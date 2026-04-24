@@ -1,6 +1,4 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require("@ducanh2912/next-pwa").default;
-
 const nextConfig = {
   images: {
     unoptimized: true,
@@ -23,10 +21,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA({
-  dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: false,
-  disable: process.env.NODE_ENV === "development",
-})(nextConfig);
+module.exports = nextConfig;

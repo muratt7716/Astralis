@@ -3,7 +3,6 @@ import "./globals.css";
 import GlobalBackground from "@/components/Cosmic/GlobalBackground";
 import Providers from "@/components/Providers";
 import ConditionalShell from "@/components/ConditionalShell";
-import PWAInstaller from "@/components/PWAInstaller";
 
 import { cookies } from "next/headers";
 import { translations, SupportedLanguage, languages } from "@/lib/i18n-shared";
@@ -58,7 +57,6 @@ export default async function RootLayout({
           <ConditionalShell>
             {children}
           </ConditionalShell>
-          <PWAInstaller />
         </Providers>
       </body>
     </html>
