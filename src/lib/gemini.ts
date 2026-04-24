@@ -911,6 +911,23 @@ ${lang} dilinde yaz. Ton: Bilge, şiirsel ama havada kalmayan, otoriter ama şef
     "color": "Bugünün şanslı rengi",
     "number": "Bugünün şanslı sayısı (1-99)",
     "time": "Günün en güçlü saati (örn: '14:00-16:00')"
+  },
+  "signInsights": {
+    "sun": {
+      "hook": "Max 6 kelimelik çarpıcı başlık — bugün güneş burcunu etkileyen en belirgin kozmik durumu yansıtıyor. Heyecan verici, kişisel, enerji hissettiren. ${lang} dilinde.",
+      "insight": "2 cümle. Bugün güneş burcunu etkileyen transit veya kozmik durumu somut, günlük hayata dokunan bir dille anlat. Teknik bir gezegen ya da açı adı kullanacaksan HEMEN arkasına 've bu şu anlama geliyor: ...' şeklinde açıkla. Soyut kelimeler yasak. ${lang} dilinde.",
+      "watch": "1 cümle. Bugün dikkat edilmesi gereken tek şey — uyarı değil, nazik bir hatırlatma tonu. ${lang} dilinde."
+    },
+    "moon": {
+      "hook": "Max 6 kelimelik çarpıcı başlık — bugün ay burcunun duygusal enerjisini yansıtıyor. ${lang} dilinde.",
+      "insight": "2 cümle. Bugün ay burcunun iç dünyaya, duygulara ve ilişkilere yansımasını anlat. Teknik terim kullanacaksan hemen açıkla: 'X yapıyor, yani bu şu anlama geliyor: ...' ${lang} dilinde.",
+      "watch": "1 cümle. Duygusal açıdan bugün akılda tutulması gereken tek şey. Nazik ton. ${lang} dilinde."
+    },
+    "rising": {
+      "hook": "Max 6 kelimelik çarpıcı başlık — bugün yükselen burcun dış dünyaya yansımasını özetliyor. ${lang} dilinde.",
+      "insight": "2 cümle. Bugün yükselen burcun insanlara nasıl göründüğünü, dış enerjiyi ve sosyal alanı nasıl etkilediğini anlat. Teknik terim kullanacaksan hemen açıkla. ${lang} dilinde.",
+      "watch": "1 cümle. Sosyal ya da dış dünya açısından bugün dikkat edilmesi gereken tek şey. Nazik ton. ${lang} dilinde."
+    }
   }
 }
 
@@ -919,6 +936,8 @@ KALİTE KRİTERLERİ:
 - Enerji puanları rastgele değil, transit ve natal etkileşimlere dayansın.
 - Şanslı elementler de kozmik verilere göre belirlensin.
 - content alanında en az 1 yerde kullanıcının natal gezegen yerleşimine atıf yap.
+- signInsights: Hiçbir teknik terim açıklanmadan bırakılmaz. Jargon varsa "yani bu şu anlama geliyor: ..." ile anında çözülür.
+- signInsights: Günlük hook başlıklar transit verilerine dayanır — her gün farklı, klişe değil.
 - JSON dışında HİÇBİR ŞEY yazma.`;
 
   try {

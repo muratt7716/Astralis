@@ -167,6 +167,7 @@ export async function GET(request: Request) {
       planetOfTheDay: result.planetOfTheDay,
       energyScores: result.energyScores,
       luckyElements: result.luckyElements,
+      signInsights: result.signInsights ?? null,
       date: today,
       language: language,
     };
