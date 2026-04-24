@@ -73,21 +73,18 @@ export default function PWAInstaller() {
     }
   };
 
-  const handleDismiss = () => {
-    setIsVisible(false);
-    // Don't show again this session
-    sessionStorage.setItem("pwa-prompt-dismissed", "true");
-  };
-
-  // If already installed or dismissed this session, don't show
-  if (isStandalone) return null;
-  
-  // Check session storage for dismissal
   useEffect(() => {
     if (sessionStorage.getItem("pwa-prompt-dismissed")) {
       setIsVisible(false);
     }
   }, []);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    sessionStorage.setItem("pwa-prompt-dismissed", "true");
+  };
+
+  if (isStandalone) return null;
 
   return (
     <AnimatePresence>
