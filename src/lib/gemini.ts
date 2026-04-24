@@ -102,31 +102,40 @@ export async function callGeminiWithFallback(
  * NOT: Structured Output schema ile streaming birlikte kullanılmıyor çünkü
  * JSON token'larını client'ta parse etmek karmaşıklığı artırır. Bunun yerine
  * backend tam metni biriktirip parseGeminiJson ile parse eder.
+ * Mid-stream iteration errors propagate to the caller — chat route's STREAM_FAILED handler is the fallback.
  */
 export async function callGeminiStream(prompt: string): Promise<AsyncIterable<string>> {
   const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
   let lastError: any;
 
   for (const modelName of models) {
+    let streamResult: any;
     try {
-      const streamResult = await ai.models.generateContentStream({
+      streamResult = await ai.models.generateContentStream({
         model: modelName,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
       });
-
-      return (async function* () {
-        for await (const chunk of streamResult) {
-          const text = chunk.text ?? "";
-          if (text) yield text;
-        }
-      })();
     } catch (error) {
-      console.warn(`Gemini stream model ${modelName} failed, trying next...`, error);
+      console.warn(`Gemini stream model ${modelName} failed to connect, trying next...`, error);
       lastError = error;
+      continue;
     }
+
+    return (async function* () {
+      for await (const chunk of streamResult) {
+        // Fix 2: check finishReason — safety/recitation stops should surface as errors
+        const finishReason = chunk.candidates?.[0]?.finishReason;
+        if (finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
+          throw new Error(`Gemini stream stopped: ${finishReason}`);
+        }
+        const text = chunk.text ?? "";
+        if (text) yield text;
+      }
+    })();
   }
 
-  throw new Error(`All Gemini stream models failed: ${lastError?.message}`);
+  // Fix 3: handle non-Error lastError gracefully
+  throw new Error(`All Gemini stream models failed: ${lastError?.message ?? String(lastError)}`);
 }
 
 /**
