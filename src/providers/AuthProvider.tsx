@@ -12,6 +12,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  mergeProfile: (data: Partial<any>) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   updateProfile: async () => {},
   refreshProfile: async () => {},
+  mergeProfile: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -82,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateProfile = async (profileData: any) => {
     if (!user) return;
 
-    // Optimistic update
+    // Optimistic update — UI reflects immediately
     const newProfile = { ...profile, ...profileData, id: user.id };
     setProfile(newProfile);
     if (typeof window !== "undefined") {
@@ -90,34 +92,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const { data: existing } = await supabase
+      // Simple update — profile always exists (created on signup)
+      const { error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .upsert({
-          ...(existing || {}),
-          id: user.id,
-          ...profileData,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .maybeSingle();
+        .update({ ...profileData, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
 
       if (error) throw error;
-
-      if (data) {
-        setProfile(data);
-        setProfileCookie(true);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("last-cosmic-profile", JSON.stringify(data));
-        }
-      }
     } catch (err) {
+      // Rollback optimistic update on error
+      setProfile(profile);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("last-cosmic-profile", JSON.stringify(profile));
+      }
       console.error("[AuthProvider] updateProfile error:", err);
+      throw err;
     }
   };
 
@@ -191,8 +180,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Merge new data into profile state without any DB call — instant UI update
+  const mergeProfile = (data: Partial<any>) => {
+    setProfile((prev: any) => {
+      const merged = { ...prev, ...data };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("last-cosmic-profile", JSON.stringify(merged));
+      }
+      return merged;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, profileLoading, signOut, updateProfile, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, profileLoading, signOut, updateProfile, refreshProfile, mergeProfile }}>
       {children}
     </AuthContext.Provider>
   );

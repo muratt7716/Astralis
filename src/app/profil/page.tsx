@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from 'swr';
 import { useAuth, uploadAvatar } from "@/lib/auth-helpers";
+import { supabase } from "@/lib/supabase";
 import { useTranslation } from "@/lib/i18n";
 
 // SWR Fetcher
@@ -35,7 +36,7 @@ import { GUIDES } from "@/components/Profile/ProfileConstants";
 export default function ProfilePage() {
   const router = useRouter();
   const { t, dir } = useTranslation();
-  const { user, profile, loading: authLoading, signOut, updateProfile } = useAuth();
+  const { user, profile, loading: authLoading, signOut, mergeProfile } = useAuth();
 
   const [saving, setSaving] = useState(false);
   // Date for SWR Key (Europe/Istanbul)
@@ -86,13 +87,17 @@ export default function ProfilePage() {
     language: "tr",
   });
 
+  // Sync form data only when drawer opens, not continuously
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/onboarding");
       return;
     }
+  }, [user, authLoading, router]);
 
-    if (profile) {
+  useEffect(() => {
+    // Only sync form when settings drawer opens to prevent save loop
+    if (settingsOpen && profile && !saving) {
       setFormData({
         full_name: profile.full_name || "",
         birth_date: profile.birth_date || "",
@@ -103,7 +108,7 @@ export default function ProfilePage() {
         language: profile.language || "tr",
       });
     }
-  }, [user, profile, authLoading, router]);
+  }, [settingsOpen, profile, saving]);
 
   // Derived Data
   const zodiacSign = useMemo(() => {
@@ -152,8 +157,8 @@ export default function ProfilePage() {
       try {
         const optimized = await compressImage(file);
         const avatarUrl = await uploadAvatar(optimized);
-        // Only update the avatar_url in DB to prevent unwanted form overwrites
-        await updateProfile({ avatar_url: avatarUrl });
+        await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", user.id);
+        mergeProfile({ avatar_url: avatarUrl });
         showToast(t("profile.saved") || "Profil resmi güncellendi!");
       } catch (err: any) {
         console.error("Avatar upload issue:", err);
@@ -164,6 +169,7 @@ export default function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     try {
       let avatarUrl = profile.avatar_url;
@@ -171,11 +177,16 @@ export default function ProfilePage() {
         const optimized = await compressImage(selectedAvatar);
         avatarUrl = await uploadAvatar(optimized);
       }
-      await updateProfile({ ...formData, avatar_url: avatarUrl });
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ...formData, avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (error) throw error;
+      mergeProfile({ ...formData, avatar_url: avatarUrl });
       showToast(t("profile.saved"));
       setSettingsOpen(false);
     } catch (err: any) {
-      showToast("Error: " + err.message);
+      showToast("Kaydedilemedi.");
     } finally {
       setSaving(false);
     }

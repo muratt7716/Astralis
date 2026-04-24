@@ -82,17 +82,27 @@ export async function getCurrentProfile() {
  * Update user profile details
  */
 export async function updateProfile(profileData: any) {
+  console.log("updateProfile: Getting user...");
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error("User not authenticated");
+  console.log("updateProfile: User authenticated:", user.id);
 
   // Fetch existing profile to preserve mandatory fields (like full_name) during upsert
-  const { data: existingProfile } = await supabase
+  console.log("updateProfile: Fetching existing profile...");
+  const { data: existingProfile, error: fetchError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
 
+  if (fetchError) {
+    console.error("updateProfile: Fetch error:", fetchError.message);
+    throw fetchError;
+  }
+  console.log("updateProfile: Existing profile fetched");
+
+  console.log("updateProfile: Upserting new data...");
   const { data, error } = await supabase
     .from("profiles")
     .upsert({
@@ -104,11 +114,14 @@ export async function updateProfile(profileData: any) {
     .select()
     .maybeSingle();
 
+  console.log("updateProfile: Upsert response received");
+
   if (error) {
-    console.error("Error updating profile:", error.message);
+    console.error("updateProfile: Upsert error:", error.message);
     throw error;
   }
 
+  console.log("updateProfile: Success");
   return data;
 }
 
