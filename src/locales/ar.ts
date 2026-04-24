@@ -562,6 +562,12 @@ export const ar: TranslationDict = {
   "nav.ruya_analizi": "تحليل الأحلام",
   "nav.araclar": "الأدوات",
   "nav.mistik_portal": "بوابة الغموض",
+  "nav.user.admin": "لوحة المشرف",
+  "nav.user.login": "تسجيل الدخول",
+  "nav.user.logout": "تسجيل الخروج",
+  "nav.user.mistik_guide": "الدليل الصوفي",
+  "nav.user.profile": "ملفي الشخصي",
+  "nav.user.placeholder": "الملف الشخصي",
   "home.feature.numeroloji.desc": "اكتشف أسرار روحك العددية بطريقتي فيثاغورس والكلدانية.",
   "planet.influence": "مجال التأثير",
   "planet.jupiter": "المشتري",
@@ -1267,7 +1273,7 @@ export const ar: TranslationDict = {
   "legal.privacy.s5.p2": "للاتصال بالمركز الرئيسي للبيانات:",
   "legal.privacy.s5.p3": "يتم الجواب عادة في غضون ثلاثين يومًا مكتملة القوانين.",
   "legal.privacy.terms_link": "عرض شروط الاستخدام",
-  
+
   "legal.mss.title": "اتفاقية البيع عن بعد",
   "legal.mss.last_updated": "آخر تحديث: أبريل 2026",
   "legal.mss.s1.title": "1. الأطراف",

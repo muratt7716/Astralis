@@ -9,7 +9,7 @@ import { logInteraction, getActionByPath } from "@/lib/logging";
 import Logo from "@/components/Cosmic/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
-import { User, LogOut, Crown } from "lucide-react";
+import { User, LogOut, Crown, LayoutDashboard } from "lucide-react";
 
 const AnimatedNavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const defaultTextColor = 'text-gray-300';
@@ -237,7 +237,7 @@ export default function Navbar() {
       max-w-[70px] xl:max-w-[100px]
     "
                   >
-                    {profile?.full_name?.split(' ')[0] || 'Profil'}
+                    {profile?.full_name?.split(' ')[0] || t("nav.user.placeholder")}
                   </span>
                 </button>
 
@@ -248,15 +248,25 @@ export default function Navbar() {
                       onClick={() => setProfileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
                     >
-                      <User className="w-4 h-4" /> Profilim
+                      <User className="w-4 h-4" /> {t("nav.user.profile")}
                     </Link>
                     <Link
                       href="/mistik-rehber"
                       onClick={() => setProfileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
                     >
-                      <CosmicIcon name="dream" size={16} className="shrink-0" /> Mistik Rehber
+                      <CosmicIcon name="dream" size={16} className="shrink-0" /> {t("nav.user.mistik_guide")}
                     </Link>
+                    {/* Admin Panel Shortcut */}
+                    {user && (user.email === 'ismailmertbal@gmail.com' || user.email === 'mmuratb77@gmail.com') && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/5 transition-colors"
+                      >
+                        <LayoutDashboard className="w-4 h-4" /> {t("nav.user.admin")}
+                      </Link>
+                    )}
                     <div className="border-t border-white/5 my-1" />
                     <button
                       onClick={async () => {
@@ -266,7 +276,7 @@ export default function Navbar() {
                       }}
                       className="flex items-center gap-3 px-4 py-3 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors w-full"
                     >
-                      <LogOut className="w-4 h-4" /> Çıkış Yap
+                      <LogOut className="w-4 h-4" /> {t("nav.user.logout")}
                     </button>
                   </div>
                 )}
@@ -276,7 +286,7 @@ export default function Navbar() {
                 href="/onboarding"
                 className="hidden sm:flex items-center gap-2 px-4 py-2 xl:px-5 xl:py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs lg:text-[13px] font-bold transition-all shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] whitespace-nowrap"
               >
-                Giriş Yap
+                {t("nav.user.login")}
               </Link>
             )
           )}
@@ -338,19 +348,25 @@ export default function Navbar() {
               user ? (
                 <div className="flex flex-col items-center gap-2 w-full px-4">
                   <Link href="/profil" onClick={() => setIsOpen(false)} className="w-full text-center py-3 rounded-xl bg-purple-600/20 border border-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest">
-                    Profilim
+                    {t("nav.user.profile")}
                   </Link>
+                  {/* Admin Panel Shortcut Mobile */}
+                  {user && (user.email === 'ismailmertbal@gmail.com' || user.email === 'mmuratb77@gmail.com') && (
+                    <Link href="/admin" onClick={() => setIsOpen(false)} className="w-full text-center py-3 rounded-xl bg-purple-500/10 border border-purple-500/10 text-purple-300 text-xs font-bold uppercase tracking-widest">
+                      {t("nav.user.admin")}
+                    </Link>
+                  )}
                   <button
                     onClick={async () => { setIsOpen(false); await signOut(); router.push('/'); }}
                     className="w-full text-center py-3 rounded-xl bg-red-500/10 border border-red-500/10 text-red-400 text-xs font-bold uppercase tracking-widest"
                   >
-                    Çıkış Yap
+                    {t("nav.user.logout")}
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 w-full px-4">
                   <Link href="/onboarding" onClick={() => setIsOpen(false)} className="w-full block text-center py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold uppercase tracking-widest">
-                    Giriş Yap
+                    {t("nav.user.login")}
                   </Link>
                 </div>
               )
