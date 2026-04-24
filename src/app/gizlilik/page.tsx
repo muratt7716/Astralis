@@ -85,8 +85,8 @@ export default function GizlilikPage() {
           </p>
           <p className="text-gray-300 text-sm leading-relaxed mt-4">
             {t("legal.privacy.s5.p2")}{" "}
-            <a href="mailto:destek@astralis.app" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold underline underline-offset-2">
-              destek@astralis.app
+            <a href="mailto:info@astralislab.com" className="text-purple-400 hover:text-purple-300 transition-colors font-semibold underline underline-offset-2">
+              info@astralislab.com
             </a>{" "}
             {t("legal.privacy.s5.p3")}
           </p>
