@@ -119,14 +119,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    // Safety net: never stay loading > 8 seconds
-    const safetyTimer = setTimeout(() => setLoading(false), 8000);
+    // Safety net: never stay loading > 3 seconds
+    const safetyTimer = setTimeout(() => setLoading(false), 3000);
 
-    // Single source of truth: onAuthStateChange handles everything
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (event === "TOKEN_REFRESHED") {
+          // Token silently refreshed — unblock UI, no profile re-fetch needed
           clearTimeout(safetyTimer);
+          if (session) setSession(session);
           setLoading(false);
           return;
         }
@@ -136,15 +137,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser((prev: any) =>
             prev?.id === session.user.id ? prev : session.user
           );
-          
-          // ALWAYS fetch profile on mount or meaningful changes
-          // INITIAL_SESSION fires on component mount
+          // Unblock UI immediately — profile loads in background
+          clearTimeout(safetyTimer);
+          setLoading(false);
+
           if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "USER_UPDATED") {
-            // Bypass the "fetchingProfileFor" ref if we REALLY want a fresh one
-            fetchingProfileFor.current = null; 
-            await fetchProfile(session.user.id);
+            fetchingProfileFor.current = null;
+            fetchProfile(session.user.id); // fire & forget
           }
         } else {
+          // No session (unauthenticated or signed out)
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -152,10 +154,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.removeItem("last-cosmic-profile");
           }
           setProfileCookie(false);
+          clearTimeout(safetyTimer);
+          setLoading(false);
         }
-
-        clearTimeout(safetyTimer);
-        setLoading(false);
       }
     );
 

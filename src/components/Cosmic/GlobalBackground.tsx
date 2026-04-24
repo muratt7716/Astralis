@@ -8,8 +8,10 @@ import { usePathname } from "next/navigation";
 
 export default function GlobalBackground() {
   const pathname = usePathname();
-  // We keep it on all pages now, and let ParticleSphere handle the zodiac orbit internally or via props
   const isHomePage = pathname === "/";
+
+  // Chat pages render their own full-screen UI — no background needed
+  if (pathname.startsWith("/mistik-rehber/chat")) return null;
 
   return (
     <div className="fixed inset-0 z-0 bg-black pointer-events-none lg:pointer-events-auto">

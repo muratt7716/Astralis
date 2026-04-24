@@ -76,7 +76,7 @@ export default function BurclarPage() {
               <div className="p-5 sm:p-8 md:p-12 flex flex-col items-center md:items-start justify-center border-b lg:border-b-0 lg:border-r border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-purple-500/10 transition-colors duration-700" />
                 <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                  <div className="text-8xl md:text-9xl group-hover:scale-110 transition-transform duration-700 drop-shadow-[0_0_50px_rgba(255,255,255,0.15)] select-none">
+                  <div className="text-8xl md:text-9xl group-hover:scale-110 transition-transform duration-700 md:drop-shadow-[0_0_50px_rgba(255,255,255,0.15)] select-none">
                     {events.moonPhase.emoji}
                   </div>
                   <div className="text-center md:text-left">
@@ -119,7 +119,7 @@ export default function BurclarPage() {
 
                   <div className="space-y-4">
                     {events.retrogrades.length > 0 ? (
-                      events.retrogrades.map((r, i) => (
+                      events.retrogrades.map((r) => (
                         <div key={r.planet} className="p-5 bg-white/5 border border-white/10 rounded-[2rem] flex items-start gap-5 hover:bg-white/10 transition-all duration-500 group/item">
                           <span className="text-4xl group-hover/item:scale-110 transition-transform duration-500">{r.emoji}</span>
                           <div className="flex-1">

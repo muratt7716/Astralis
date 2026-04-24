@@ -80,12 +80,6 @@ export default function Footer() {
     { name: t("nav.horary"), href: "/horary" },
   ];
 
-  const supportLinks = [
-    { name: "SSS", href: "#" },
-    { name: "Kullanım Koşulları", href: "#" },
-    { name: "Gizlilik Politikası", href: "#" },
-    { name: "Destek", href: "#" },
-  ];
 
   return (
     <footer className="relative w-full overflow-hidden border-t border-white/5 pt-12 sm:pt-20 pb-10 bg-transparent backdrop-blur-sm">
@@ -234,11 +228,11 @@ export default function Footer() {
           <p className="text-gray-600 text-xs font-light tracking-wide">
             © 2026 {t("site.name")} • {t("footer.rights")}
           </p>
-          <div className="flex flex-wrap items-center gap-6 justify-center">
-            <Link href="/gizlilik" className="text-gray-700 hover:text-gray-400 text-[10px] uppercase tracking-widest font-bold transition-colors">{t("footer.privacy")}</Link>
-            <Link href="/kullanim-kosullari" className="text-gray-700 hover:text-gray-400 text-[10px] uppercase tracking-widest font-bold transition-colors">{t("footer.terms")}</Link>
-            <span className="text-gray-700 text-[10px] uppercase tracking-widest font-bold">{t("footer.cosmic_guide")}</span>
-            <span className="text-gray-700 text-[10px] uppercase tracking-widest font-bold">{t("footer.stay_peaceful")}</span>
+          <div className="flex flex-wrap items-center gap-6 justify-center text-[10px] uppercase tracking-widest font-bold">
+            <Link href="/gizlilik" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.privacy.title")}</Link>
+            <Link href="/kullanim-kosullari" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.terms.title")}</Link>
+            <Link href="/mesafeli-satis-sozlesmesi" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.mss.title")}</Link>
+            <Link href="/iptal-ve-iade" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.return.title")}</Link>
           </div>
         </div>
       </div>

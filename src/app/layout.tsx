@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import GlobalBackground from "@/components/Cosmic/GlobalBackground";
+import GlobalBackground from "@/components/Cosmic/GlobalBackgroundClient";
 import Providers from "@/components/Providers";
 import ConditionalShell from "@/components/ConditionalShell";
 import PWAInstaller from "@/components/PWAInstaller";

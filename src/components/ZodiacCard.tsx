@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import Link from "next/link";
 import { ZodiacSign } from "@/data/zodiac";
 import { useTranslation } from "@/lib/i18n";
@@ -88,7 +89,7 @@ const zodiacConstellations: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
+function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
   const { t } = useTranslation();
 
   const elementThemes: Record<string, { 
@@ -228,3 +229,5 @@ export default function ZodiacCard({ sign, compact = false }: ZodiacCardProps) {
     </Link>
   );
 }
+
+export default React.memo(ZodiacCard);

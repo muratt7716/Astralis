@@ -284,3 +284,49 @@ h6 {
 .glass-button-text {
   text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
+
+/* ============================================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   Geri almak için bu blok silinebilir (globals.css sonu)
+   ============================================================ */
+
+/* 1. Mobilede backdrop-blur kapat — GPU scroll jank'ının ana nedeni */
+@media (max-width: 767px) {
+  [class*="backdrop-blur"],
+  .glass-card,
+  .enhanced-glass,
+  .glass-button {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* 2. Mobilede animasyonları kapat — GPU compositing layer → yazı pikselleşmesi */
+@media (max-width: 767px) {
+  .fade-in-up,
+  .fade-in-up-delay-1,
+  .fade-in-up-delay-2,
+  .fade-in-up-delay-3,
+  .float,
+  .spin-slow {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* 3. prefers-reduced-motion — erişilebilirlik standardı (Apple HIG / WCAG) */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up,
+  .fade-in-up-delay-1,
+  .fade-in-up-delay-2,
+  .fade-in-up-delay-3,
+  .animate-spin-slow,
+  .animate-pulse-slow,
+  .float,
+  .glow {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useMemo } from "react"
+import { useRef, useMemo, useEffect } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useTexture } from "@react-three/drei"
 import * as THREE from "three"
@@ -92,6 +92,19 @@ export function ParticleSphere({ images, showSigns = true }: ParticleSphereProps
   const groupRef = useRef<THREE.Group>(null)
   const orbitingGroupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.InstancedMesh>(null)
+  const scrollYRef = useRef(0)
+  const pausedRef = useRef(false)
+
+  useEffect(() => {
+    const handleScroll = () => { scrollYRef.current = window.scrollY }
+    const handleVisibility = () => { pausedRef.current = document.hidden }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    document.addEventListener("visibilitychange", handleVisibility)
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      document.removeEventListener("visibilitychange", handleVisibility)
+    }
+  }, [])
   
   const zodiacPaths = useMemo(() => ZODIAC_DATA.map(z => z.path), [])
   const textures = useTexture(zodiacPaths)
@@ -160,12 +173,13 @@ export function ParticleSphere({ images, showSigns = true }: ParticleSphereProps
   }, [isMobile])
 
   useFrame(() => {
+    if (pausedRef.current) return
+
     if (groupRef.current) {
       groupRef.current.rotation.y += ROTATION_SPEED_Y
     }
-    
-    const scroll = typeof window !== 'undefined' ? window.scrollY : 0
-    const newOpacity = Math.max(0, 1 - scroll / 600)
+
+    const newOpacity = Math.max(0, 1 - scrollYRef.current / 600)
     
     if (orbitingGroupRef.current) {
       orbitingGroupRef.current.children.forEach((group) => {

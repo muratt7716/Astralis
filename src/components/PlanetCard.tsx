@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
 import { Planet } from "@/data/planets";
 import { zodiacSigns } from "@/data/zodiac";
@@ -28,7 +27,7 @@ export default function PlanetCard({ planet, index }: PlanetCardProps) {
           <div className="relative w-32 h-32 md:w-40 md:h-40 mb-6 group-hover:scale-105 transition-transform duration-700">
             {/* Ambient Glow */}
             <div
-              className="absolute inset-0 rounded-full blur-3xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+              className="absolute inset-0 rounded-full md:blur-3xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
               style={{ backgroundColor: planet.color }}
             ></div>
 
