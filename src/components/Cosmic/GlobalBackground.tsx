@@ -13,7 +13,11 @@ export default function GlobalBackground() {
 
   return (
     <div className="fixed inset-0 z-0 bg-black pointer-events-none lg:pointer-events-auto">
-      <Canvas camera={{ position: [-12, 1.5, 12], fov: 42 }}>
+      <Canvas
+        camera={{ position: [-12, 1.5, 12], fov: 42 }}
+        gl={{ powerPreference: 'low-power', antialias: false, precision: 'mediump' }}
+        dpr={[1, 1.5]}
+      >
         <ambientLight intensity={0.7} />
         <pointLight position={[10, 10, 10]} intensity={2} />
         <Suspense fallback={null}>
