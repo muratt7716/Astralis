@@ -367,24 +367,71 @@ export default function ChatPage() {
         throw new Error(errData.error || "API_ERROR");
       }
 
-      const data = await res.json();
+      // SSE stream okuyucu
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      const assistantId = genId("assistant");
+      let accumulated = "";
+      let streamingStarted = false;
 
-      setMessages(prev => [
-        // Keep tempId as the final user message ID to avoid re-animation
-        ...prev.filter(m => m.id !== tempId),
-        { id: tempId, role: "user", content: userMessage, createdAt: new Date().toISOString() },
-        {
-          id: data.userMessageId || genId("assistant"),
-          role: "assistant",
-          content: data.message,
-          createdAt: new Date().toISOString(),
-          metadata: data.visual ? { visual: data.visual } : undefined
-        },
-      ]);
+      // "message" alanının içeriğini JSON token akışından çıkar
+      const extractMessage = (text: string): string => {
+        const full = text.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (full) return full[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        const partial = text.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)/);
+        if (partial) return partial[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        return "";
+      };
 
-      if (data.conversationId) setConversationId(data.conversationId);
-      if (data.warmthLevel) setWarmthLevel(data.warmthLevel);
-      if (data.distinctDays !== undefined) setDistinctDays(data.distinctDays);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const lines = decoder.decode(value, { stream: true }).split("\n");
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const raw = line.slice(6).trim();
+          if (!raw) continue;
+
+          let event: any;
+          try { event = JSON.parse(raw); } catch { continue; }
+
+          if (event.error === "STREAM_FAILED") throw new Error("STREAM_FAILED");
+
+          if (event.delta) {
+            accumulated += event.delta;
+            const content = extractMessage(accumulated);
+            if (!content) continue;
+
+            if (!streamingStarted) {
+              // İlk içerik geldi: typing dots'u kapat, streaming mesajı ekle
+              streamingStarted = true;
+              setSending(false);
+              setMessages(prev => [
+                ...prev.filter(m => m.id !== tempId),
+                { id: tempId, role: "user", content: userMessage, createdAt: new Date().toISOString() },
+                { id: assistantId, role: "assistant", content, createdAt: new Date().toISOString() },
+              ]);
+            } else {
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId ? { ...m, content } : m
+              ));
+            }
+          }
+
+          if (event.done) {
+            if (event.conversationId) setConversationId(event.conversationId);
+            if (event.warmthLevel) setWarmthLevel(event.warmthLevel);
+            if (event.distinctDays !== undefined) setDistinctDays(event.distinctDays);
+            if (event.visual) {
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId ? { ...m, metadata: { visual: event.visual } } : m
+              ));
+            }
+          }
+        }
+      }
     } catch (err: any) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
       const errorMsg = err.message === "AUTH_SESSION_MISSING"
