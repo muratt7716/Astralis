@@ -36,18 +36,58 @@ export async function POST(req: NextRequest) {
     const userId = user.id;
     console.log(`[MistikRehberChat] User ${userId} is chatting with guide ${guideId}`);
 
-    // 2. Profile çek
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name, sun_sign, rising_sign, moon_sign, relationship_status, life_focus, is_premium, birth_chart_summary")
-      .eq("id", userId)
-      .single();
+    // 2-7: Tüm bağımsız DB sorgularını paralel çalıştır
+    const [
+      profileResult,
+      convDaysResult,
+      memoriesResult,
+      recentMessagesResult,
+      interactionLogsResult,
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("full_name, sun_sign, rising_sign, moon_sign, relationship_status, life_focus, is_premium, birth_chart_summary")
+        .eq("id", userId)
+        .single(),
 
+      supabaseAdmin
+        .from("conversations")
+        .select("created_at")
+        .eq("user_id", userId)
+        .eq("guide_id", guideId),
+
+      supabaseAdmin
+        .from("memories")
+        .select("category, fact, importance")
+        .eq("user_id", userId)
+        .eq("guide_id", guideId)
+        .order("importance", { ascending: false })
+        .limit(20),
+
+      // recentMessages için conversationId lazım — henüz yoksa boş döner
+      conversationId
+        ? supabaseAdmin
+            .from("messages")
+            .select("role, content")
+            .eq("conversation_id", conversationId)
+            .order("created_at", { ascending: false })
+            .limit(20)
+        : Promise.resolve({ data: [] }),
+
+      supabaseAdmin
+        .from("interaction_logs")
+        .select("action, meta, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    const profile = profileResult.data;
     if (!profile) {
       return new Response(JSON.stringify({ error: "Profil bulunamadı" }), { status: 404 });
     }
 
-    // 3. Premium kontrolü — değilse toplam user mesaj sayısına bak
+    // Premium kontrolü — convIds için profile'a bağımlı ayrı sorgu
     if (!profile.is_premium) {
       const convIds = await supabaseAdmin
         .from("conversations")
@@ -69,7 +109,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Conversation al veya oluştur
+    // Conversation al veya oluştur
     let activeConversationId = conversationId;
     let contextSummary: any = null;
 
@@ -89,43 +129,15 @@ export async function POST(req: NextRequest) {
       contextSummary = conv?.context_summary || null;
     }
 
-    // 5. Isınma seviyesi — distinct gün sayısı
-    const { data: convDays } = await supabaseAdmin
-      .from("conversations")
-      .select("created_at")
-      .eq("user_id", userId)
-      .eq("guide_id", guideId);
-
+    // Warmth: paralel çekilen convDays verisinden hesapla
     const distinctDays = new Set(
-      (convDays || []).map(c => new Date(c.created_at).toISOString().split("T")[0])
+      (convDaysResult.data || []).map(c => new Date(c.created_at).toISOString().split("T")[0])
     ).size;
     const warmthLevel = getWarmthLevel(distinctDays);
 
-    // 6. Hafıza çek
-    const { data: memories } = await supabaseAdmin
-      .from("memories")
-      .select("category, fact, importance")
-      .eq("user_id", userId)
-      .eq("guide_id", guideId)
-      .order("importance", { ascending: false })
-      .limit(20);
-
-    // 7. Son 20 mesajı çek
-    const { data: recentMessages } = await supabaseAdmin
-      .from("messages")
-      .select("role, content")
-      .eq("conversation_id", activeConversationId)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    const chatHistory = (recentMessages || []).reverse();
-
-    // 7.5. Son 5 aktiviteyi çek
-    const { data: interactionLogs } = await supabaseAdmin
-      .from("interaction_logs")
-      .select("action, meta, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(5);
+    const memories = memoriesResult.data || [];
+    const chatHistory = ((recentMessagesResult as any).data || []).reverse() as Array<{ role: string; content: string }>;
+    const interactionLogs = interactionLogsResult.data || [];
 
     // 8. Sistem prompt oluştur
     const systemPrompt = buildSystemPrompt({
