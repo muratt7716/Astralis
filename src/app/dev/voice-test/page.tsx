@@ -5,32 +5,37 @@
 
 import { useState, useRef } from "react";
 
+// Gemini Live 2.5 — onaylı erkek sesler sadece 4 tane
+// Derin/yaşlı için en iyi adaylar Charon ve Gacrux
 const VOICE_GROUPS = [
   {
-    label: "Umut (Yaşlı Şaman)",
+    label: "Erkek — Derin / Olgun (Umut & Aras için)",
     voices: [
-      { name: "Algenib", desc: "gravelly / çakıllı" },
-      { name: "Gacrux", desc: "mature / olgun" },
-      { name: "Sadaltager", desc: "knowledgeable / bilge" },
+      { name: "Charon", desc: "calm, professional — en derin" },
+      { name: "Gacrux", desc: "mature, experienced — en olgun" },
+      { name: "Orus", desc: "grounded — sakin derin" },
+      { name: "Fenrir", desc: "excitable — enerjik (Umut için zayıf)" },
+      { name: "Puck", desc: "upbeat — genç/enerjik (Aras için zayıf)" },
     ],
   },
   {
-    label: "Aras (Sakin Erkek)",
+    label: "Kadın — Sıcak (Melisa / Selin için)",
     voices: [
-      { name: "Charon", desc: "dark / otoriter" },
-      { name: "Orus", desc: "deep / derin" },
-      { name: "Fenrir", desc: "strong / güçlü" },
-      { name: "Umbriel", desc: "neutral / nötr" },
+      { name: "Aoede", desc: "warm — sıcak, samimi" },
+      { name: "Kore", desc: "firm — güçlü, kararlı" },
+      { name: "Laomedeia", desc: "upbeat feminine" },
+      { name: "Erinome", desc: "clear feminine" },
+      { name: "Autonoe", desc: "bright feminine" },
     ],
   },
   {
-    label: "Melisa / Selin / Hekate (Kadın)",
+    label: "Kadın — Mistik / Derin (Hekate için)",
     voices: [
-      { name: "Kore", desc: "deep feminine" },
-      { name: "Aoede", desc: "warm feminine" },
-      { name: "Laomedeia", desc: "feminine" },
-      { name: "Erinome", desc: "feminine" },
-      { name: "Autonoe", desc: "feminine" },
+      { name: "Schedar", desc: "even — sakin, düz" },
+      { name: "Iapetus", desc: "clear — net, soğuk" },
+      { name: "Umbriel", desc: "neutral — nötr, gölgeli" },
+      { name: "Leda", desc: "youthful feminine" },
+      { name: "Despina", desc: "smooth feminine" },
     ],
   },
 ];
