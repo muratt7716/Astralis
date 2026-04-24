@@ -332,3 +332,27 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ########################################################
+-- 6. PWA_INSTALLS (Uygulama Yükleme Takibi)
+-- Supabase SQL Editor'de ayrı çalıştırabilirsin.
+-- ########################################################
+
+CREATE TABLE IF NOT EXISTS public.pwa_installs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  installed_at TIMESTAMPTZ DEFAULT NOW(),
+  user_agent TEXT
+);
+
+ALTER TABLE public.pwa_installs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "PWA Installs: service role full access" ON public.pwa_installs;
+CREATE POLICY "PWA Installs: service role full access"
+  ON public.pwa_installs FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_pwa_installs_date
+  ON public.pwa_installs(installed_at DESC);

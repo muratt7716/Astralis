@@ -51,6 +51,12 @@ export default function PWAInstaller() {
 
     window.addEventListener("beforeinstallprompt", handler);
 
+    // 4. Track successful installs
+    const onInstalled = () => {
+      fetch('/api/pwa-install', { method: 'POST' }).catch(() => {});
+    };
+    window.addEventListener("appinstalled", onInstalled);
+
     // 4. For iOS, we show it manually after a delay or based on logic
     // because there's no event.
     if (isIOS && !isStandalone) {
@@ -58,7 +64,10 @@ export default function PWAInstaller() {
       return () => clearTimeout(timer);
     }
 
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, [isStandalone, isIOS]);
 
   const handleInstall = async () => {

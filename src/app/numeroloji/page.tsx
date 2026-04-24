@@ -13,6 +13,7 @@ import CosmicIcon from '@/components/Cosmic/CosmicIcon';
 import { GlassButton } from "@/components/ui/glass-button";
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useFreemiumQuota } from "@/lib/freemium";
+import { scrollToResults } from "@/lib/scroll-utils";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 import FreemiumBadge from "@/components/FreemiumBadge";
 
@@ -45,7 +46,7 @@ export default function NumerologyPage() {
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !dob) return;
-    
+
     if (!isPremium) {
       if (isPremiumOnly) { setPremiumVariant("premium_required"); setShowPremium(true); return; }
       if (isBlocked) { setPremiumVariant("quota_exceeded"); setShowPremium(true); return; }
@@ -55,6 +56,7 @@ export default function NumerologyPage() {
     const core = getPythagoreanCore(fullName, dob);
     setCoreNumbers(core);
     setIsCalculated(true);
+    scrollToResults("numerology-results");
   };
 
   return (
@@ -113,7 +115,7 @@ export default function NumerologyPage() {
             </form>
           </div>
         ) : (
-          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div id="numerology-results" className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="flex justify-center mb-8">
               <button
                 onClick={() => setIsCalculated(false)}

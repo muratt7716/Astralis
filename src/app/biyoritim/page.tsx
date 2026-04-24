@@ -10,6 +10,7 @@ import {
 } from "@/lib/biorhythm";
 import { getCurrentProfile, useAuth } from "@/lib/auth-helpers";
 import { logInteraction } from "@/lib/logging";
+import { scrollToResults } from "@/lib/scroll-utils";
 import { useTranslation } from "@/lib/i18n";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
@@ -97,7 +98,8 @@ function BiyoritimContent() {
     if (parsedBirth) {
       router.push(`?birth=${birthDate}&target=${targetDateInput}`, { scroll: false });
       setShowResult(true);
-      
+      scrollToResults("biorhythm-results");
+
       // Log Interaction
       try {
         const profile = await getCurrentProfile();
@@ -307,7 +309,7 @@ function BiyoritimContent() {
 
         {/* Results Sections */}
         {showResult && summary && targetPoint && (
-          <div className="space-y-12 fade-in-up">
+          <div id="biorhythm-results" className="space-y-12 fade-in-up">
              
             {/* Master's Insight Alert */}
             <div className="glass-card p-6 border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-900/40 to-transparent flex gap-6 items-center">
@@ -628,19 +630,19 @@ function BiyoritimContent() {
             {summary.criticalDays.length > 0 && (
               <div className="glass-card overflow-hidden shadow-2xl border border-amber-500/20 bg-gradient-to-br from-amber-950/40 to-black relative group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[50px] pointer-events-none" />
-                <div className="p-8 md:px-10">
-                  <h3 className="text-amber-400 font-black tracking-widest uppercase text-xl mb-3 flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-2xl">⚠️</span> 
+                <div className="p-6 md:p-8 md:px-10">
+                  <h3 className="text-amber-400 font-black tracking-widest uppercase text-lg md:text-xl mb-3 flex items-center gap-3">
+                    <span className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-xl md:text-2xl shrink-0">⚠️</span>
                     {t("bio.critical_title")}
                   </h3>
-                  <p className="text-gray-400 text-sm mb-6 max-w-3xl font-light leading-relaxed pl-14">
+                  <p className="text-gray-400 text-xs md:text-sm mb-6 max-w-3xl font-light leading-relaxed pl-12 md:pl-14">
                     {t("bio.critical.extended_desc")}
                   </p>
-                  <ul className="space-y-3 pl-14">
+                  <ul className="space-y-2 md:space-y-3 pl-12 md:pl-14">
                     {summary.criticalDays.map((day, i) => (
-                      <li key={i} className="text-amber-300 text-sm flex items-center gap-3 font-semibold bg-amber-500/5 p-3 rounded-xl border border-amber-500/10 w-max pr-6">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-                        {day}
+                      <li key={i} className="text-amber-300 text-xs md:text-sm flex items-start gap-2 md:gap-3 md:items-center font-semibold bg-amber-500/5 p-2.5 md:p-3 rounded-xl border border-amber-500/10 w-full md:w-max md:pr-6">
+                        <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0 mt-1 md:mt-0" />
+                        <span className="break-words">{day}</span>
                       </li>
                     ))}
                   </ul>

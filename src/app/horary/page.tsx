@@ -19,6 +19,7 @@ import PremiumModal, { PremiumModalVariant } from "@/components/PremiumModal";
 import FreemiumBadge from "@/components/FreemiumBadge";
 import CosmicIcon from "@/components/Cosmic/CosmicIcon";
 import { logInteraction } from "@/lib/logging";
+import { scrollToResults } from "@/lib/scroll-utils";
 
 // ─── Types ───────────────────────────────────────────────────
 interface Stricture { type: string; severity: string; messageKey: string; }
@@ -126,12 +127,13 @@ export default function HoraryPage() {
       const data = await res.json();
       if (data.success) {
         setChartData(data.chartData); setAnalysis(data.analysis); setReading(data.reading);
-        
+        scrollToResults("horary-results");
+
         // Log Interaction
         try {
           const profile = await getCurrentProfile();
           if (profile) {
-            logInteraction(profile.id, "astrology", t("horary.hero.title") + " hesaplaması yapıldı");
+            logInteraction(profile.id, "horary", t("horary.hero.title") + " hesaplaması yapıldı");
           }
         } catch (err) {
           console.error("Log failed", err);
@@ -294,7 +296,7 @@ export default function HoraryPage() {
 
           {/* Results */}
           {chartData && analysis && reading && (
-            <motion.div key="results" initial={{ opacity:0 }} animate={{ opacity:1 }}>
+            <motion.div id="horary-results" key="results" initial={{ opacity:0 }} animate={{ opacity:1 }}>
 
               {/* Back */}
               <button onClick={handleReset}
