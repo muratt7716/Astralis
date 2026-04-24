@@ -176,10 +176,11 @@ export interface SystemPromptParams {
   memories: Memory[];
   interactionLogs?: Array<{ action: string; meta: any; created_at: string }>;
   contextSummary?: string | null;
+  driftDirective?: string;
 }
 
 export function buildSystemPrompt(params: SystemPromptParams): string {
-  const { guideId, warmthLevel, language, profile, memories, contextSummary, interactionLogs } = params;
+  const { guideId, warmthLevel, language, profile, memories, contextSummary, interactionLogs, driftDirective } = params;
 
   const characterPrompt = characterPrompts[guideId] || characterPrompts["melisa"];
   const warmthPrompt = warmthPrompts[warmthLevel];
@@ -290,6 +291,7 @@ Her yanıtını İSTİSNASIZ aşağıdaki JSON formatında döndürmelisin. JSON
           : `Bu kişiyle daha önce konuştunuz. Ruh hali: ${(contextSummary as any).mood || "belirsiz"}. Konuştuklarınız: ${((contextSummary as any).topics || []).join(", ")}. ${(contextSummary as any).raw_summary || ""}`
         : "Bu kişiyle ilk karşılaşmanız."
     }`,
+    driftDirective ? `\n## TON KALİBRASYONU\n${driftDirective}` : "",
     `\n## SAMİMİYET SEVİYESİ (${warmthLevel})\n${warmthPrompt}`,
     adaptiveEngine,
     dynamicConstraints,

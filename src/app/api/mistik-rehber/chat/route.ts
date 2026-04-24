@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { buildSystemPrompt, buildSummaryPrompt, getWarmthLevel } from "@/lib/guide-prompts";
 import { callGeminiWithFallback, callGeminiStream } from "@/lib/gemini";
+import { generateEmbedding, searchMemoriesByEmbedding, saveMemoryEmbeddingBackground } from "@/lib/embeddings";
+import { parseDriftProfile, updateDriftProfile, extractSignals, buildDriftDirective } from "@/lib/persona-drift";
 
 export const runtime = "nodejs";
 
@@ -112,6 +114,7 @@ export async function POST(req: NextRequest) {
     // Conversation al veya oluştur
     let activeConversationId = conversationId;
     let contextSummary: any = null;
+    let driftProfile = parseDriftProfile(null);
 
     if (!activeConversationId) {
       const { data: newConv } = await supabaseAdmin
@@ -123,10 +126,11 @@ export async function POST(req: NextRequest) {
     } else {
       const { data: conv } = await supabaseAdmin
         .from("conversations")
-        .select("context_summary")
+        .select("context_summary, drift_profile")
         .eq("id", activeConversationId)
         .single();
       contextSummary = conv?.context_summary || null;
+      driftProfile = parseDriftProfile(conv?.drift_profile);
     }
 
     // Warmth: paralel çekilen convDays verisinden hesapla
@@ -135,7 +139,38 @@ export async function POST(req: NextRequest) {
     ).size;
     const warmthLevel = getWarmthLevel(distinctDays);
 
-    const memories = memoriesResult.data || [];
+    // Semantic retrieval: kullanıcı mesajını embed et, benzer anıları bul
+    let memories: Array<{ category: string; fact: string; importance: number }> = [];
+    const fallbackMemories = (memoriesResult.data || []) as typeof memories;
+
+    const queryEmbedding = await generateEmbedding(message);
+    if (queryEmbedding) {
+      const semanticHits = await searchMemoriesByEmbedding(userId, guideId, queryEmbedding, 5);
+      const importanceTop = fallbackMemories.slice(0, 3);
+
+      const seen = new Set<string>();
+      for (const m of [...semanticHits, ...importanceTop]) {
+        if (!seen.has(m.fact)) {
+          seen.add(m.fact);
+          memories.push(m);
+        }
+      }
+    } else {
+      memories = fallbackMemories;
+    }
+
+    // Kullanılan anıların last_referenced_at değerini arka planda güncelle
+    if (memories.length > 0) {
+      const facts = memories.map(m => m.fact);
+      Promise.resolve(
+        supabaseAdmin
+          .from("memories")
+          .update({ last_referenced_at: new Date().toISOString() })
+          .eq("user_id", userId)
+          .eq("guide_id", guideId)
+          .in("fact", facts)
+      ).catch((e: unknown) => console.warn("[Memories] last_referenced_at update failed:", e));
+    }
     const chatHistory = ((recentMessagesResult as any).data || []).reverse() as Array<{ role: string; content: string }>;
     const interactionLogs = interactionLogsResult.data || [];
 
@@ -151,6 +186,7 @@ export async function POST(req: NextRequest) {
       memories: memories || [],
       interactionLogs: interactionLogs || [],
       contextSummary,
+      driftDirective: buildDriftDirective(driftProfile),
     });
 
     // 9. Prompt oluştur
@@ -228,6 +264,11 @@ export async function POST(req: NextRequest) {
               )
             )
           );
+
+          // Yeni anılar için embedding üretimi arka planda çalışır — stream'i bloklamaz
+          for (const mem of parsed.memories_to_save) {
+            saveMemoryEmbeddingBackground(userId, guideId, mem.fact).catch(() => {});
+          }
         }
 
         // Her 20 mesajda özet güncelle (arka planda — stream'i bloklamaz)
@@ -253,11 +294,32 @@ export async function POST(req: NextRequest) {
                 .from("conversations")
                 .update({ context_summary: summaryJson })
                 .eq("id", activeConversationId);
+
+              // Topics tablosunu güncelle
+              for (const topic of (summaryJson.topics || []) as string[]) {
+                Promise.resolve(
+                  supabaseAdmin.rpc("upsert_conversation_topic", {
+                    p_user_id: userId,
+                    p_guide_id: guideId,
+                    p_topic: topic,
+                  })
+                ).catch((e: unknown) => console.warn("[Topics] upsert failed:", e));
+              }
             } catch (e) {
               console.error("[Summary] Failed:", e);
             }
           })();
         }
+
+        // Drift profile güncelle (arka planda)
+        const signals = extractSignals(chatHistory);
+        const updatedDrift = updateDriftProfile(driftProfile, signals);
+        Promise.resolve(
+          supabaseAdmin
+            .from("conversations")
+            .update({ drift_profile: updatedDrift })
+            .eq("id", activeConversationId)
+        ).catch((e: unknown) => console.warn("[Drift] update failed:", e));
 
         // Done event — client bu event'i alınca side effect'leri uygular
         controller.enqueue(
