@@ -635,14 +635,14 @@ function BiyoritimContent() {
                     <span className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-xl md:text-2xl shrink-0">⚠️</span>
                     {t("bio.critical_title")}
                   </h3>
-                  <p className="text-gray-400 text-xs md:text-sm mb-6 max-w-3xl font-light leading-relaxed pl-12 md:pl-14">
+                  <p className="text-gray-400 text-xs md:text-sm mb-6 max-w-3xl font-light leading-relaxed pl-10 md:pl-14">
                     {t("bio.critical.extended_desc")}
                   </p>
-                  <ul className="space-y-2 md:space-y-3 pl-12 md:pl-14">
+                  <ul className="space-y-2 md:space-y-3">
                     {summary.criticalDays.map((day, i) => (
-                      <li key={i} className="text-amber-300 text-xs md:text-sm flex items-start gap-2 md:gap-3 md:items-center font-semibold bg-amber-500/5 p-2.5 md:p-3 rounded-xl border border-amber-500/10 w-full md:w-max md:pr-6">
-                        <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0 mt-1 md:mt-0" />
-                        <span className="break-words">{day}</span>
+                      <li key={i} className="text-amber-300 text-xs md:text-sm flex items-start gap-2 md:gap-3 md:items-center font-semibold bg-amber-500/5 p-2 md:p-3 rounded-xl border border-amber-500/10 w-full md:w-max md:pr-6 ml-8 md:ml-0">
+                        <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0 mt-0.5 md:mt-0" />
+                        <span className="break-words min-w-0">{day}</span>
                       </li>
                     ))}
                   </ul>
