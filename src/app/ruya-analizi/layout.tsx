@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Rüya Analizi — Bilinçaltı Mesajlarını Keşfet | Astralis',
-  description: 'Rüyalarınızı yapay zeka ile analiz edin. Jungian psikoloji ve arketip sembolizmi kullanarak bilinçaltınızın mesajlarını çözün. Rüya tabiri değil, bilinç analizi.',
+  description: 'Rüyalarınızı Jungian psikoloji ve arketip sembolizmiyle çözümleyin. Bilinçaltınızın mesajlarını anlayın. Rüya tabiri değil, derinlemesine bilinç analizi.',
   alternates: {
     canonical: 'https://www.astralislab.com/ruya-analizi',
   },

@@ -100,7 +100,7 @@ export default async function RootLayout({
                   "name": "Astralis",
                   "url": BASE_URL,
                   "logo": `${BASE_URL}/favicon.png`,
-                  "description": "Yapay zeka destekli astroloji, kişisel gelişim ve yaşam koçluğu platformu.",
+                  "description": "Profesyonel astroloji, kişisel gelişim ve yaşam koçluğu platformu.",
                   "knowsAbout": ["Astroloji", "Numeroloji", "Doğum Haritası", "Horary Astroloji", "Biyoritim", "Kişisel Gelişim"]
                 },
                 {
@@ -120,7 +120,7 @@ export default async function RootLayout({
                   "operatingSystem": "Web, iOS PWA, Android PWA",
                   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" },
                   "featureList": [
-                    "Yapay Zeka Doğum Haritası Yorumu",
+                    "Kişisel Doğum Haritası Analizi",
                     "Burç Uyumluluk Analizi",
                     "Numeroloji Hesaplama",
                     "Biyoritim Takibi",
@@ -128,7 +128,7 @@ export default async function RootLayout({
                     "Rüya Analizi",
                     "I Ching",
                     "Rün Okuma",
-                    "Mistik AI Rehberler"
+                    "Mistik Rehberler"
                   ]
                 }
               ]

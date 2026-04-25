@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ period: s
   const canonicalUrl = `https://www.astralislab.com/yorumlar/${period}`;
   return {
     title: `${label} Burç Yorumları — Tüm 12 Burç | Astralis`,
-    description: `${label} burç yorumları: Koç, Boğa, İkizler, Yengeç ve tüm 12 burç için ${label.toLowerCase()} astroloji analizi. Astralis yapay zeka destekli kozmik rehberlik platformu.`,
+    description: `${label} burç yorumları: Koç, Boğa, İkizler, Yengeç ve tüm 12 burç için ${label.toLowerCase()} astroloji analizi. Astralis kozmik rehberlik ve kişisel gelişim platformu.`,
     alternates: { canonical: canonicalUrl },
     openGraph: {
       title: `${label} Burç Yorumları | Astralis`,

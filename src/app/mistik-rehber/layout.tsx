@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Mistik Rehberler | Astralis',
-    description: 'Yapay zeka destekli kozmik danışmanlarınla tanış. Empati, analiz, bilgelik ve dürüstlük — her rehber sana özel.',
+    description: 'Kozmik danışmanlarınla tanış. Empati, analiz, bilgelik ve dürüstlük — her rehber sana özel.',
     url: 'https://www.astralislab.com/mistik-rehber',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
