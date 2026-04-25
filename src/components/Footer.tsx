@@ -228,11 +228,17 @@ export default function Footer() {
           <p className="text-gray-600 text-xs font-light tracking-wide">
             © 2026 {t("site.name")} • {t("footer.rights")}
           </p>
-          <div className="flex flex-wrap items-center gap-6 justify-center text-[10px] uppercase tracking-widest font-bold">
-            <Link href="/gizlilik" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.privacy.title")}</Link>
-            <Link href="/kullanim-kosullari" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.terms.title")}</Link>
-            <Link href="/mesafeli-satis-sozlesmesi" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.mss.title")}</Link>
-            <Link href="/iptal-ve-iade" className="text-gray-700 hover:text-gray-400 transition-colors">{t("legal.return.title")}</Link>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 justify-center text-[10px] uppercase tracking-widest font-bold">
+            {/* Company links — slightly brighter, higher hierarchy */}
+            <Link href="/hakkimizda" className="text-gray-500 hover:text-white transition-colors py-1">{t("legal.about.title")}</Link>
+            <Link href="/iletisim" className="text-gray-500 hover:text-white transition-colors py-1">{t("legal.contact.title")}</Link>
+            {/* Visual separator */}
+            <span className="text-gray-800 select-none">|</span>
+            {/* Legal links — subdued */}
+            <Link href="/gizlilik" className="text-gray-700 hover:text-gray-400 transition-colors py-1">{t("legal.privacy.title")}</Link>
+            <Link href="/kullanim-kosullari" className="text-gray-700 hover:text-gray-400 transition-colors py-1">{t("legal.terms.title")}</Link>
+            <Link href="/mesafeli-satis-sozlesmesi" className="text-gray-700 hover:text-gray-400 transition-colors py-1">{t("legal.mss.title")}</Link>
+            <Link href="/iptal-ve-iade" className="text-gray-700 hover:text-gray-400 transition-colors py-1">{t("legal.return.title")}</Link>
           </div>
         </div>
       </div>
