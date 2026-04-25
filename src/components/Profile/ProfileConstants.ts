@@ -50,6 +50,7 @@ export const ALL_TOOLS = [
   { id: "bio", name: "Biyoritim", iconName: "biorhythm", href: "/biyoritim", color: "text-cyan-400", bg: "bg-cyan-500/10" },
   { id: "sphere", name: "Kristal Küre", iconName: "kristal", href: "/kristal", color: "text-rose-400", bg: "bg-rose-500/10" },
   { id: "numerology", name: "Numeroloji", iconName: "numerology", href: "/numeroloji", color: "text-indigo-400", bg: "bg-indigo-500/10" },
+  { id: "horary", name: "Horary", iconName: "horary", href: "/horary", color: "text-blue-400", bg: "bg-blue-500/10" },
 ];
 
 export const LANGUAGES = [

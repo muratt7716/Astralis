@@ -87,6 +87,7 @@ export function ActiveGuideCard({
                             tool.id === "dream" ? "nav.ruya_analizi" :
                             tool.id === "bio" ? "nav.biyoritim" :
                             tool.id === "sphere" ? "fortune.kristal.title" :
+                            tool.id === "horary" ? "nav.horary" :
                             tool.id === "numerology" ? "nav.numeroloji" : "";
             return (
               <button
