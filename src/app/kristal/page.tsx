@@ -30,13 +30,13 @@ export default function KristalPage() {
       const res = await fetch("/api/divination", { 
         method: "POST", 
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          type: "sphere", 
-          cards: [{ name: "Kristal Küre Sezgisi", meaning: question }], 
-          question, 
+        body: JSON.stringify({
+          type: "crystal",
+          cards: [{ name: "Kristal Küre", meaning: question }],
+          question,
           language,
-          userId: user?.id 
-        }) 
+          userId: user?.id
+        })
       });
       const data = await res.json();
       if (data.success) setResult(data.data);
@@ -71,28 +71,45 @@ export default function KristalPage() {
       {result && (
         <section className="pb-20 px-4"><div className="max-w-3xl mx-auto fade-in-up">
           <div className="glass-card p-5 sm:p-8 relative overflow-hidden glow">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
-            
-            <h3 className="text-2xl font-bold text-white mb-6">{result.title}</h3>
-            
-            {result.cards?.map((c: any, i: number) => (
+            <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none" />
+
+            {/* Başlık */}
+            <h3 className="text-2xl font-bold text-white mb-4">{result.title}</h3>
+
+            {/* Açılış — kürenin atmosferi */}
+            {result.opening && (
+              <p className="text-violet-200/70 text-sm leading-relaxed italic mb-6 border-l-2 border-violet-500/30 pl-4">
+                {result.opening}
+              </p>
+            )}
+
+            {/* 3 Vizyon */}
+            {result.visions?.map((v: any, i: number) => (
               <div key={i} className="mb-4 p-4 bg-violet-900/20 rounded-xl border border-violet-500/20">
-                <p className="text-gray-300 text-sm leading-relaxed">{c.interpretation}</p>
+                <p className="text-violet-300 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <Sparkles className="size-3" />
+                  {v.image}
+                </p>
+                <p className="text-gray-300 text-sm leading-relaxed">{v.meaning}</p>
               </div>
             ))}
 
-            <div className="p-4 bg-purple-900/20 rounded-xl border border-purple-500/20 mt-4">
-              <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                <Orbit className="size-5 text-purple-400" /> {t("chart.overview")}
-              </h4>
-              <p className="text-gray-300 text-sm leading-relaxed">{result.synthesis}</p>
-            </div>
+            {/* Ana mesaj */}
+            {result.message && (
+              <div className="p-4 bg-purple-900/20 rounded-xl border border-purple-500/20 mt-4">
+                <h4 className="text-sm font-semibold text-purple-300 mb-2 flex items-center gap-2 uppercase tracking-wider">
+                  <Orbit className="size-4" /> Kürenin Mesajı
+                </h4>
+                <p className="text-gray-300 text-sm leading-relaxed">{result.message}</p>
+              </div>
+            )}
 
-            {result.advice && (
+            {/* Rehberlik */}
+            {result.guidance && (
               <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 flex items-center gap-3">
-                <Sparkles className="size-5 text-violet-400 shrink-0" />
-                <span className="text-gray-300 text-sm">{result.advice}</span>
+                <Info className="size-4 text-violet-400 shrink-0" />
+                <span className="text-gray-300 text-sm italic">{result.guidance}</span>
               </div>
             )}
           </div>

@@ -551,6 +551,9 @@ async function _generateDivinationReading(
   if (type === "rune") {
     return _generateRuneReading(cards, question, lang, langName);
   }
+  if (type === "crystal") {
+    return _generateCrystalReading(question, lang, langName);
+  }
 
   const typeDescriptions: Record<DivinationType, string> = {
     tarot: "Tarot card reader (Rider-Waite tradition). Interpret major and minor arcana with depth and psychological insight.",
@@ -610,6 +613,70 @@ QUALITY REQUIREMENTS:
     return parseGeminiJson(text);
   } catch (error) {
     console.error(`Gemini ${type} reading failed:`, error);
+    return null;
+  }
+}
+
+/**
+ * Dedicated crystal ball reading — no card language, fully vision-based.
+ * Output: opening, visions (3 symbols), message, guidance.
+ */
+async function _generateCrystalReading(
+  question: string,
+  lang: SupportedLanguage,
+  langName: string
+) {
+  const defaultQuestion = lang === "tr" ? "Genel bir rehberlik istiyorum" : "I seek general guidance";
+
+  const prompt = `You are a mystical crystal ball seer — an ancient oracle who gazes into the swirling mists of a crystal sphere and translates what you see into deeply personal visions. You do NOT read cards. You do NOT use tarot language. You see living images, symbols, colors, light, and movement inside the crystal.
+
+RESPONSE LANGUAGE: ${langName} — Write ALL output fields in ${langName} only.
+
+The seeker's question: "${question || defaultQuestion}"
+
+Your task: Gaze into the crystal. Describe exactly what you see — not what cards say, not what symbols traditionally mean, but what you personally witness in the swirling mists of this sphere as it responds to this specific question and this specific person.
+
+STRICT OUTPUT RULES:
+- Return ONLY valid JSON, no markdown, no extra text
+- Never use the word "kart", "card", "tarot", "rün", "rune" anywhere
+- Never start with "Bu kart" or any card-referencing phrase
+- Always write in first person as the seer ("Kürede görüyorum...", "Sisler aralandığında...")
+- Be vivid, poetic, intimate — not generic
+
+OUTPUT FORMAT:
+{
+  "title": "A short evocative title for this vision (max 8 words)",
+  "opening": "2 sentences: describe the atmosphere of the crystal as you gaze into it for this person — the colors, the mist, the energy you feel before the visions begin",
+  "visions": [
+    {
+      "image": "A specific visual symbol or scene you see in the crystal — a concrete image (e.g. 'a door half-open in golden light', 'two hands reaching but not quite touching', 'a river splitting into two paths')",
+      "meaning": "2-3 sentences: what this vision reveals about the seeker's question — intimate, personal, direct"
+    },
+    {
+      "image": "Second distinct vision seen in the crystal",
+      "meaning": "2-3 sentences: its meaning for the seeker"
+    },
+    {
+      "image": "Third vision — often the most clarifying or forward-looking",
+      "meaning": "2-3 sentences: what this suggests about the path ahead"
+    }
+  ],
+  "message": "3-4 sentences: the crystal's unified message — weave all three visions into a single flowing narrative that speaks directly to the heart of the question",
+  "guidance": "1 sentence of clear, grounded wisdom — the one thing the crystal most wants this person to know or do"
+}
+
+QUALITY REQUIREMENTS:
+- Each vision image must be CONCRETE and UNIQUE — a real thing you see, not an abstraction
+- The message must reference the question directly and feel personally addressed to the seeker
+- Guidance must be actionable and specific, not vague ("Trust yourself" is too vague — "Begin the conversation you have been postponing" is specific)
+- Write with warmth, gravity, and poetic intimacy throughout
+- Vary sentence rhythm — short, powerful sentences for visions; flowing prose for the message`;
+
+  try {
+    const text = await callGeminiWithFallback(prompt);
+    return parseGeminiJson(text);
+  } catch (error) {
+    console.error("Gemini crystal reading failed:", error);
     return null;
   }
 }
