@@ -19,12 +19,27 @@ export async function generateStaticParams() {
   ];
 }
 
+const periodKeywords: Record<string, string> = {
+  daily: "günlük burç yorumu, bugün burç, günlük astroloji",
+  weekly: "haftalık burç yorumu, bu hafta burçlar, haftalık astroloji",
+  monthly: "aylık burç yorumu, ay burç analizi, aylık astroloji",
+  yearly: "yıllık burç yorumu, 2026 burç tahminleri, yıllık astroloji",
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ period: string }> }): Promise<Metadata> {
   const { period } = await params;
   const label = periodLabels[period] || "Günlük";
+  const canonicalUrl = `https://www.astralislab.com/yorumlar/${period}`;
   return {
-    title: `${label} Burç Yorumları | Astralis`,
-    description: `Tüm burçlar için ${label.toLowerCase()} yorumlar.`,
+    title: `${label} Burç Yorumları — Tüm 12 Burç | Astralis`,
+    description: `${label} burç yorumları: Koç, Boğa, İkizler, Yengeç ve tüm 12 burç için ${label.toLowerCase()} astroloji analizi. Astralis yapay zeka destekli kozmik rehberlik platformu.`,
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title: `${label} Burç Yorumları | Astralis`,
+      description: `Tüm burçlar için ${label.toLowerCase()} astroloji analizi ve rehberlik.`,
+      url: canonicalUrl,
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
   };
 }
 

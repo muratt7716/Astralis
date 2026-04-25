@@ -784,7 +784,7 @@ First, analyze this image. If the image does NOT clearly contain a coffee cup, c
 Do NOT interpret non-coffee images as fortune telling under ANY circumstances.
 
 If the image IS a valid coffee cup/grounds:
-User's question: "${question || (lang === 'tr' ? 'Genel falıma bak' : 'Give me a general reading')}"
+User's question: "${question || (lang === 'tr' ? 'Genel yorumuma bak' : 'Give me a general reading')}"
 Language: ${langName}
 
 Carefully examine the coffee grounds. Identify 3-5 distinct shapes/symbols you see in the telve patterns.
@@ -855,7 +855,7 @@ async function _generateVirtualCoffeeReading(
 
 IMAGINE that you are looking at fresh coffee grounds in a cup. Invent 3-5 completely random, creative, and vividly described telve shapes/symbols that you "see" in this imaginary cup. Make each symbol unique and surprising.
 
-User's question: "${question || (lang === 'tr' ? 'Genel falıma bak' : 'Give me a general reading')}"
+User's question: "${question || (lang === 'tr' ? 'Genel yorumuma bak' : 'Give me a general reading')}"
 Language: ${langName}
 
 STRICT OUTPUT RULES:

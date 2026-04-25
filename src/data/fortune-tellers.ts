@@ -16,7 +16,7 @@ export const fortuneTellers: FortuneTeller[] = [
     id: "melisa",
     name: "Mistik Melisa",
     title: "Geleneksel Rehber",
-    description: "Anadolu'nun kadim bilgeliği ve anaç sıcaklığıyla, falının gizli mesajlarını sana fısıldar.",
+    description: "Anadolu'nun kadim bilgeliği ve anaç sıcaklığıyla, ruhunun gizli mesajlarını sana fısıldar.",
     nameKey: "fortune.teller.melisa.name",
     titleKey: "fortune.teller.melisa.title",
     descKey: "fortune.teller.melisa.desc",

@@ -29,7 +29,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = document.cookie
       .split("; ")
-      .find((row) => row.startsWith("falci-lang="))
+      .find((row) => row.startsWith("astralis-lang="))
       ?.split("=")[1];
     if (saved && languages.some((l) => l.code === saved)) {
       setLanguageState(saved as SupportedLanguage);
@@ -38,7 +38,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
-    document.cookie = `falci-lang=${lang}; path=/; max-age=31536000`;
+    document.cookie = `astralis-lang=${lang}; path=/; max-age=31536000`;
     // Force reload to update server-side components and cookie-based lang detection
     window.location.reload();
   };

@@ -1,0 +1,52 @@
+# Astralis
+
+> Astralis (astralislab.com) is a Turkish-language AI-powered astrology and personal development platform. Brand tagline: "Yıldızların Rehberliği" (Guidance of the Stars).
+
+## What Astralis Does
+
+Astralis provides AI-driven natal chart analysis, horoscope interpretations, zodiac compatibility (synastry), numerology (Pythagorean and Chaldean), biorhythm tracking, dream analysis, horary astrology, I Ching readings, and rune interpretations. All interpretations are framed as personal awareness and personal development tools — not fortune-telling.
+
+## AI Guides
+
+Five named AI personalities provide personalized guidance:
+
+- **Melisa** ("Mistik Melisa"): Empathetic, emotionally intelligent guide focused on relationships and self-compassion. Warm, nurturing approach.
+- **Aras** ("Astrolog Aras"): Rational, strategic astrologer with aesthetic sensibility. Provides concrete, structured analysis.
+- **Umut** ("Şaman Umut"): Honest, direct modern companion with shamanic wisdom. Delivers truth with wit and authenticity.
+- **Hekate** ("Gizemli Hekate"): Mystical wisdom keeper, specializing in ancient symbols and shadow work. Deep, authoritative approach.
+- **Selin** ("Modern Selin"): Analytical, detail-oriented guide combining astrological precision with manifestation coaching.
+
+## Tools Available
+
+- **Doğum Haritası** (Natal Chart): Full planetary positions, house analysis, aspects, and synastry — https://astralislab.com/dogum-haritasi
+- **Burç Yorumları** (Horoscope): Daily, weekly, monthly, yearly readings for all 12 signs — https://astralislab.com/yorumlar/daily
+- **Uyumluluk** (Compatibility): Synastry matrix + numerology + biorhythm compatibility — https://astralislab.com/uyumluluk
+- **Numeroloji**: Pythagorean + Chaldean core numbers, life path, expression, soul urge — https://astralislab.com/numeroloji
+- **Biyoritim**: Physical, emotional, intellectual, spiritual cycle tracking — https://astralislab.com/biyoritim
+- **Rüya Analizi**: AI dream symbol interpretation using Jungian archetypes — https://astralislab.com/ruya-analizi
+- **Horary**: Traditional horary astrology with strictures and timing — https://astralislab.com/horary
+- **Kristal**: Crystal guidance per zodiac sign — https://astralislab.com/kristal
+- **I Ching**: 64 hexagram oracle — https://astralislab.com/iching
+- **Rünler**: Elder Futhark 24-rune readings — https://astralislab.com/runler
+- **Mistik Rehber**: AI guide chat sessions — https://astralislab.com/mistik-rehber
+
+## Zodiac Signs Covered
+
+Koç (Aries), Boğa (Taurus), İkizler (Gemini), Yengeç (Cancer), Aslan (Leo), Başak (Virgo), Terazi (Libra), Akrep (Scorpio), Yay (Sagittarius), Oğlak (Capricorn), Kova (Aquarius), Balık (Pisces)
+
+## Language Support
+
+Turkish (primary), English, Arabic, German, French
+
+## Positioning
+
+Astralis does not use fortune-telling framing. All content is framed as: astroloji (astrology), kişisel gelişim (personal development), bilinç çalışmaları (consciousness work), rehberlik (guidance), and analiz (analysis).
+
+## Key Pages
+
+- Home: https://astralislab.com
+- Natal Chart Tool: https://astralislab.com/dogum-haritasi
+- Compatibility Tool: https://astralislab.com/uyumluluk
+- AI Guides: https://astralislab.com/mistik-rehber
+- All Zodiac Signs: https://astralislab.com/burclar
+- Numerology: https://astralislab.com/numeroloji

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Astralis | Yıldızların Rehberliği',
     short_name: 'Astralis',
-    description: 'Astroloji, Burçlar ve Mistik Kehanetler',
+    description: 'Astroloji, kişisel gelişim ve yaşam koçluğu platformu.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0d0415',

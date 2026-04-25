@@ -35,17 +35,25 @@ export async function generateMetadata({ params }: { params: Promise<{ sign: str
   const { sign: signId } = await params;
   const sign = getZodiacById(signId);
   const cookieStore = await cookies();
-  const lang = (cookieStore.get("falci-lang")?.value as SupportedLanguage) || "tr";
+  const lang = (cookieStore.get("astralis-lang")?.value as SupportedLanguage) || "tr";
   const t = getT(lang);
 
   if (!sign) return { title: t("site.name") };
-  
+
   const localizedName = t(sign.nameKey);
   const dateRange = formatZodiacDate(sign, t);
-  
+  const canonicalUrl = `https://www.astralislab.com/burclar/${signId}`;
+
   return {
-    title: `${localizedName} | ${t("site.name")}`,
-    description: `${localizedName} (${dateRange}) ${t("astrology.label.lucky_numbers")}, ${t("astrology.label.lucky_color")} ${t("hero.subtitle")}`,
+    title: `${localizedName} Burcu — Kişilik Özellikleri ve 2026 Yorumu | Astralis`,
+    description: `${localizedName} burcu kişilik özellikleri, aşk hayatı, kariyer ve sağlık rehberi. ${dateRange} tarihleri arasında doğanların detaylı astroloji analizi ve 2026 yıl yorumu.`,
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title: `${localizedName} Burcu | Astralis`,
+      description: `${localizedName} burcunun derinlemesine astroloji analizi. Kişilik, aşk, kariyer ve uyumluluk.`,
+      url: canonicalUrl,
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
   };
 }
 
@@ -53,7 +61,7 @@ export default async function ZodiacDetailPage({ params }: { params: Promise<{ s
   const { sign: signId } = await params;
   const sign = getZodiacById(signId);
   const cookieStore = await cookies();
-  const lang = (cookieStore.get("falci-lang")?.value as SupportedLanguage) || "tr";
+  const lang = (cookieStore.get("astralis-lang")?.value as SupportedLanguage) || "tr";
   const t = getT(lang);
 
   if (!sign) notFound();
