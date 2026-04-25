@@ -31,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(BASE_URL),
     title,
     description,
+    verification: {
+      google: 'Ed0gLXyqHORDm0DIOePPiPA_PuthjJzQzJXoR70qI1c',
+    },
     manifest: '/manifest.webmanifest',
     appleWebApp: {
       capable: true,
