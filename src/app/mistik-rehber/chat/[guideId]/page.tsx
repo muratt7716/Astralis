@@ -14,6 +14,7 @@ import SynastryMatrix from "@/components/Cosmic/SynastryMatrix";
 import { BiorhythmChart } from "@/components/BiorhythmChart";
 import { calculateBirthChart } from "@/lib/astrology";
 import { useTranslation } from "@/lib/i18n";
+import ToolSuggestionCard from "@/components/Chat/ToolSuggestionCard";
 
 interface Message {
   id: string;
@@ -47,58 +48,69 @@ const MessageItem = memo(function MessageItem({
   guide: (typeof GUIDES)[0];
   birthChart: ReturnType<typeof calculateBirthChart> | null;
 }) {
+  const visual = msg.metadata?.visual;
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className={cn("flex items-end gap-2.5", msg.role === "user" ? "justify-end" : "justify-start")}
+      className={cn("flex flex-col gap-1.5", msg.role === "user" ? "items-end" : "items-start")}
     >
-      {msg.role === "assistant" && (
-        <div className="shrink-0 w-7 h-7 rounded-xl overflow-hidden border border-white/10 mb-0.5">
-          <img src={guide.image} alt={guide.name} className="w-full h-full object-cover" />
-        </div>
-      )}
-
-      <div
-        className={cn(
-          "relative max-w-[78%] px-4 py-2.5 rounded-2xl text-[14px] leading-relaxed",
-          msg.role === "user"
-            ? "bg-white/[0.09] text-white/90 border border-white/[0.08] rounded-br-md"
-            : cn("border rounded-bl-md text-white/85", guide.bgAccent, guide.borderAccent)
-        )}
-        style={msg.role === "assistant" ? { boxShadow: `0 4px 24px ${guide.glow}20` } : {}}
-      >
+      <div className={cn("flex items-end gap-2.5 w-full", msg.role === "user" ? "justify-end" : "justify-start")}>
         {msg.role === "assistant" && (
-          <div
-            className="absolute inset-0 rounded-2xl rounded-bl-md opacity-30 pointer-events-none"
-            style={{ boxShadow: `inset 0 0 0 1px ${guide.glow}` }}
-          />
-        )}
-        <p className="relative whitespace-pre-wrap">{msg.content}</p>
-
-        {msg.metadata?.visual && (
-          <div className="mt-4 pt-4 border-t border-white/10 w-full overflow-visible">
-            {msg.metadata.visual === "birth_chart" && birthChart && (
-              <div className="scale-90 md:scale-100 origin-top -mx-4 flex justify-center">
-                <BirthChartWheel chart={birthChart} />
-              </div>
-            )}
-            {msg.metadata.visual === "biorhythm" && (
-              <BiorhythmChart
-                birthDate={new Date().toISOString().split("T")[0]}
-                targetDate={new Date().toISOString().split("T")[0]}
-              />
-            )}
-            {msg.metadata.visual === "compatibility" && (
-              <div className="scale-75 origin-top -mx-8 -my-20">
-                <SynastryMatrix />
-              </div>
-            )}
+          <div className="shrink-0 w-7 h-7 rounded-xl overflow-hidden border border-white/10 mb-0.5">
+            <img src={guide.image} alt={guide.name} className="w-full h-full object-cover" />
           </div>
         )}
+
+        <div
+          className={cn(
+            "relative max-w-[78%] px-4 py-2.5 rounded-2xl text-[14px] leading-relaxed",
+            msg.role === "user"
+              ? "bg-white/[0.09] text-white/90 border border-white/[0.08] rounded-br-md"
+              : cn("border rounded-bl-md text-white/85", guide.bgAccent, guide.borderAccent)
+          )}
+          style={msg.role === "assistant" ? { boxShadow: `0 4px 24px ${guide.glow}20` } : {}}
+        >
+          {msg.role === "assistant" && (
+            <div
+              className="absolute inset-0 rounded-2xl rounded-bl-md opacity-30 pointer-events-none"
+              style={{ boxShadow: `inset 0 0 0 1px ${guide.glow}` }}
+            />
+          )}
+          <p className="relative whitespace-pre-wrap">{msg.content}</p>
+
+          {visual && (
+            <div className="mt-4 pt-4 border-t border-white/10 w-full overflow-visible">
+              {visual === "birth_chart" && birthChart && (
+                <div className="scale-90 md:scale-100 origin-top -mx-4 flex justify-center">
+                  <BirthChartWheel chart={birthChart} />
+                </div>
+              )}
+              {visual === "biorhythm" && (
+                <BiorhythmChart
+                  birthDate={new Date().toISOString().split("T")[0]}
+                  targetDate={new Date().toISOString().split("T")[0]}
+                />
+              )}
+              {visual === "compatibility" && (
+                <div className="scale-75 origin-top -mx-8 -my-20">
+                  <SynastryMatrix />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Tool suggestion card — assistant mesajlarında visual varsa göster */}
+      {msg.role === "assistant" && visual && (
+        <div className="pl-[38px]">
+          <ToolSuggestionCard visual={visual} glow={guide.glow} />
+        </div>
+      )}
     </motion.div>
   );
 });
