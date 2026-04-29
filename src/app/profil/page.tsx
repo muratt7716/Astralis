@@ -36,7 +36,7 @@ import { GUIDES } from "@/components/Profile/ProfileConstants";
 export default function ProfilePage() {
   const router = useRouter();
   const { t, dir } = useTranslation();
-  const { user, profile, loading: authLoading, signOut, mergeProfile } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading, signOut, mergeProfile } = useAuth() as any;
 
   const [saving, setSaving] = useState(false);
   // Date for SWR Key (Europe/Istanbul)
@@ -93,7 +93,11 @@ export default function ProfilePage() {
       router.push("/onboarding");
       return;
     }
-  }, [user, authLoading, router]);
+    // If logged in, but profile is not loading and profile is null, force onboarding
+    if (!authLoading && user && !profileLoading && !profile) {
+      router.push("/onboarding");
+    }
+  }, [user, profile, authLoading, profileLoading, router]);
 
   useEffect(() => {
     // Only sync form when settings drawer opens to prevent save loop

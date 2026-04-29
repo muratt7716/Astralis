@@ -15,12 +15,12 @@ export default function Logo({ className = "", size }: LogoProps) {
     <div className={`relative flex items-center justify-center ${className}`} 
          style={sizeStyle}>
       {/* The Logo Image */}
-      <div className="relative z-10 w-full h-full transform hover:scale-105 transition-transform duration-300">
+      <div className="relative z-10 w-full h-full transform hover:scale-105 transition-transform duration-300 rounded-full overflow-hidden shadow-[0_0_15px_rgba(168,85,247,0.15)] ring-1 ring-white/10">
         <Image
-          src="/images/logo.png"
+          src="/logo_final.png"
           alt="Astralis Logo"
           fill
-          className="object-contain"
+          className="object-cover"
           priority
         />
         

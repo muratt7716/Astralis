@@ -65,6 +65,14 @@ export async function middleware(req: NextRequest) {
       redirectUrl.pathname = '/profil';
       return NextResponse.redirect(redirectUrl);
     }
+    
+    // Logged in, but no profile and trying to access protected route
+    if (!hasProfile && pathname !== '/onboarding' && PROTECTED_ROUTES.some(p => pathname.startsWith(p))) {
+      const redirectUrl = req.nextUrl.clone();
+      redirectUrl.pathname = '/onboarding';
+      return NextResponse.redirect(redirectUrl);
+    }
+    
     return res;
   }
 

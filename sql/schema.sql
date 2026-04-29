@@ -420,37 +420,14 @@ $$;
 
 
 -- ########################################################
--- OTOMATİK PROFİL OLUŞTURMA TRİGGER'I
--- Yeni kullanıcı kayıt olduğunda profil kaydı otomatik açılır
--- SECURITY DEFINER: RLS'yi bypass eder, kayıt sırasında hata önler
+-- OTOMATİK PROFİL OLUŞTURMA TRİGGER'I (İPTAL EDİLDİ)
+-- Yeni kullanıcıların onboarding ekranını atlamaması için
+-- otomatik profil oluşturma devre dışı bırakılmıştır.
+-- Profil kaydı, onboarding formunun sonunda oluşturulacaktır.
 -- ########################################################
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, email, birth_date)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', 'Yeni Kullanıcı'),
-    NEW.email,
-    COALESCE((NEW.raw_user_meta_data->>'birth_date')::DATE, '2000-01-01'::DATE)
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email,
-    updated_at = NOW();
-  RETURN NEW;
-END;
-$$;
-
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user();
+DROP FUNCTION IF EXISTS public.handle_new_user();
 
 
 -- ########################################################

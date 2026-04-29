@@ -129,7 +129,16 @@ export default function Navbar() {
 
       <div className="flex items-center justify-between w-full gap-x-4 sm:gap-x-6 lg:gap-x-6 xl:gap-x-12 shrink-0">
         <div className="flex items-center">
-          <Link href="/" className="hover:scale-110 transition-transform">
+          <Link 
+            href="/" 
+            className="hover:scale-110 transition-transform"
+            onClick={(e) => {
+              if (pathname === '/') {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+          >
             <Logo className="w-9 h-9 sm:w-11 sm:h-11 border-none bg-transparent" />
           </Link>
         </div>

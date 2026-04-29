@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from "@/lib/i18n";
 import Logo from "@/components/Cosmic/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -23,6 +24,7 @@ const AnimatedNavLink = ({ href, children }: { href: string; children: React.Rea
 
 export function Navbar() {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
@@ -91,7 +93,16 @@ export function Navbar() {
 
       <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-10">
         <div className="flex items-center">
-          <Link href="/" className="hover:scale-110 transition-transform">
+          <Link 
+            href="/" 
+            className="hover:scale-110 transition-transform"
+            onClick={(e) => {
+              if (pathname === '/') {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+          >
             <Logo className="w-9 h-9 sm:w-11 sm:h-11 border-none bg-transparent" />
           </Link>
         </div>

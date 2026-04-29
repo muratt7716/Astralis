@@ -87,6 +87,8 @@ export default function OnboardingPage() {
         avatar_url: avatarUrl
       });
 
+      document.cookie = `has-profile=true; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+
       router.push("/mistik-rehber");
     } catch (error: any) {
       alert(t("onboarding.error.generic") + " " + error.message);
@@ -150,7 +152,6 @@ export default function OnboardingPage() {
               onError={() => {
                 console.error("Google Auth Başarısız");
               }}
-              useOneTap
               theme="filled_black"
               shape="pill"
               text="continue_with"
