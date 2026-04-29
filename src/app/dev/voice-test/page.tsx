@@ -41,20 +41,37 @@ const VOICE_GROUPS = [
 ];
 const VOICES = VOICE_GROUPS.flatMap(g => g.voices.map(v => v.name));
 const GUIDES = [
-  { id: "melisa", label: "Melisa" },
-  { id: "aras", label: "Aras" },
-  { id: "umut", label: "Umut" },
+  { id: "melisa", label: "Melisa", desc: "Sıcak, anaç, şefkatli · Ankara, palyatif bakım geçmişi" },
+  { id: "aras", label: "Aras", desc: "Dramatik, estetik, hafif efemine · İzmir, tiyatro/antikacılık" },
+  { id: "hekate", label: "Hekate", desc: "Gizemli, otoriter, şiirsel · Kütüphaneci kökenli mistik" },
+  { id: "selin", label: "Selin", desc: "Enerjik, manifesting koçu · Boğaziçi mat., eski borsa analisti" },
+];
+
+// Umut için 4 farklı prompt stratejisi test edilecek
+const UMUT_VARIANTS = [
+  { id: "umut-v1", label: "V1 — Fiziksel", desc: "Taştan yonturcasına, boğuk, yıllarca rüzgara karşı bağırmış" },
+  { id: "umut-v2", label: "V2 — Duygusal", desc: "Yorgun ama kırılmamış, nefesli, 60 yaşın ağırlığı" },
+  { id: "umut-v3", label: "V3 — Metafor", desc: "Kurt totemi, dağ geçidi, bıçak gibi sözler" },
+  { id: "umut-v4", label: "V4 — Minimal", desc: "62 yaş, kısık ses, lafı kısa tutan — sade prompt" },
 ];
 
 const PRESETS = [
-  "Merhaba, bugün nasıl hissediyorsun?",
-  "Sana bir sorum var, aşk hayatım hakkında ne düşünüyorsun?",
-  "Yıldızlar bu gece bana ne söylüyor?",
-  "Kaderim hakkında bir şeyler hissediyor musun?",
+  // Nötr / selamlama
+  { label: "Selamlama", text: "Merhaba, bugün nasıl hissediyorsun?" },
+  // Umut trollleme testi
+  { label: "Troll testi (Umut)", text: "Yıllardır aynı hatayı yapıyorum, ne yapayım bilemedim." },
+  // Kahkaha / hafiflik testi
+  { label: "Mizah testi", text: "Bugün çok saçma bir şey oldu, anlatayım mı?" },
+  // Derin / duygusal
+  { label: "Derin / duygusal", text: "Bazen hayatın anlamını sorguluyorum, içim sıkışık hissediyorum." },
+  // Heyecan / yüksek enerji (Selin için)
+  { label: "Enerji testi (Selin)", text: "Harika bir fırsat çıktı önüme, heyecanlıyım ama korkuyorum." },
+  // Mistik / ağır (Hekate için)
+  { label: "Mistik test (Hekate)", text: "Rüyamda karanlık bir koridor gördüm, ne anlama geliyor?" },
 ];
 
 export default function VoiceTestPage() {
-  const [text, setText] = useState(PRESETS[0]);
+  const [text, setText] = useState(PRESETS[0].text);
   const [voice, setVoice] = useState("Kore");
   const [guide, setGuide] = useState("melisa");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -144,13 +161,40 @@ export default function VoiceTestPage() {
         {/* Guide selector */}
         <div>
           <label style={{ display: "block", marginBottom: "0.4rem", color: "#a78bfa" }}>Rehber</label>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {/* Umut varyantları */}
+            <div style={{ fontSize: "0.7rem", color: "#666", marginBottom: "0.1rem" }}>Umut (Yaşlı Şaman) — 4 farklı prompt stratejisi:</div>
+            {UMUT_VARIANTS.map(g => (
+              <button
+                key={g.id}
+                onClick={() => setGuide(g.id)}
+                style={{
+                  padding: "0.4rem 0.8rem",
+                  borderRadius: 6,
+                  border: "1px solid",
+                  borderColor: guide === g.id ? "#f59e0b" : "#2a2a1e",
+                  background: guide === g.id ? "#3a2a00" : "#1a1a0e",
+                  color: guide === g.id ? "#fde68a" : "#888",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  textAlign: "left",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.1rem",
+                }}
+              >
+                <span style={{ fontWeight: guide === g.id ? "bold" : "normal" }}>{g.label}</span>
+                <span style={{ fontSize: "0.68rem", opacity: 0.55 }}>{g.desc}</span>
+              </button>
+            ))}
+            {/* Diğer rehberler */}
+            <div style={{ fontSize: "0.7rem", color: "#666", marginTop: "0.4rem", marginBottom: "0.1rem" }}>Diğer Rehberler:</div>
             {GUIDES.map(g => (
               <button
                 key={g.id}
                 onClick={() => setGuide(g.id)}
                 style={{
-                  padding: "0.3rem 0.8rem",
+                  padding: "0.4rem 0.8rem",
                   borderRadius: 6,
                   border: "1px solid",
                   borderColor: guide === g.id ? "#a78bfa" : "#333",
@@ -158,9 +202,14 @@ export default function VoiceTestPage() {
                   color: guide === g.id ? "#e2d9f3" : "#888",
                   cursor: "pointer",
                   fontSize: "0.85rem",
+                  textAlign: "left",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.1rem",
                 }}
               >
-                {g.label}
+                <span style={{ fontWeight: guide === g.id ? "bold" : "normal" }}>{g.label}</span>
+                <span style={{ fontSize: "0.68rem", opacity: 0.55 }}>{g.desc}</span>
               </button>
             ))}
           </div>
@@ -172,21 +221,22 @@ export default function VoiceTestPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
             {PRESETS.map(p => (
               <button
-                key={p}
-                onClick={() => setText(p)}
+                key={p.text}
+                onClick={() => setText(p.text)}
                 style={{
                   padding: "0.3rem 0.6rem",
                   borderRadius: 6,
                   border: "1px solid",
-                  borderColor: text === p ? "#a78bfa" : "#2a2a3e",
-                  background: text === p ? "#1f1040" : "transparent",
+                  borderColor: text === p.text ? "#a78bfa" : "#2a2a3e",
+                  background: text === p.text ? "#1f1040" : "transparent",
                   color: "#ccc",
                   cursor: "pointer",
                   textAlign: "left",
                   fontSize: "0.8rem",
                 }}
               >
-                {p}
+                <span style={{ fontSize: "0.68rem", color: "#666", marginRight: "0.4rem" }}>[{p.label}]</span>
+                {p.text}
               </button>
             ))}
           </div>

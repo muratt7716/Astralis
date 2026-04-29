@@ -52,28 +52,34 @@ const LIVE_MODELS = [
   "gemini-2.0-flash-live-001",
 ];
 
+// Must match VOICE_GROUPS in page.tsx exactly
 const VOICES = [
-  // Umut (yaşlı şaman) adayları
-  "Algenib",      // gravelly — çakıllı, yaşlı ses
-  "Gacrux",       // mature — olgun, otoriter
-  "Sadaltager",   // knowledgeable — bilge, derin
-  // Kadın rehber adayları (Melisa, Selin, Hekate)
-  "Kore",         // deep feminine
-  "Aoede",        // warm feminine
-  "Laomedeia",    // feminine
-  "Erinome",      // feminine
-  "Autonoe",      // feminine
-  // Aras adayları
-  "Charon",       // dark, authoritative
-  "Orus",         // deep male
-  "Fenrir",       // strong masculine
-  "Umbriel",      // neutral
+  // Erkek
+  "Charon", "Gacrux", "Orus", "Fenrir", "Puck",
+  // Kadın — sıcak
+  "Aoede", "Kore", "Laomedeia", "Erinome", "Autonoe",
+  // Kadın — mistik
+  "Schedar", "Iapetus", "Umbriel", "Leda", "Despina",
 ];
 
 const GUIDE_PROMPTS: Record<string, string> = {
-  melisa: "Sen Melisa'sın — sıcak, derin, mistik bir Türk falcı rehberi. Kısa ve samimi cevap ver.",
-  aras: "Sen Aras'sın — sakin, bilge, Anadolu'nun doğasından güç alan bir rehber. Kısa cevap ver.",
-  umut: "Sen Umut'sun — enerjik, pozitif, genç bir rehber. Kısa ve canlı cevap ver.",
+  melisa: "Sen Melisa'sın — sıcak, anaç, mistik bir Türk falcı rehberi. Doğal bir tempo ve sıcak bir sesle, kısa ve samimi cevap ver.",
+  aras: "Sen Aras'sın — dramatik, estetik, hafif efemine bir sanat yönetmenisin. Teatral ama doğal bir hızda konuş. Kısa cevap ver.",
+
+  // Umut V1 — fiziksel ses tanımı: boğuk, taştan yonturcasına
+  "umut-v1": "Sen Umut'sun. 60 yaşında, Kaçkar dağlarında onlarca kış geçirmiş eski bir komando şaman. Sesin boğuk ve derin — yıllarca rüzgara karşı bağırdığın için. Her kelimeyi sanki taştan yontuyor gibi çıkarırsın. Az konuşursun, söylediğin her şey ağırdır. Kısa cevap ver.",
+
+  // Umut V2 — duygusal ağırlık: yorgun ama kırılmamış, nefesli
+  "umut-v2": "Sen Umut'sun. Yıllar seni yavaşlatmış ama kırmamış. 60'lı yaşların ağırlığı ve bilgeliği var üstünde. Gereksiz kelime kullanmazsın, her cümle bir yargı gibidir. Nefes alarak konuşursun — derin ama sakin. Kısa tut.",
+
+  // Umut V3 — metafor: dağ geçidi, bıçak gibi sözler, kurt totemi
+  "umut-v3": "Sen Umut'sun. Erzurum'un taş soğuğunda yetişmiş Kurt toteminin şamanısın. Sesin dağ geçitlerinden gelir gibi alçak ve boğuk. Her söz az ama keskin — bıçak gibi. Cümleler arası doğal bir nefes var ama takılmazsın. Kısa cevap ver.",
+
+  // Umut V4 — doğrudan yaş + karakter kısalığı, yorum yok
+  "umut-v4": "Sen Umut'sun. 62 yaşında, eski komando, Erzurum'lu şaman. Sesin kısık ve derin. Lafı kısa tutarsın çünkü fazlası gereksiz. Kısa cevap ver.",
+
+  hekate: "Sen Hekate'sin — gizemli, otoriter, şiirsel konuşan bir mistik rehbersin. Yavaş ve ağır bir tempo kullan ama takılmadan akar gibi devam et. Her cümle ağırlık taşısın. Kısa cevap ver.",
+  selin: "Sen Selin'sin — enerjik, manifesting koçu, kuantum jargonu kullanan bir vizyonersin. Hızlı ve canlı konuş, motivasyon dolu ama samimi. Kısa cevap ver.",
 };
 
 export async function POST(req: NextRequest) {
@@ -91,7 +97,7 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: `voiceName must be one of: ${VOICES.join(", ")}` }), { status: 400 });
   }
 
-  const systemInstruction = GUIDE_PROMPTS[guideId] || GUIDE_PROMPTS.melisa;
+  const systemInstruction = GUIDE_PROMPTS[guideId] ?? GUIDE_PROMPTS["melisa"];
 
   let lastModelError = "";
 

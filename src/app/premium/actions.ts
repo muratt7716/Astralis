@@ -1,22 +1,15 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import { lemonSqueezySetup, createCheckout as lsCreateCheckout } from "@lemonsqueezy/lemonsqueezy.js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
-function initLemonSqueezy() {
-  lemonSqueezySetup({
-    apiKey: process.env.LEMON_SQUEEZY_API_KEY!,
-    onError: (error) => {
-      console.error("[LemonSqueezy]", error);
-    },
-  });
-}
-
 export type PlanType = "monthly" | "lifetime";
 
-export async function createCheckout(planType: PlanType) {
+/**
+ * Shopier ürün URL'sini döndürür (client tarafında yeni sekmede açılacak).
+ * Server action olarak kullanıcı session kontrolü yapar.
+ */
+export async function getCheckoutUrl(planType: PlanType): Promise<string> {
   // Kullanıcı session kontrolü
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -39,36 +32,18 @@ export async function createCheckout(planType: PlanType) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/onboarding");
+    throw new Error("NOT_AUTHENTICATED");
   }
 
-  // Variant ID seç
-  const variantId =
+  // Shopier ürün URL'sini seç
+  const productUrl =
     planType === "lifetime"
-      ? process.env.LEMON_SQUEEZY_LIFETIME_VARIANT_ID!
-      : process.env.LEMON_SQUEEZY_MONTHLY_VARIANT_ID!;
+      ? process.env.SHOPIER_LIFETIME_PRODUCT_URL
+      : process.env.SHOPIER_MONTHLY_PRODUCT_URL;
 
-  const storeId = process.env.LEMON_SQUEEZY_STORE_ID!;
-
-  if (!variantId || !storeId) {
-    throw new Error("Lemon Squeezy environment variables eksik");
+  if (!productUrl) {
+    throw new Error("Shopier ürün URL'si yapılandırılmamış (.env.local)");
   }
 
-  initLemonSqueezy();
-
-  const { data, error } = await lsCreateCheckout(storeId, variantId, {
-    checkoutData: {
-      email: user.email ?? undefined,
-      custom: {
-        user_id: user.id,
-      },
-    },
-  });
-
-  if (error || !data?.data?.attributes?.url) {
-    console.error("[createCheckout] Hata:", error);
-    throw new Error("Checkout oluşturulamadı");
-  }
-
-  redirect(data.data.attributes.url);
+  return productUrl;
 }
