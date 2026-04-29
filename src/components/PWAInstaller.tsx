@@ -111,8 +111,8 @@ export default function PWAInstaller() {
 
             <div className="flex items-start gap-4">
               {/* App Icon */}
-              <div className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-2.5 shadow-lg shadow-purple-500/20">
-                <img src="/icon-192.png" alt="Astralis" className="w-full h-full object-contain" />
+              <div className="shrink-0 w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shadow-lg shadow-purple-500/20 ring-1 ring-white/10">
+                <img src="/icon-192.png" alt="Astralis" className="w-full h-full object-cover" />
               </div>
 
               {/* Text */}
