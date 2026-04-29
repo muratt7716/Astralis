@@ -89,7 +89,7 @@ export function formatResetTime(ms: number): string {
 export const FEATURE_KEYS = [
   { id: 'dogum-haritasi', label: 'Doğum Haritası', isPremiumOnly: true },
   { id: 'uyumluluk', label: 'Aşk ve Uyumluluk', isPremiumOnly: false },
-  { id: 'ruya-analizi', label: 'Rüya Analizi', isPremiumOnly: false },
+  { id: 'ruya-analizi', label: 'Rüya Analizi', isPremiumOnly: true },
   { id: 'horary', label: 'Soru Astrolojisi', isPremiumOnly: true },
   { id: 'biyoritim', label: 'Biyoritim Uzmanı', isPremiumOnly: false },
   { id: 'numeroloji', label: 'Numeroloji', isPremiumOnly: true },

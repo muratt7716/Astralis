@@ -10,7 +10,7 @@ interface FreemiumBadgeProps {
 
 export default function FreemiumBadge({ toolKey }: FreemiumBadgeProps) {
   const { t } = useTranslation();
-  const { isPremium, quotaUsed, resetTimeStr, loading } = useFreemiumQuota(toolKey);
+  const { isPremium, isPremiumOnly, quotaUsed, resetTimeStr, loading } = useFreemiumQuota(toolKey);
 
   if (loading) return null;
 
@@ -23,12 +23,21 @@ export default function FreemiumBadge({ toolKey }: FreemiumBadgeProps) {
     );
   }
 
-  if (quotaUsed) {
+  if (isPremiumOnly) {
     return (
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-medium">
+        <Sparkles className="w-3 h-3" />
+        {t("freemium.premium_only")}
+      </div>
+    );
+  }
+
+  if (quotaUsed) {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[11px] font-medium">
         <Clock className="w-3 h-3" />
         <span className="font-mono tabular-nums">{resetTimeStr}</span>
-        <span className="text-amber-400/70">{t("freemium.resets_in")}</span>
+        <span className="text-orange-400/70">{t("freemium.resets_in")}</span>
       </div>
     );
   }

@@ -80,7 +80,12 @@ export default function DreamAnalysisPage() {
             {t("dream.title")}
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-4">{t("dream.subtitle")}</p>
-          <FreemiumBadge toolKey="ruya" />
+          <FreemiumBadge toolKey="ruya-analizi" />
+          
+          <div className="mt-6 mx-auto max-w-xl p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200/90 text-sm font-medium leading-relaxed backdrop-blur-md">
+            <Sparkles className="w-4 h-4 inline-block mr-2 text-amber-400" />
+            <span dangerouslySetInnerHTML={{ __html: t("dream.premium_reason").replace(/Premium/g, '<strong class="text-amber-400">Premium</strong>') }} />
+          </div>
         </div>
 
         {/* Form */}
