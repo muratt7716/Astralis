@@ -66,7 +66,7 @@ export default function Footer() {
         </svg>
       ),
       label: "Instagram",
-      href: "https://instagram.com"
+      href: "https://www.instagram.com/astralis.lab"
     },
   ];
 
