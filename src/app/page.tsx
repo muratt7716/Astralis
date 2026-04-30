@@ -50,7 +50,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-center">
             <h1 suppressHydrationWarning className="text-4xl sm:text-5xl lg:text-7xl font-normal mb-6 font-serif tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] transition-all duration-700">
               {t("home.hero.title_part1")}{" "}
-              <span suppressHydrationWarning className="italic inline-block px-4 text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-amber-500 underline decoration-amber-500/20 underline-offset-[12px]">
+              <span suppressHydrationWarning className="italic inline-block px-4 pb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-amber-500">
                 {t("home.hero.title_part2_italic")}
               </span>
               {t("home.hero.title_part3") && ` ${t("home.hero.title_part3")}`}

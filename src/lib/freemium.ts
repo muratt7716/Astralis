@@ -126,7 +126,6 @@ export function useFreemiumQuota(toolKey: string) {
   const isPremiumOnly = FEATURE_KEYS.find(f => f.id === toolKey)?.isPremiumOnly ?? false;
 
   const [quotaUsedToday, setQuotaUsedToday] = useState(false);
-  const [sessionActive, setSessionActive] = useState(false);
   const [msUntilReset, setMsUntilReset] = useState(getMsUntilMidnight());
 
   // Read quota from localStorage once profile is ready
@@ -143,17 +142,14 @@ export function useFreemiumQuota(toolKey: string) {
       setMsUntilReset(ms);
       if (ms < 1000) {
         setQuotaUsedToday(false);
-        setSessionActive(false);
       }
     }, 1000);
     return () => clearInterval(id);
   }, []);
 
   // Consume 1 quota unit. Returns true if the action should proceed.
-  // Idempotent: safe to call multiple times in the same session.
   const consumeQuota = useCallback((): boolean => {
     if (isPremium) return true;
-    if (sessionActive) return true; // already started this session
 
     const usage = getTodayUsage();
     const count = usage[toolKey] ?? 0;
@@ -162,15 +158,14 @@ export function useFreemiumQuota(toolKey: string) {
     usage[toolKey] = count + 1;
     saveTodayUsage(usage);
     setQuotaUsedToday(count + 1 >= FREE_TOOL_LIMIT);
-    setSessionActive(true);
     return true;
-  }, [isPremium, toolKey, sessionActive]);
+  }, [isPremium, toolKey]);
 
   return {
     isPremium,
     isPremiumOnly,
-    /** Use for action guards: blocks only when quota gone AND no active session */
-    isBlocked: isPremiumOnly ? !isPremium : (!isPremium && !sessionActive && quotaUsedToday),
+    /** Use for action guards: blocks when quota gone */
+    isBlocked: isPremiumOnly ? !isPremium : (!isPremium && quotaUsedToday),
     /** Use for badge display: shows timer when quota was used today */
     quotaUsed: !isPremium && quotaUsedToday,
     consumeQuota,
