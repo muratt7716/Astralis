@@ -27,7 +27,8 @@ const ai = new GoogleGenAI({
 });
 
 // İki kademe, her biri sırayla denenir (ilki başarısız olursa sonraki):
-// - quality: rehber sohbeti, hafıza özeti ve premium derin okumalar
+// - quality: rehber sohbeti, hafıza özeti ve premium derin okumalar — yalnızca Flash, yedek de Flash
+//   (Lite modeller sohbette genel geçer cevap verip ayrı bilgileri tek hafıza kaydına sıkıştırıyor)
 // - fast: önbelleklenen burç/uyum yorumları, kısa fal okumaları, günlük not
 // GEMINI_MODELS_FAST / GEMINI_MODELS_QUALITY (virgülle ayrılmış) ile kod değişmeden değiştirilebilir.
 // gemini-2.5-flash / -flash-lite 20 Ekim 2026'da emekliye ayrıldı (Vertex AI model sürümleri sayfası).
@@ -37,12 +38,12 @@ const parseModelList = (value: string) => value.split(",").map((m) => m.trim()).
 
 const GEMINI_MODELS: Record<GeminiTier, string[]> = {
   fast: parseModelList(process.env.GEMINI_MODELS_FAST || "gemini-3.5-flash-lite,gemini-3.1-flash-lite"),
-  quality: parseModelList(process.env.GEMINI_MODELS_QUALITY || "gemini-3.8-flash,gemini-3.5-flash-lite"),
+  quality: parseModelList(process.env.GEMINI_MODELS_QUALITY || "gemini-3.8-flash,gemini-3.5-flash"),
 };
 
-// 3.8 Flash varsayılan düşünmede ilk parçayı 4–14 sn'de veriyor; LOW kaliteyi koruyup ~3 sn'ye indiriyor
-// (18.10.2026, rehber sohbeti prompt'uyla ölçüldü). MINIMAL bu modelde 400 döner. Lite modeller varsayılanda kalır.
-const THINKING_LOW_MODELS = new Set(["gemini-3.8-flash"]);
+// Flash modeller varsayılan düşünmede ilk parçayı 4–14 sn'de veriyor; LOW kaliteyi koruyup 1,7–4,3 sn'ye indiriyor
+// (18.10.2026, rehber sohbeti prompt'uyla ölçüldü). MINIMAL 3.8 Flash'ta 400 döner. Lite modeller varsayılanda kalır.
+const THINKING_LOW_MODELS = new Set(["gemini-3.8-flash", "gemini-3.5-flash"]);
 
 const thinkingConfigFor = (modelName: string) =>
   THINKING_LOW_MODELS.has(modelName) ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {};
