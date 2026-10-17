@@ -15,14 +15,23 @@ try {
   console.error("Google Service Account JSON ayrıştırma hatası:", error);
 }
 
+// Metin üretimi "global" uç noktasında: güncel Gemini modelleri us-central1'de sunulmuyor.
+// GOOGLE_CLOUD_LOCATION'a dokunulmaz — embeddings.ts (text-embedding-004) onu kullanmaya devam ediyor.
 const ai = new GoogleGenAI({
   project: process.env.GOOGLE_CLOUD_PROJECT,
-  location: process.env.GOOGLE_CLOUD_LOCATION,
+  location: process.env.GEMINI_LOCATION || "global",
   vertexai: true,
   googleAuthOptions: {
     credentials,
   },
 });
+
+// Sırayla denenir: ilki başarısız olursa sonraki. GEMINI_MODELS ile (virgülle ayrılmış) kod değişmeden değiştirilebilir.
+// gemini-2.5-flash / -flash-lite 20 Ekim 2026'da emekliye ayrıldı (Vertex AI model sürümleri sayfası).
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || "gemini-3.5-flash-lite,gemini-3.1-flash-lite")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
 
 export type SupportedLanguage = "tr" | "en" | "ar" | "de" | "fr";
 
@@ -71,10 +80,9 @@ export async function callGeminiWithFallback(
   prompt: string,
   schema?: GeminiSchema
 ): Promise<string> {
-  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
   let lastError: any;
 
-  for (const modelName of models) {
+  for (const modelName of GEMINI_MODELS) {
     try {
       const result = await ai.models.generateContent({
         model: modelName,
@@ -105,10 +113,9 @@ export async function callGeminiWithFallback(
  * Mid-stream iteration errors propagate to the caller — chat route's STREAM_FAILED handler is the fallback.
  */
 export async function callGeminiStream(prompt: string): Promise<AsyncIterable<string>> {
-  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
   let lastError: any;
 
-  for (const modelName of models) {
+  for (const modelName of GEMINI_MODELS) {
     let streamResult: any;
     try {
       streamResult = await ai.models.generateContentStream({
@@ -826,7 +833,7 @@ QUALITY REQUIREMENTS:
 
 /**
  * Generate a coffee reading from an uploaded image.
- * Uses premium 3-model Vision chain: gemini-3-flash → 2.5-flash → 2.5-flash-lite
+ * Uses the GEMINI_MODELS chain (all current models accept image input)
  * Includes dual-layer safety guardrails.
  */
 async function _generateCoffeeReading(
@@ -871,10 +878,9 @@ OUTPUT FORMAT:
   "advice": "A warm, grandmother-like piece of advice"
 }`;
 
-  const visionModels = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"];
   let lastError: any;
 
-  for (const modelName of visionModels) {
+  for (const modelName of GEMINI_MODELS) {
     try {
       const result = await ai.models.generateContent({
         model: modelName,
