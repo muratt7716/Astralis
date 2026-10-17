@@ -65,7 +65,7 @@ CRITICAL RULES:
   "reflection_questions": ["3 deep, unique, thought-provoking questions"]
 }`;
 
-    const text = await callGeminiWithFallback(prompt);
+    const text = await callGeminiWithFallback(prompt, undefined, "quality");
 
     // Parse JSON from AI response robustly
     let analysis;

@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel, Type } from "@google/genai";
 import { calculateBaseCompatibilityScore } from "./astrology/compatibility-logic";
 
 // 1. Çevre değişkeninden JSON'ı ayrıştır
@@ -26,12 +26,26 @@ const ai = new GoogleGenAI({
   },
 });
 
-// Sırayla denenir: ilki başarısız olursa sonraki. GEMINI_MODELS ile (virgülle ayrılmış) kod değişmeden değiştirilebilir.
+// İki kademe, her biri sırayla denenir (ilki başarısız olursa sonraki):
+// - quality: rehber sohbeti, hafıza özeti ve premium derin okumalar
+// - fast: önbelleklenen burç/uyum yorumları, kısa fal okumaları, günlük not
+// GEMINI_MODELS_FAST / GEMINI_MODELS_QUALITY (virgülle ayrılmış) ile kod değişmeden değiştirilebilir.
 // gemini-2.5-flash / -flash-lite 20 Ekim 2026'da emekliye ayrıldı (Vertex AI model sürümleri sayfası).
-const GEMINI_MODELS = (process.env.GEMINI_MODELS || "gemini-3.5-flash-lite,gemini-3.1-flash-lite")
-  .split(",")
-  .map((m) => m.trim())
-  .filter(Boolean);
+export type GeminiTier = "fast" | "quality";
+
+const parseModelList = (value: string) => value.split(",").map((m) => m.trim()).filter(Boolean);
+
+const GEMINI_MODELS: Record<GeminiTier, string[]> = {
+  fast: parseModelList(process.env.GEMINI_MODELS_FAST || "gemini-3.5-flash-lite,gemini-3.1-flash-lite"),
+  quality: parseModelList(process.env.GEMINI_MODELS_QUALITY || "gemini-3.8-flash,gemini-3.5-flash-lite"),
+};
+
+// 3.8 Flash varsayılan düşünmede ilk parçayı 4–14 sn'de veriyor; LOW kaliteyi koruyup ~3 sn'ye indiriyor
+// (18.10.2026, rehber sohbeti prompt'uyla ölçüldü). MINIMAL bu modelde 400 döner. Lite modeller varsayılanda kalır.
+const THINKING_LOW_MODELS = new Set(["gemini-3.8-flash"]);
+
+const thinkingConfigFor = (modelName: string) =>
+  THINKING_LOW_MODELS.has(modelName) ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {};
 
 export type SupportedLanguage = "tr" | "en" | "ar" | "de" | "fr";
 
@@ -78,21 +92,23 @@ export const CHAT_RESPONSE_SCHEMA: GeminiSchema = {
  */
 export async function callGeminiWithFallback(
   prompt: string,
-  schema?: GeminiSchema
+  schema?: GeminiSchema,
+  tier: GeminiTier = "fast"
 ): Promise<string> {
   let lastError: any;
 
-  for (const modelName of GEMINI_MODELS) {
+  for (const modelName of GEMINI_MODELS[tier]) {
     try {
       const result = await ai.models.generateContent({
         model: modelName,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        ...(schema && {
-          config: {
+        config: {
+          ...thinkingConfigFor(modelName),
+          ...(schema && {
             responseMimeType: "application/json",
             responseSchema: schema,
-          },
-        }),
+          }),
+        },
       });
       return result.text?.trim() || "";
     } catch (error) {
@@ -112,15 +128,19 @@ export async function callGeminiWithFallback(
  * backend tam metni biriktirip parseGeminiJson ile parse eder.
  * Mid-stream iteration errors propagate to the caller — chat route's STREAM_FAILED handler is the fallback.
  */
-export async function callGeminiStream(prompt: string): Promise<AsyncIterable<string>> {
+export async function callGeminiStream(
+  prompt: string,
+  tier: GeminiTier = "quality"
+): Promise<AsyncIterable<string>> {
   let lastError: any;
 
-  for (const modelName of GEMINI_MODELS) {
+  for (const modelName of GEMINI_MODELS[tier]) {
     let streamResult: any;
     try {
       streamResult = await ai.models.generateContentStream({
         model: modelName,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: thinkingConfigFor(modelName),
       });
     } catch (error) {
       console.warn(`Gemini stream model ${modelName} failed to connect, trying next...`, error);
@@ -307,7 +327,7 @@ QUALITY REQUIREMENTS:
 - Make interpretations feel personal and specific`;
 
   try {
-    const text = await callGeminiWithFallback(prompt);
+    const text = await callGeminiWithFallback(prompt, undefined, "quality");
     return parseGeminiJson(text);
   } catch (error) {
     console.error("Gemini birth chart interpretation failed:", error);
@@ -467,7 +487,7 @@ OUTPUT STRUCTURE:
 Write elegantly and naturally in ${lang}. Ensure every interpretation is professional, insightful, and comprehensive.`;
 
   try {
-    const text = await callGeminiWithFallback(prompt);
+    const text = await callGeminiWithFallback(prompt, undefined, "quality");
     return parseGeminiJson(text);
   } catch (error) {
     console.error("Gemini synastry interpretation failed:", error);
@@ -519,7 +539,7 @@ QUALITY REQUIREMENTS:
 - Write fluently and elegantly in ${lang}`;
 
   try {
-    const text = await callGeminiWithFallback(prompt);
+    const text = await callGeminiWithFallback(prompt, undefined, "quality");
     return parseGeminiJson(text);
   } catch (error) {
     console.error("Gemini transit interpretation failed:", error);
@@ -880,7 +900,7 @@ OUTPUT FORMAT:
 
   let lastError: any;
 
-  for (const modelName of GEMINI_MODELS) {
+  for (const modelName of GEMINI_MODELS.fast) {
     try {
       const result = await ai.models.generateContent({
         model: modelName,

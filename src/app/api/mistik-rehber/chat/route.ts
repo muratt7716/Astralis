@@ -287,7 +287,9 @@ export async function POST(req: NextRequest) {
                 .order("created_at", { ascending: true })
                 .limit(20);
               const summaryRaw = await callGeminiWithFallback(
-                buildSummaryPrompt({ messages: allMsgs || [], previousSummary: contextSummary })
+                buildSummaryPrompt({ messages: allMsgs || [], previousSummary: contextSummary }),
+                undefined,
+                "quality"
               );
               const summaryJson = parseGeminiJson(summaryRaw);
               await supabaseAdmin

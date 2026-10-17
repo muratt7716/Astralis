@@ -56,7 +56,7 @@ KESİNLİKLE markdown \`\`\`json karakterleri KOYMA! Sadece aşağıdaki formatt
 }
 `;
 
-    const aiText = await callGeminiWithFallback(prompt);
+    const aiText = await callGeminiWithFallback(prompt, undefined, "quality");
 
     let analysis: any = {};
     try {

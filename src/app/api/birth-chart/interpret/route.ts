@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       retrogradeCount: chart.retrogradeCount,
     });
 
-    const raw = await callGeminiWithFallback(prompt);
+    const raw = await callGeminiWithFallback(prompt, undefined, "quality");
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ error: "AI yanıtı işlenemedi." }, { status: 500 });
 
